@@ -27,6 +27,8 @@ interface ControlsProps {
   onExportFormantCsv: () => void;
   onExportIntensityCsv: () => void;
   onExportSelectionWav: () => void;
+  onExportFullWav: () => void;
+  onExportHarmonicityCsv: () => void;
 }
 
 export function Controls({
@@ -56,6 +58,8 @@ export function Controls({
   onExportFormantCsv,
   onExportIntensityCsv,
   onExportSelectionWav,
+  onExportFullWav,
+  onExportHarmonicityCsv,
 }: ControlsProps) {
   const formatTime = (time: number) => `${time.toFixed(3)}s`;
 
@@ -114,6 +118,12 @@ export function Controls({
         </button>
         <button className="btn btn-secondary" disabled={!selection} onClick={onExportSelectionWav}>
           Selection WAV
+        </button>
+        <button className="btn btn-secondary" disabled={!hasAudio} onClick={onExportFullWav}>
+          Export WAV
+        </button>
+        <button className="btn btn-secondary" disabled={!hasAudio} onClick={onExportHarmonicityCsv}>
+          HNR CSV
         </button>
       </div>
       <div className="controls-info">

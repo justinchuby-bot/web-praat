@@ -23,6 +23,7 @@ import {
   downloadBinaryFile,
   downloadTextFile,
   exportFormantCsv,
+  exportHarmonicityCsv,
   exportIntensityCsv,
   exportPitchCsv,
   exportSelectedRegionWav,
@@ -442,6 +443,11 @@ export default function App() {
             const samples = currentSamplesRef.current.slice(range.start, range.end);
             downloadBinaryFile('selection.wav', exportSelectedRegionWav(samples, sampleRate));
           }}
+          onExportFullWav={() => {
+            if (!currentSamplesRef.current) return;
+            downloadBinaryFile('audio.wav', exportSelectedRegionWav(currentSamplesRef.current, sampleRate));
+          }}
+          onExportHarmonicityCsv={() => analysis && downloadTextFile('harmonicity.csv', exportHarmonicityCsv(analysis.harmonicity), 'text/csv')}
         />
 
         <div className="visualizations">
