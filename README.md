@@ -1,76 +1,103 @@
 # Web Praat
 
-A web-based speech analysis tool inspired by [Praat](https://www.fon.hum.uva.nl/praat/), built entirely in the browser with no external DSP libraries.
+A browser-based speech analysis workstation inspired by [Praat](https://www.fon.hum.uva.nl/praat/), built with React, strict TypeScript, and custom DSP only.
 
 ![Stack](https://img.shields.io/badge/React_18-TypeScript-blue)
 ![Build](https://img.shields.io/badge/Vite-5-purple)
-![Tests](https://img.shields.io/badge/tests-7_passing-green)
+![Tests](https://img.shields.io/badge/tests-27_passing-green)
 
 ## Features
 
-- **Record / Load Audio** — Record from microphone or drag-and-drop WAV/MP3/OGG files
-- **Waveform Display** — Time-domain waveform with selection support
-- **Spectrogram** — STFT spectrogram with jet colormap (1024 FFT, 256 hop, Hamming window)
-- **Pitch (F0) Tracking** — Autocorrelation-based pitch detection (75–600 Hz), displayed as blue overlay
-- **Formant Analysis** — Burg's LPC method with Durand-Kerner root finding (F1/F2/F3), displayed as red dots
-- **Intensity Curve** — RMS-based loudness in dB, displayed as green overlay
-- **Playback** — Play/pause with real-time cursor tracking
-- **Time Selection** — Click and drag to select time ranges
+- Recording, playback, drag-and-drop audio loading
+- Waveform display with time selection
+- Spectrogram with configurable FFT size, hop size, dynamic range, and colormap
+- Pitch tracking with configurable min/max frequency and voicing threshold
+- LPC-based formant extraction plus continuous formant trajectory tracking
+- Intensity contour overlay
+- Spectrum slice analysis from spectrogram clicks with FFT magnitude and LPC envelope
+- TextGrid annotation editor with interval tiers, point tiers, boundary insertion, label editing, drag repositioning, and Praat `.TextGrid` import/export
+- Zoom and navigation with mouse-wheel zoom, shift/middle-button pan, ctrl-drag zoom-to-region, fit-to-window, and a time ruler
+- Voice-quality analysis with pulse detection, jitter metrics, and shimmer metrics
+- Biquad filters from scratch: low-pass, high-pass, and band-pass
+- Audio editing with cut, copy, paste, delete, undo, and redo
+- Data export for TextGrid, pitch/formant/intensity CSV, and selected-region WAV
+- Duration and rhythm statistics including mean, stdev, min, max, nPVI, and rPVI
 
-## Tech Stack
+## DSP Implementation
 
-- **React 18** + TypeScript (strict mode)
-- **Vite** for development and building
-- **Canvas API** for all visualizations
-- **Web Audio API** for recording and playback
-- **Vitest** for testing
+All signal processing is implemented locally without third-party DSP libraries.
 
-## Algorithms (all from scratch)
-
-| Feature | Method |
-|---------|--------|
-| Spectrogram | STFT with Hamming window, 1024-point FFT, 256-sample hop |
-| Pitch | Normalized autocorrelation with voicing threshold |
-| Formants | Burg's method (LPC order 12) → Durand-Kerner polynomial roots → formant selection |
-| Intensity | Frame-wise RMS → dB conversion |
-| FFT | Radix-2 Cooley-Tukey (in-place, bit-reversal) |
+- FFT: radix-2 Cooley-Tukey
+- Spectrogram: STFT with Hamming window
+- Pitch: normalized autocorrelation
+- Formants: Burg LPC + root analysis + dynamic programming tracking
+- Spectrum slice: frame FFT + LPC spectral envelope
+- Voice quality: differentiated-waveform pulse picking with jitter/shimmer formulas
+- Filters: RBJ-style biquad IIR design and sample-by-sample filtering
+- WAV export: PCM16 encoding and manual RIFF/WAVE header writing
 
 ## Getting Started
 
 ```bash
 npm install
-npm run dev      # Start dev server
-npm test         # Run tests
-npm run build    # Production build
+npm run dev
+npm test
+npx tsc --noEmit
+npm run build
 ```
 
 ## Project Structure
 
-```
+```text
 src/
-  App.tsx                 — Main application component
-  components/
-    Waveform.tsx          — Waveform canvas with selection
-    Spectrogram.tsx       — Spectrogram + pitch/formant/intensity overlays
-    Controls.tsx          — Record/play/file controls
-    Sidebar.tsx           — Overlay toggles and settings
+  App.tsx
   audio/
-    analyzer.ts           — STFT, pitch, formant, intensity analysis
-    lpc.ts                — Burg's method LPC + Durand-Kerner root finding
-    recorder.ts           — Web Audio recording + file loading
+    analyzer.ts
+    defaults.ts
+    editor.ts
+    filters.ts
+    formantTracking.ts
+    lpc.ts
+    recorder.ts
+    rhythm.ts
+    spectrum.ts
+    voiceQuality.ts
+  components/
+    Controls.tsx
+    FilterPanel.tsx
+    RhythmPanel.tsx
+    SettingsPanel.tsx
+    Sidebar.tsx
+    Spectrogram.tsx
+    SpectrumSlice.tsx
+    TextGridEditor.tsx
+    TimeRuler.tsx
+    VoiceQualityPanel.tsx
+    Waveform.tsx
+  export/
+    index.ts
+  textgrid/
+    parser.ts
   utils/
-    fft.ts                — Radix-2 FFT implementation
-    colormap.ts           — Jet and grayscale colormaps
-  types.ts                — TypeScript interfaces
+    colormap.ts
+    fft.ts
+    id.ts
+    view.ts
 tests/
-  analyzer.test.ts        — FFT, pitch, intensity, spectrogram tests
-  lpc.test.ts             — Burg's method and formant extraction tests
+  analyzer.test.ts
+  editor.test.ts
+  export.test.ts
+  filters.test.ts
+  formantTracking.test.ts
+  lpc.test.ts
+  rhythm.test.ts
+  textgrid.test.ts
+  voiceQuality.test.ts
+  zoom.test.ts
 ```
 
-## Design
+## Development Notes
 
-Modern dark theme (Catppuccin Mocha-inspired). Upper panel shows waveform, lower panel shows spectrogram with optional pitch/formant/intensity overlays. Sidebar provides overlay toggles.
-
-## License
-
-MIT
+- TypeScript `strict` mode is enabled.
+- The app state drives re-analysis when settings change.
+- Tests cover parser/export behavior, zoom math, formant tracking, voice quality, filters, rhythm metrics, and editor history.

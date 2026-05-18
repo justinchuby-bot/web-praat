@@ -1,3 +1,62 @@
+export type FilterType = 'none' | 'lowpass' | 'highpass' | 'bandpass';
+export type TextGridTierKind = 'interval' | 'point';
+export type ColormapName = 'jet' | 'grayscale';
+
+export interface AnalysisSettings {
+  spectrogram: {
+    fftSize: 256 | 512 | 1024 | 2048;
+    hopSize: number;
+    dynamicRangeDb: number;
+    colormap: ColormapName;
+  };
+  pitch: {
+    minHz: number;
+    maxHz: number;
+    voicingThreshold: number;
+  };
+  formant: {
+    maxFrequency: number;
+    lpcOrder: number;
+    numberOfFormants: number;
+  };
+}
+
+export interface SpectrumSliceData {
+  time: number;
+  fftFrequencies: Float64Array;
+  fftMagnitudes: Float64Array;
+  lpcEnvelope: Float64Array;
+}
+
+export interface VoiceQualityMetrics {
+  pulses: number[];
+  periodDurations: number[];
+  pulseAmplitudes: number[];
+  jitterLocalPercent: number;
+  jitterAbsolute: number;
+  rap: number;
+  ppq5: number;
+  shimmerLocalPercent: number;
+  shimmerDb: number;
+  apq3: number;
+  apq5: number;
+}
+
+export interface RhythmMetrics {
+  count: number;
+  mean: number;
+  stdev: number;
+  min: number;
+  max: number;
+  nPVI: number;
+  rPVI: number;
+}
+
+export interface FormantFrame {
+  time: number;
+  candidates: number[];
+}
+
 export interface AnalysisResult {
   waveform: Float32Array;
   sampleRate: number;
@@ -6,18 +65,22 @@ export interface AnalysisResult {
   pitch: PitchData;
   formants: FormantData;
   intensity: IntensityData;
+  voiceQuality: VoiceQualityMetrics;
+  spectrumSlice: SpectrumSliceData | null;
+  settings: AnalysisSettings;
 }
 
 export interface SpectrogramData {
-  magnitudes: Float64Array[]; // Each element is one frame's frequency bins
-  timeStep: number; // seconds per frame
-  freqStep: number; // Hz per bin
+  magnitudes: Float64Array[];
+  timeStep: number;
+  freqStep: number;
   maxFreq: number;
+  frameTimes: number[];
 }
 
 export interface PitchData {
   times: number[];
-  frequencies: (number | null)[]; // null = unvoiced
+  frequencies: (number | null)[];
 }
 
 export interface FormantData {
@@ -25,14 +88,67 @@ export interface FormantData {
   f1: (number | null)[];
   f2: (number | null)[];
   f3: (number | null)[];
+  tracked: Array<Array<number | null>>;
+  candidates: FormantFrame[];
 }
 
 export interface IntensityData {
   times: number[];
-  values: number[]; // dB
+  values: number[];
 }
 
 export interface TimeSelection {
   start: number;
   end: number;
+}
+
+export interface ViewRange {
+  start: number;
+  end: number;
+}
+
+export interface Interval {
+  id: string;
+  start: number;
+  end: number;
+  label: string;
+}
+
+export interface Point {
+  id: string;
+  time: number;
+  label: string;
+}
+
+export interface IntervalTier {
+  id: string;
+  name: string;
+  kind: 'interval';
+  intervals: Interval[];
+}
+
+export interface PointTier {
+  id: string;
+  name: string;
+  kind: 'point';
+  points: Point[];
+}
+
+export type TextGridTier = IntervalTier | PointTier;
+
+export interface TextGrid {
+  xmin: number;
+  xmax: number;
+  tiers: TextGridTier[];
+}
+
+export interface FilterSettings {
+  type: FilterType;
+  cutoffHz: number;
+  q: number;
+}
+
+export interface ExportSeriesRow {
+  time: number;
+  value: number | null;
 }

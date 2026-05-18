@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 interface SidebarProps {
   showPitch: boolean;
   showFormants: boolean;
@@ -5,6 +7,7 @@ interface SidebarProps {
   onTogglePitch: () => void;
   onToggleFormants: () => void;
   onToggleIntensity: () => void;
+  children?: ReactNode;
 }
 
 export function Sidebar({
@@ -14,6 +17,7 @@ export function Sidebar({
   onTogglePitch,
   onToggleFormants,
   onToggleIntensity,
+  children,
 }: SidebarProps) {
   return (
     <aside className="sidebar">
@@ -27,7 +31,7 @@ export function Sidebar({
         <label className="toggle-label">
           <input type="checkbox" checked={showPitch} onChange={onTogglePitch} />
           <span className="toggle-indicator pitch" />
-          Pitch (F0)
+          Pitch
         </label>
         <label className="toggle-label">
           <input type="checkbox" checked={showFormants} onChange={onToggleFormants} />
@@ -41,18 +45,17 @@ export function Sidebar({
         </label>
       </div>
 
+      {children}
+
       <div className="sidebar-section">
-        <h3>Help</h3>
+        <h3>Navigation</h3>
         <p className="help-text">
-          Drop an audio file or click Record to start.
-          Click and drag on the waveform to select a time range.
+          Wheel to zoom. Shift-drag or middle-drag to pan. Ctrl-drag to zoom a region. Click the spectrogram for a spectrum slice.
         </p>
       </div>
 
       <div className="sidebar-footer">
-        <span className="footer-text">
-          No external DSP libraries — all algorithms from scratch.
-        </span>
+        <span className="footer-text">No external DSP libraries. All analysis is implemented in TypeScript.</span>
       </div>
     </aside>
   );

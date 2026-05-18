@@ -6,11 +6,27 @@ interface ControlsProps {
   isRecording: boolean;
   selection: TimeSelection | null;
   duration: number;
+  canUndo: boolean;
+  canRedo: boolean;
   onRecord: () => void;
   onStopRecord: () => void;
   onPlay: () => void;
   onPause: () => void;
   onLoadFile: (file: File) => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  onCut: () => void;
+  onCopy: () => void;
+  onPaste: () => void;
+  onDelete: () => void;
+  onFitToWindow: () => void;
+  onZoomToSelection: () => void;
+  onImportTextGrid: (file: File) => void;
+  onExportTextGrid: () => void;
+  onExportPitchCsv: () => void;
+  onExportFormantCsv: () => void;
+  onExportIntensityCsv: () => void;
+  onExportSelectionWav: () => void;
 }
 
 export function Controls({
@@ -19,55 +35,92 @@ export function Controls({
   isRecording,
   selection,
   duration,
+  canUndo,
+  canRedo,
   onRecord,
   onStopRecord,
   onPlay,
   onPause,
   onLoadFile,
+  onUndo,
+  onRedo,
+  onCut,
+  onCopy,
+  onPaste,
+  onDelete,
+  onFitToWindow,
+  onZoomToSelection,
+  onImportTextGrid,
+  onExportTextGrid,
+  onExportPitchCsv,
+  onExportFormantCsv,
+  onExportIntensityCsv,
+  onExportSelectionWav,
 }: ControlsProps) {
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) onLoadFile(file);
-  };
-
-  const formatTime = (t: number) => t.toFixed(3) + 's';
+  const formatTime = (time: number) => `${time.toFixed(3)}s`;
 
   return (
     <div className="controls">
-      <div className="controls-group">
-        <button
-          className={`btn ${isRecording ? 'btn-danger' : 'btn-primary'}`}
-          onClick={isRecording ? onStopRecord : onRecord}
-        >
-          {isRecording ? '⏹ Stop' : '⏺ Record'}
+      <div className="controls-group controls-wrap">
+        <button className={`btn ${isRecording ? 'btn-danger' : 'btn-primary'}`} onClick={isRecording ? onStopRecord : onRecord}>
+          {isRecording ? 'Stop' : 'Record'}
         </button>
-
-        <button
-          className="btn btn-primary"
-          disabled={!hasAudio}
-          onClick={isPlaying ? onPause : onPlay}
-        >
-          {isPlaying ? '⏸ Pause' : '▶ Play'}
+        <button className="btn btn-primary" disabled={!hasAudio} onClick={isPlaying ? onPause : onPlay}>
+          {isPlaying ? 'Pause' : 'Play'}
         </button>
-
         <label className="btn btn-secondary file-label">
-          📂 Open File
-          <input
-            type="file"
-            accept="audio/*"
-            onChange={handleFileInput}
-            hidden
-          />
+          Open Audio
+          <input hidden type="file" accept="audio/*" onChange={(event) => event.target.files?.[0] && onLoadFile(event.target.files[0])} />
         </label>
+        <label className="btn btn-secondary file-label">
+          Import TextGrid
+          <input hidden type="file" accept=".TextGrid,.textgrid,text/plain" onChange={(event) => event.target.files?.[0] && onImportTextGrid(event.target.files[0])} />
+        </label>
+        <button className="btn btn-secondary" disabled={!selection} onClick={onZoomToSelection}>
+          Zoom Selection
+        </button>
+        <button className="btn btn-secondary" disabled={!hasAudio} onClick={onFitToWindow}>
+          Fit
+        </button>
+        <button className="btn btn-secondary" disabled={!selection} onClick={onCut}>
+          Cut
+        </button>
+        <button className="btn btn-secondary" disabled={!selection} onClick={onCopy}>
+          Copy
+        </button>
+        <button className="btn btn-secondary" disabled={!hasAudio} onClick={onPaste}>
+          Paste
+        </button>
+        <button className="btn btn-secondary" disabled={!selection} onClick={onDelete}>
+          Delete
+        </button>
+        <button className="btn btn-secondary" disabled={!canUndo} onClick={onUndo}>
+          Undo
+        </button>
+        <button className="btn btn-secondary" disabled={!canRedo} onClick={onRedo}>
+          Redo
+        </button>
+        <button className="btn btn-secondary" disabled={!hasAudio} onClick={onExportTextGrid}>
+          Export TextGrid
+        </button>
+        <button className="btn btn-secondary" disabled={!hasAudio} onClick={onExportPitchCsv}>
+          Pitch CSV
+        </button>
+        <button className="btn btn-secondary" disabled={!hasAudio} onClick={onExportFormantCsv}>
+          Formant CSV
+        </button>
+        <button className="btn btn-secondary" disabled={!hasAudio} onClick={onExportIntensityCsv}>
+          Intensity CSV
+        </button>
+        <button className="btn btn-secondary" disabled={!selection} onClick={onExportSelectionWav}>
+          Selection WAV
+        </button>
       </div>
-
       <div className="controls-info">
         {hasAudio && (
           <span className="info-text">
             Duration: {formatTime(duration)}
-            {selection && (
-              <> | Selection: {formatTime(selection.start)} – {formatTime(selection.end)}</>
-            )}
+            {selection ? ` | Selection: ${formatTime(selection.start)} - ${formatTime(selection.end)}` : ''}
           </span>
         )}
       </div>

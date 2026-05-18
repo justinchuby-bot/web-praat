@@ -1,25 +1,43 @@
-import { useRef, useEffect } from 'react';
-import { jetColormap } from '../utils/colormap';
-import type { AnalysisResult, TimeSelection } from '../types';
+import { useEffect, useRef } from 'react';
+import { grayscaleColormap, jetColormap } from '../utils/colormap';
+import type { AnalysisResult, TimeSelection, ViewRange } from '../types';
+import { timeToX, xToTime } from '../utils/view';
 
 interface SpectrogramProps {
   analysis: AnalysisResult | null;
   selection: TimeSelection | null;
   currentTime: number;
+  viewRange: ViewRange;
   showPitch: boolean;
   showFormants: boolean;
   showIntensity: boolean;
+  onWheelZoom: (pivotTime: number, zoomFactor: number) => void;
+  onPan: (deltaTime: number) => void;
+  onZoomSelection: (selection: TimeSelection) => void;
+  onSelectionChange: (selection: TimeSelection | null) => void;
+  onSpectrumSliceSelect: (time: number) => void;
 }
+
+type DragMode = 'select' | 'pan' | 'zoom' | null;
 
 export function Spectrogram({
   analysis,
   selection,
   currentTime,
+  viewRange,
   showPitch,
   showFormants,
   showIntensity,
+  onWheelZoom,
+  onPan,
+  onZoomSelection,
+  onSelectionChange,
+  onSpectrumSliceSelect,
 }: SpectrogramProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const dragModeRef = useRef<DragMode>(null);
+  const dragStartTimeRef = useRef(0);
+  const lastPanTimeRef = useRef(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -28,65 +46,69 @@ export function Spectrogram({
     if (!ctx) return;
 
     const { width, height } = canvas.getBoundingClientRect();
-    canvas.width = width * devicePixelRatio;
-    canvas.height = height * devicePixelRatio;
-    ctx.scale(devicePixelRatio, devicePixelRatio);
+    canvas.width = width * window.devicePixelRatio;
+    canvas.height = height * window.devicePixelRatio;
+    ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
 
-    // Background
     ctx.fillStyle = '#11111b';
     ctx.fillRect(0, 0, width, height);
 
-    const { spectrogram, duration } = analysis;
-    const { magnitudes } = spectrogram;
-    if (magnitudes.length === 0) return;
-
-    // Find global max for normalization
-    let globalMax = 0;
-    for (const frame of magnitudes) {
-      for (let i = 0; i < frame.length; i++) {
-        if (frame[i] > globalMax) globalMax = frame[i];
-      }
-    }
-    if (globalMax === 0) globalMax = 1;
-
-    // Draw spectrogram
-    const maxDisplayFreq = 5000; // Show up to 5kHz
+    const { spectrogram } = analysis;
+    if (spectrogram.magnitudes.length === 0) return;
+    const maxDisplayFreq = Math.min(analysis.settings.formant.maxFrequency, spectrogram.maxFreq);
     const binsToShow = Math.min(
-      magnitudes[0].length,
+      spectrogram.magnitudes[0].length,
       Math.ceil(maxDisplayFreq / spectrogram.freqStep)
     );
 
-    const colWidth = width / magnitudes.length;
+    const globalMax = spectrogram.magnitudes.reduce((outerMax, frame) => {
+      let frameMax = outerMax;
+      for (let i = 0; i < frame.length; i++) {
+        frameMax = Math.max(frameMax, frame[i]);
+      }
+      return frameMax;
+    }, 1e-6);
+
+    const colorForValue =
+      analysis.settings.spectrogram.colormap === 'grayscale' ? grayscaleColormap : jetColormap;
     const rowHeight = height / binsToShow;
 
-    for (let i = 0; i < magnitudes.length; i++) {
-      const x = i * colWidth;
-      for (let j = 0; j < binsToShow; j++) {
-        const y = height - (j + 1) * rowHeight;
-        // Log scale for better visibility
-        const val = magnitudes[i][j] / globalMax;
-        const logVal = Math.max(0, 1 + Math.log10(Math.max(val, 1e-4)) / 4);
-        const [r, g, b] = jetColormap(logVal);
+    for (let frameIndex = 0; frameIndex < spectrogram.magnitudes.length; frameIndex++) {
+      const time = spectrogram.frameTimes[frameIndex];
+      if (time < viewRange.start || time > viewRange.end) continue;
+      const x = timeToX(time, width, viewRange);
+      const nextTime = time + spectrogram.timeStep;
+      const nextX = timeToX(nextTime, width, viewRange);
+      const colWidth = Math.max(1, nextX - x);
+
+      for (let bin = 0; bin < binsToShow; bin++) {
+        const value = spectrogram.magnitudes[frameIndex][bin] / globalMax;
+        const db = 20 * Math.log10(Math.max(value, 1e-6));
+        const normalized = Math.max(
+          0,
+          Math.min(1, 1 - Math.abs(db) / Math.max(analysis.settings.spectrogram.dynamicRangeDb, 1))
+        );
+        const [r, g, b] = colorForValue(normalized);
         ctx.fillStyle = `rgb(${r},${g},${b})`;
+        const y = height - (bin + 1) * rowHeight;
         ctx.fillRect(x, y, colWidth + 1, rowHeight + 1);
       }
     }
 
-    // Pitch overlay (blue line)
-    if (showPitch && analysis.pitch) {
+    if (showPitch) {
       ctx.strokeStyle = '#89b4fa';
       ctx.lineWidth = 2;
       ctx.beginPath();
       let started = false;
-      const { times, frequencies } = analysis.pitch;
-      for (let i = 0; i < times.length; i++) {
-        const f = frequencies[i];
-        if (f === null) {
+      for (let i = 0; i < analysis.pitch.times.length; i++) {
+        const frequency = analysis.pitch.frequencies[i];
+        const time = analysis.pitch.times[i];
+        if (frequency === null || time < viewRange.start || time > viewRange.end) {
           started = false;
           continue;
         }
-        const x = (times[i] / duration) * width;
-        const y = height - (f / maxDisplayFreq) * height;
+        const x = timeToX(time, width, viewRange);
+        const y = height - (frequency / maxDisplayFreq) * height;
         if (!started) {
           ctx.moveTo(x, y);
           started = true;
@@ -97,71 +119,133 @@ export function Spectrogram({
       ctx.stroke();
     }
 
-    // Formant overlay (red dots)
-    if (showFormants && analysis.formants) {
-      const { times, f1, f2, f3 } = analysis.formants;
-      ctx.fillStyle = '#f38ba8';
-      for (let i = 0; i < times.length; i++) {
-        const x = (times[i] / duration) * width;
-        const drawDot = (freq: number | null) => {
-          if (freq === null || freq > maxDisplayFreq) return;
-          const y = height - (freq / maxDisplayFreq) * height;
-          ctx.beginPath();
-          ctx.arc(x, y, 2, 0, 2 * Math.PI);
-          ctx.fill();
-        };
-        drawDot(f1[i]);
-        drawDot(f2[i]);
-        drawDot(f3[i]);
-      }
+    if (showFormants) {
+      const colors = ['#f38ba8', '#fab387', '#f9e2af'];
+      analysis.formants.tracked.forEach((track, index) => {
+        ctx.strokeStyle = colors[index] ?? '#f38ba8';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        let started = false;
+        track.forEach((frequency, frameIndex) => {
+          const time = analysis.formants.times[frameIndex];
+          if (frequency === null || time < viewRange.start || time > viewRange.end || frequency > maxDisplayFreq) {
+            started = false;
+            return;
+          }
+          const x = timeToX(time, width, viewRange);
+          const y = height - (frequency / maxDisplayFreq) * height;
+          if (!started) {
+            ctx.moveTo(x, y);
+            started = true;
+          } else {
+            ctx.lineTo(x, y);
+          }
+        });
+        ctx.stroke();
+      });
     }
 
-    // Intensity overlay (green line)
-    if (showIntensity && analysis.intensity) {
-      const { times, values } = analysis.intensity;
-      const minDb = -60;
-      const maxDb = 0;
+    if (showIntensity) {
       ctx.strokeStyle = '#a6e3a1';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
-      for (let i = 0; i < times.length; i++) {
-        const x = (times[i] / duration) * width;
-        const norm = Math.max(0, Math.min(1, (values[i] - minDb) / (maxDb - minDb)));
-        const y = height - norm * height;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+      let started = false;
+      for (let i = 0; i < analysis.intensity.times.length; i++) {
+        const time = analysis.intensity.times[i];
+        if (time < viewRange.start || time > viewRange.end) continue;
+        const normalized = (analysis.intensity.values[i] + 80) / 80;
+        const x = timeToX(time, width, viewRange);
+        const y = height - Math.max(0, Math.min(1, normalized)) * height;
+        if (!started) {
+          ctx.moveTo(x, y);
+          started = true;
+        } else {
+          ctx.lineTo(x, y);
+        }
       }
       ctx.stroke();
     }
 
-    // Selection
     if (selection) {
-      const x1 = (selection.start / duration) * width;
-      const x2 = (selection.end / duration) * width;
+      const x1 = timeToX(selection.start, width, viewRange);
+      const x2 = timeToX(selection.end, width, viewRange);
       ctx.fillStyle = 'rgba(137, 180, 250, 0.1)';
       ctx.fillRect(x1, 0, x2 - x1, height);
     }
 
-    // Playback cursor
-    if (currentTime > 0) {
-      const cx = (currentTime / duration) * width;
+    if (currentTime >= viewRange.start && currentTime <= viewRange.end) {
+      const x = timeToX(currentTime, width, viewRange);
       ctx.strokeStyle = '#cdd6f4';
-      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(cx, 0);
-      ctx.lineTo(cx, height);
+      ctx.moveTo(x + 0.5, 0);
+      ctx.lineTo(x + 0.5, height);
       ctx.stroke();
     }
+  }, [analysis, currentTime, selection, showFormants, showIntensity, showPitch, viewRange]);
 
-    // Frequency axis labels
-    ctx.fillStyle = '#a6adc8';
-    ctx.font = '11px monospace';
-    ctx.textAlign = 'right';
-    for (let freq = 1000; freq <= maxDisplayFreq; freq += 1000) {
-      const y = height - (freq / maxDisplayFreq) * height;
-      ctx.fillText(`${freq / 1000}k`, width - 4, y + 4);
+  const getTime = (event: React.MouseEvent<HTMLCanvasElement>): number => {
+    const rect = canvasRef.current!.getBoundingClientRect();
+    return xToTime(event.clientX - rect.left, rect.width, viewRange);
+  };
+
+  const handleMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!analysis) return;
+    const time = getTime(event);
+    dragStartTimeRef.current = time;
+    lastPanTimeRef.current = time;
+    if (event.button === 1 || event.shiftKey) {
+      dragModeRef.current = 'pan';
+      return;
     }
-  }, [analysis, selection, currentTime, showPitch, showFormants, showIntensity]);
+    if (event.ctrlKey) {
+      dragModeRef.current = 'zoom';
+      onSelectionChange(null);
+      return;
+    }
+    dragModeRef.current = 'select';
+    onSelectionChange(null);
+  };
 
-  return <canvas ref={canvasRef} className="spectrogram-canvas" />;
+  const handleMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!dragModeRef.current) return;
+    const time = getTime(event);
+    if (dragModeRef.current === 'pan') {
+      const delta = lastPanTimeRef.current - time;
+      lastPanTimeRef.current = time;
+      onPan(delta);
+      return;
+    }
+    const start = Math.min(dragStartTimeRef.current, time);
+    const end = Math.max(dragStartTimeRef.current, time);
+    if (end - start > 0.001) {
+      onSelectionChange({ start, end });
+    }
+  };
+
+  const handleMouseUp = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    const time = getTime(event);
+    if (dragModeRef.current === 'zoom' && selection && selection.end > selection.start) {
+      onZoomSelection(selection);
+    } else if (dragModeRef.current === 'select') {
+      onSpectrumSliceSelect(time);
+    }
+    dragModeRef.current = null;
+  };
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="spectrogram-canvas"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={() => {
+        dragModeRef.current = null;
+      }}
+      onWheel={(event) => {
+        event.preventDefault();
+        onWheelZoom(getTime(event), event.deltaY > 0 ? 1.25 : 0.8);
+      }}
+    />
+  );
 }

@@ -1,191 +1,195 @@
-/**
- * Audio analysis: spectrogram, pitch, formants, intensity.
- * All DSP algorithms implemented from scratch.
- */
-
 import { fftMagnitude, hammingWindow } from '../utils/fft';
+import { defaultAnalysisSettings } from './defaults';
 import { extractFormants } from './lpc';
+import { trackFormants } from './formantTracking';
+import { computeVoiceQuality } from './voiceQuality';
 import type {
   AnalysisResult,
-  SpectrogramData,
-  PitchData,
+  AnalysisSettings,
   FormantData,
+  FormantFrame,
   IntensityData,
+  PitchData,
+  SpectrogramData,
 } from '../types';
 
-const FFT_SIZE = 1024;
-const HOP_SIZE = 256;
+function mergeSettings(settings?: Partial<AnalysisSettings>): AnalysisSettings {
+  return {
+    spectrogram: { ...defaultAnalysisSettings.spectrogram, ...settings?.spectrogram },
+    pitch: { ...defaultAnalysisSettings.pitch, ...settings?.pitch },
+    formant: { ...defaultAnalysisSettings.formant, ...settings?.formant },
+  };
+}
 
-/**
- * Full analysis pipeline for loaded audio.
- */
-export function analyzeAudio(samples: Float32Array, sampleRate: number): AnalysisResult {
+export function analyzeAudio(
+  samples: Float32Array,
+  sampleRate: number,
+  settings?: Partial<AnalysisSettings>
+): AnalysisResult {
+  const resolved = mergeSettings(settings);
   const duration = samples.length / sampleRate;
-  const spectrogram = computeSpectrogram(samples, sampleRate);
-  const pitch = computePitch(samples, sampleRate);
-  const formants = computeFormants(samples, sampleRate);
+  const spectrogram = computeSpectrogram(samples, sampleRate, resolved);
+  const pitch = computePitch(samples, sampleRate, resolved);
+  const formants = computeFormants(samples, sampleRate, resolved);
   const intensity = computeIntensity(samples, sampleRate);
+  const voiceQuality = computeVoiceQuality(samples, sampleRate);
 
   return {
-    waveform: samples,
+    waveform: Float32Array.from(samples),
     sampleRate,
     duration,
     spectrogram,
     pitch,
     formants,
     intensity,
+    voiceQuality,
+    spectrumSlice: null,
+    settings: resolved,
   };
 }
 
-/**
- * STFT spectrogram with Hamming window.
- */
-export function computeSpectrogram(samples: Float32Array, sampleRate: number): SpectrogramData {
-  const numFrames = Math.floor((samples.length - FFT_SIZE) / HOP_SIZE) + 1;
+export function computeSpectrogram(
+  samples: Float32Array,
+  sampleRate: number,
+  settings?: Partial<AnalysisSettings>
+): SpectrogramData {
+  const resolved = mergeSettings(settings);
+  const fftSize = resolved.spectrogram.fftSize;
+  const hopSize = resolved.spectrogram.hopSize;
   const magnitudes: Float64Array[] = [];
+  const frameTimes: number[] = [];
+  const totalFrames = Math.max(0, Math.floor((samples.length - fftSize) / hopSize) + 1);
 
-  for (let i = 0; i < numFrames; i++) {
-    const start = i * HOP_SIZE;
-    const frame = new Float64Array(FFT_SIZE);
-    for (let j = 0; j < FFT_SIZE; j++) {
-      frame[j] = start + j < samples.length ? samples[start + j] : 0;
+  for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
+    const start = frameIndex * hopSize;
+    const frame = new Float64Array(fftSize);
+    for (let i = 0; i < fftSize; i++) {
+      frame[i] = start + i < samples.length ? samples[start + i] : 0;
     }
-    const windowed = hammingWindow(frame);
-    const mag = fftMagnitude(windowed, FFT_SIZE);
-    magnitudes.push(mag);
+    magnitudes.push(fftMagnitude(hammingWindow(frame), fftSize));
+    frameTimes.push((start + fftSize / 2) / sampleRate);
   }
 
   return {
     magnitudes,
-    timeStep: HOP_SIZE / sampleRate,
-    freqStep: sampleRate / FFT_SIZE,
+    timeStep: hopSize / sampleRate,
+    freqStep: sampleRate / fftSize,
     maxFreq: sampleRate / 2,
+    frameTimes,
   };
 }
 
-/**
- * Pitch detection using autocorrelation method (similar to Praat's AC method).
- * Searches for F0 in range 75–600 Hz.
- */
-export function computePitch(samples: Float32Array, sampleRate: number): PitchData {
-  const frameSize = Math.round(sampleRate * 0.04); // 40ms frames
-  const hopSize = Math.round(sampleRate * 0.01); // 10ms hop
-  const minLag = Math.round(sampleRate / 600); // 600 Hz max
-  const maxLag = Math.round(sampleRate / 75); // 75 Hz min
+export function computePitch(
+  samples: Float32Array,
+  sampleRate: number,
+  settings?: Partial<AnalysisSettings>
+): PitchData {
+  const resolved = mergeSettings(settings);
+  const frameSize = Math.round(sampleRate * 0.04);
+  const hopSize = Math.max(1, Math.round(sampleRate * 0.01));
+  const minLag = Math.round(sampleRate / resolved.pitch.maxHz);
+  const maxLag = Math.round(sampleRate / resolved.pitch.minHz);
 
   const times: number[] = [];
-  const frequencies: (number | null)[] = [];
+  const frequencies: Array<number | null> = [];
 
   for (let start = 0; start + frameSize <= samples.length; start += hopSize) {
     const time = (start + frameSize / 2) / sampleRate;
     times.push(time);
-
-    // Extract frame and apply window
     const frame = new Float64Array(frameSize);
     for (let i = 0; i < frameSize; i++) {
-      frame[i] = samples[start + i] * (0.54 - 0.46 * Math.cos((2 * Math.PI * i) / (frameSize - 1)));
+      frame[i] = samples[start + i];
     }
-
-    // Compute normalized autocorrelation
-    let r0 = 0;
-    for (let i = 0; i < frameSize; i++) r0 += frame[i] * frame[i];
-
-    if (r0 < 1e-6) {
+    const windowed = hammingWindow(frame);
+    let energy = 0;
+    for (let i = 0; i < windowed.length; i++) energy += windowed[i] * windowed[i];
+    if (energy < 1e-6) {
       frequencies.push(null);
       continue;
     }
 
     let bestLag = 0;
-    let bestCorr = 0;
-
+    let bestCorrelation = 0;
     for (let lag = minLag; lag <= Math.min(maxLag, frameSize - 1); lag++) {
-      let num = 0;
-      let den1 = 0;
-      let den2 = 0;
+      let numerator = 0;
+      let denominator1 = 0;
+      let denominator2 = 0;
       for (let i = 0; i < frameSize - lag; i++) {
-        num += frame[i] * frame[i + lag];
-        den1 += frame[i] * frame[i];
-        den2 += frame[i + lag] * frame[i + lag];
+        numerator += windowed[i] * windowed[i + lag];
+        denominator1 += windowed[i] * windowed[i];
+        denominator2 += windowed[i + lag] * windowed[i + lag];
       }
-      const denom = Math.sqrt(den1 * den2);
-      const corr = denom > 0 ? num / denom : 0;
-
-      if (corr > bestCorr) {
-        bestCorr = corr;
+      const denom = Math.sqrt(denominator1 * denominator2);
+      const correlation = denom > 0 ? numerator / denom : 0;
+      if (correlation > bestCorrelation) {
+        bestCorrelation = correlation;
         bestLag = lag;
       }
     }
 
-    // Voicing threshold
-    if (bestCorr > 0.45 && bestLag > 0) {
-      // Parabolic interpolation for sub-sample accuracy
-      const f0 = sampleRate / bestLag;
-      frequencies.push(f0);
-    } else {
-      frequencies.push(null);
-    }
+    frequencies.push(bestCorrelation >= resolved.pitch.voicingThreshold && bestLag > 0 ? sampleRate / bestLag : null);
   }
 
   return { times, frequencies };
 }
 
-/**
- * Formant analysis using LPC (Burg's method) on overlapping frames.
- */
-export function computeFormants(samples: Float32Array, sampleRate: number): FormantData {
-  const frameSize = Math.round(sampleRate * 0.025); // 25ms
-  const hopSize = Math.round(sampleRate * 0.01); // 10ms
-
+export function computeFormants(
+  samples: Float32Array,
+  sampleRate: number,
+  settings?: Partial<AnalysisSettings>
+): FormantData {
+  const resolved = mergeSettings(settings);
+  const frameSize = Math.round(sampleRate * 0.025);
+  const hopSize = Math.max(1, Math.round(sampleRate * 0.01));
   const times: number[] = [];
-  const f1: (number | null)[] = [];
-  const f2: (number | null)[] = [];
-  const f3: (number | null)[] = [];
+  const frames: FormantFrame[] = [];
 
   for (let start = 0; start + frameSize <= samples.length; start += hopSize) {
-    const time = (start + frameSize / 2) / sampleRate;
-    times.push(time);
-
     const frame = new Float64Array(frameSize);
     for (let i = 0; i < frameSize; i++) {
       frame[i] = samples[start + i];
     }
-
-    const result = extractFormants(frame, sampleRate, 12);
-    if (result) {
-      f1.push(result.f1);
-      f2.push(result.f2);
-      f3.push(result.f3);
-    } else {
-      f1.push(null);
-      f2.push(null);
-      f3.push(null);
-    }
+    const time = (start + frameSize / 2) / sampleRate;
+    times.push(time);
+    const result = extractFormants(
+      frame,
+      sampleRate,
+      resolved.formant.lpcOrder,
+      resolved.formant.maxFrequency
+    );
+    frames.push({
+      time,
+      candidates: result?.candidates.map((candidate) => candidate.freq) ?? [],
+    });
   }
 
-  return { times, f1, f2, f3 };
+  const tracked = trackFormants(frames, resolved.formant.numberOfFormants);
+  const [f1, f2, f3] = tracked;
+
+  return {
+    times,
+    f1: f1 ?? new Array(times.length).fill(null),
+    f2: f2 ?? new Array(times.length).fill(null),
+    f3: f3 ?? new Array(times.length).fill(null),
+    tracked,
+    candidates: frames,
+  };
 }
 
-/**
- * Intensity (loudness) in dB, computed as RMS per frame.
- */
 export function computeIntensity(samples: Float32Array, sampleRate: number): IntensityData {
-  const frameSize = Math.round(sampleRate * 0.032); // 32ms
-  const hopSize = Math.round(sampleRate * 0.01); // 10ms
-
+  const frameSize = Math.round(sampleRate * 0.032);
+  const hopSize = Math.max(1, Math.round(sampleRate * 0.01));
   const times: number[] = [];
   const values: number[] = [];
 
   for (let start = 0; start + frameSize <= samples.length; start += hopSize) {
-    const time = (start + frameSize / 2) / sampleRate;
-    times.push(time);
-
-    let sum = 0;
+    let energy = 0;
     for (let i = 0; i < frameSize; i++) {
-      sum += samples[start + i] * samples[start + i];
+      energy += samples[start + i] * samples[start + i];
     }
-    const rms = Math.sqrt(sum / frameSize);
-    const db = rms > 0 ? 20 * Math.log10(rms) : -100;
-    values.push(db);
+    const rms = Math.sqrt(energy / frameSize);
+    values.push(rms > 0 ? 20 * Math.log10(rms) : -100);
+    times.push((start + frameSize / 2) / sampleRate);
   }
 
   return { times, values };
