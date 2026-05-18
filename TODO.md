@@ -30,6 +30,7 @@
 - [ ] 滤波器（低通/高通/带通）
 - [ ] 实时录音模式（streaming spectrogram）
 - [ ] 界面打磨：动画、快捷键、accessibility
+- [ ] React 性能优化：修复 useMemo/useCallback 依赖问题（settings 对象引用、无意义 useMemo）
 - [ ] 性能优化：Web Worker for heavy DSP
 - [ ] 移动端适配
 
