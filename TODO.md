@@ -1,5 +1,8 @@
 # Web Praat — Development TODO
 
+## 目标
+1:1 还原 Praat (https://github.com/praat/praat.github.io) 的所有功能。可以改善用户体验和界面，但功能必须完整覆盖。如果发现 Praat 有的功能我们没有，自动加到 backlog。
+
 **Working dir:** ~/clawspace/web-praat/
 **Repo:** justinchuby-bot/web-praat (public)
 **参考源码:** ~/clawspace/praat.github.io/
