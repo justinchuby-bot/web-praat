@@ -4,6 +4,10 @@
 **Repo:** justinchuby-bot/web-praat (public)
 **参考源码:** ~/clawspace/praat.github.io/
 
+## 基础设施
+
+- [ ] 引入 shadcn/ui + Tailwind (按钮/slider/dropdown/dialog/tooltip)
+
 ## 当前优先任务
 
 - [ ] WebGPU FFT 加速 (src/utils/fft-gpu.ts)
