@@ -10,12 +10,11 @@
 
 ## 当前优先任务
 
-- [ ] 引入 shadcn/ui + Tailwind (按钮/slider/dropdown/dialog/tooltip)
+- [ ] 完善 TextGrid 标注（导入/导出 .TextGrid 格式）
 
 ## Backlog（按优先级）
 
-- [ ] 完善 TextGrid 标注（导入/导出 .TextGrid 格式）
-- [ ] Zoom & Pan 优化（鼠标滚轮、拖动、fit to window）
+- [ ] Zoom & Pan 優化（鼠標滾輪、拖動、fit to window）
 - [ ] Spectrogram 设置面板（FFT size、hop、colormap、dynamic range）
 - [ ] Pitch 设置（min/max Hz、voicing threshold）
 - [ ] Formant tracking（帧间平滑，连续轨迹）
@@ -42,6 +41,7 @@
 - [x] 深色主题 UI
 - [x] 7 个单元测试通过
 - [x] WebGPU FFT 加速 (src/utils/fft-gpu.ts) — compute shader + CPU fallback + 4 tests
+- [x] 引入 shadcn/ui + Tailwind (按钮/slider/dropdown/dialog/tooltip)
 - [x] 键盘快捷键（空格=播放/暂停, Cmd/Ctrl+Z=undo, 方向键=移动选择, zoom, select all）
 
 ## 规则

@@ -1,3 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-base: #1e1e2e;
+  --color-bg-surface: #181825;
+  --color-bg-overlay: #11111b;
+  --color-panel: #202033;
+  --color-text-primary: #cdd6f4;
+  --color-text-dim: #a6adc8;
+  --color-accent: #89b4fa;
+  --color-destructive: #f38ba8;
+  --color-success: #a6e3a1;
+  --color-warning: #fab387;
+  --color-border: #313244;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+}
+
 :root {
   --bg-base: #1e1e2e;
   --bg-surface: #181825;
