@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useStreamingRecording } from './hooks/useStreamingRecording';
 import { analyzeAudio } from './audio/analyzer';
 import { defaultAnalysisSettings, defaultFilterSettings, createEmptyTextGrid } from './audio/defaults';
 import { AudioEditorHistory, ReplaceRangeCommand } from './audio/editor';
 import { applyBiquadFilter } from './audio/filters';
 import { computeRhythmMetrics } from './audio/rhythm';
-import { AudioRecorder, loadAudioFile } from './audio/recorder';
+import { loadAudioFile } from './audio/recorder';
 import { computeSpectrumSlice } from './audio/spectrum';
 import { Controls } from './components/Controls';
 import { FilterPanel } from './components/FilterPanel';
@@ -64,7 +65,7 @@ export default function App() {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
 
-  const recorderRef = useRef(new AudioRecorder());
+  const streaming = useStreamingRecording(settings);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
   const animFrameRef = useRef<number>(0);
@@ -141,15 +142,19 @@ export default function App() {
   }, []);
 
   const handleRecord = useCallback(async () => {
-    await recorderRef.current.start();
+    await streaming.startStreaming();
     setIsRecording(true);
-  }, []);
+  }, [streaming]);
 
-  const handleStopRecord = useCallback(async () => {
-    const buffer = await recorderRef.current.stop();
+  const handleStopRecord = useCallback(() => {
+    const { samples, sampleRate: sr } = streaming.stopStreaming();
     setIsRecording(false);
-    processAudioBuffer(buffer, true);
-  }, [processAudioBuffer]);
+    if (samples.length > 0) {
+      originalSamplesRef.current = Float32Array.from(samples);
+      editorRef.current.setSamples(samples);
+      processSamples(samples, sr, true);
+    }
+  }, [streaming, processSamples]);
 
   const handlePlay = useCallback(() => {
     if (!currentSamplesRef.current) return;
@@ -451,12 +456,45 @@ export default function App() {
         />
 
         <div className="visualizations">
-          {!analysis && (
+          {!analysis && !streaming.streamAnalysis && (
             <div className="empty-state">
               <div className="empty-icon">🎙️</div>
               <p>Drop audio or a TextGrid here, or start recording.</p>
               <p className="empty-hint">Waveform, spectrogram, pitch, formants, intensity, TextGrid, editing, filters, and exports are all live in this view.</p>
             </div>
+          )}
+
+          {!analysis && streaming.streamAnalysis && (
+            <>
+              <div className="streaming-indicator">
+                <span className="recording-dot" /> Recording — {streaming.streamDuration.toFixed(1)}s
+              </div>
+              <TimeRuler duration={streaming.streamAnalysis.duration} viewRange={{ start: 0, end: streaming.streamAnalysis.duration }} />
+              <Waveform
+                analysis={streaming.streamAnalysis}
+                selection={null}
+                currentTime={streaming.streamAnalysis.duration}
+                viewRange={{ start: 0, end: streaming.streamAnalysis.duration }}
+                onSelectionChange={() => {}}
+                onWheelZoom={() => {}}
+                onPan={() => {}}
+                onZoomSelection={() => {}}
+              />
+              <Spectrogram
+                analysis={streaming.streamAnalysis}
+                selection={null}
+                currentTime={streaming.streamAnalysis.duration}
+                viewRange={{ start: 0, end: streaming.streamAnalysis.duration }}
+                showPitch={showPitch}
+                showFormants={showFormants}
+                showIntensity={showIntensity}
+                onWheelZoom={() => {}}
+                onPan={() => {}}
+                onZoomSelection={() => {}}
+                onSelectionChange={() => {}}
+                onSpectrumSliceSelect={() => {}}
+              />
+            </>
           )}
 
           {analysis && (

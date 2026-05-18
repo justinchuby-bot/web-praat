@@ -10,12 +10,9 @@
 
 ## 当前優先任務
 
-- [ ] 录音编辑（剪切/复制/粘贴/Undo）
+- [ ] 实时录音模式（streaming spectrogram）
 
 ## Backlog（按優先級）
-- [ ] Jitter/Shimmer 嗓音质量面板
-- [ ] 滤波器（低通/高通/带通）
-- [ ] 实时录音模式（streaming spectrogram）
 - [ ] 界面打磨：动画、快捷键、accessibility
 - [ ] React 性能优化：修复 useMemo/useCallback 依赖问题（settings 对象引用、无意义 useMemo）
 - [ ] 性能优化：Web Worker for heavy DSP
@@ -42,6 +39,9 @@
 - [x] Zoom & Pan 優化（滾輪zoom、trackpad橫滑pan、pinch-to-zoom、雙擊zoom in、拖動pan）
 - [x] 导出 CSV/WAV（Pitch/Formant/Intensity/HNR CSV + Selection WAV + Full WAV export）
 - [x] Formant tracking — Viterbi + Gaussian smoothing + median filter + configurable settings UI
+- [x] 录音编辑（剪切/复制/粘贴/Undo）— AudioEditorHistory + ReplaceRangeCommand + keyboard shortcuts + toolbar buttons
+- [x] Jitter/Shimmer 嗓音质量面板 — VoiceQualityPanel + pulse detection + all metrics
+- [x] 滤波器（低通/高通/带通）— biquad filter + FilterPanel UI + apply/reset
 
 ## 规则
 

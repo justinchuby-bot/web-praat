@@ -497,3 +497,27 @@ button, input, select {
   outline: none;
   border-color: var(--accent, #89b4fa);
 }
+
+.streaming-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(235, 64, 52, 0.1);
+  border-radius: 6px;
+  font-size: 14px;
+  color: #f38ba8;
+}
+
+.recording-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #f38ba8;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
