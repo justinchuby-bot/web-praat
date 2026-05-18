@@ -10,11 +10,10 @@
 
 ## 当前优先任务
 
-- [ ] 完善 TextGrid 标注（导入/导出 .TextGrid 格式）
+- [ ] Zoom & Pan 優化（鼠標滾輪、拖動、fit to window）
 
 ## Backlog（按优先级）
 
-- [ ] Zoom & Pan 優化（鼠標滾輪、拖動、fit to window）
 - [ ] Spectrogram 设置面板（FFT size、hop、colormap、dynamic range）
 - [ ] Pitch 设置（min/max Hz、voicing threshold）
 - [ ] Formant tracking（帧间平滑，连续轨迹）
@@ -43,6 +42,7 @@
 - [x] WebGPU FFT 加速 (src/utils/fft-gpu.ts) — compute shader + CPU fallback + 4 tests
 - [x] 引入 shadcn/ui + Tailwind (按钮/slider/dropdown/dialog/tooltip)
 - [x] 键盘快捷键（空格=播放/暂停, Cmd/Ctrl+Z=undo, 方向键=移动选择, zoom, select all）
+- [x] 完善 TextGrid 标注（导入/导出 .TextGrid + tier管理 + 删除boundary/point）
 
 ## 规则
 

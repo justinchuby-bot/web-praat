@@ -28,7 +28,7 @@ import {
   exportSelectedRegionWav,
   exportTextGrid,
 } from './export';
-import { addPointToTier, moveBoundary, movePoint, parseTextGrid, splitIntervalTierBoundary, updateTextGridLabel } from './textgrid/parser';
+import { addPointToTier, addTier, deleteBoundary, deletePoint, moveBoundary, movePoint, parseTextGrid, removeTier, renameTier, splitIntervalTierBoundary, updateTextGridLabel } from './textgrid/parser';
 import type {
   AnalysisResult,
   AnalysisSettings,
@@ -495,6 +495,11 @@ export default function App() {
                   if (nextLabel === null) return;
                   setTextGrid((current) => updateTextGridLabel(current, tierId, itemId, nextLabel));
                 }}
+                onAddTier={(name, kind) => setTextGrid((current) => addTier(current, name, kind))}
+                onRemoveTier={(tierId) => setTextGrid((current) => removeTier(current, tierId))}
+                onRenameTier={(tierId, name) => setTextGrid((current) => renameTier(current, tierId, name))}
+                onDeleteBoundary={(tierId, boundaryIndex) => setTextGrid((current) => deleteBoundary(current, tierId, boundaryIndex))}
+                onDeletePoint={(tierId, pointId) => setTextGrid((current) => deletePoint(current, tierId, pointId))}
               />
             </>
           )}

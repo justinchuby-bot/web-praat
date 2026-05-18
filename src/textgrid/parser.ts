@@ -257,3 +257,58 @@ export function movePoint(grid: TextGrid, tierId: string, pointId: string, time:
     }),
   };
 }
+
+export function addTier(
+  grid: TextGrid,
+  name: string,
+  kind: 'interval' | 'point'
+): TextGrid {
+  const id = createId('tier');
+  const tier: TextGridTier =
+    kind === 'interval'
+      ? { id, name, kind: 'interval', intervals: [{ id: createId('interval'), start: grid.xmin, end: grid.xmax, label: '' }] }
+      : { id, name, kind: 'point', points: [] };
+  return { ...grid, tiers: [...grid.tiers, tier] };
+}
+
+export function removeTier(grid: TextGrid, tierId: string): TextGrid {
+  return { ...grid, tiers: grid.tiers.filter((t) => t.id !== tierId) };
+}
+
+export function renameTier(grid: TextGrid, tierId: string, name: string): TextGrid {
+  return {
+    ...grid,
+    tiers: grid.tiers.map((t) => (t.id === tierId ? { ...t, name } : t)),
+  };
+}
+
+export function deleteBoundary(grid: TextGrid, tierId: string, boundaryIndex: number): TextGrid {
+  return {
+    ...grid,
+    tiers: grid.tiers.map((tier) => {
+      if (tier.id !== tierId || tier.kind !== 'interval') return tier;
+      if (boundaryIndex <= 0 || boundaryIndex >= tier.intervals.length) return tier;
+      const intervals = [...tier.intervals];
+      const left = intervals[boundaryIndex - 1];
+      const right = intervals[boundaryIndex];
+      const merged: Interval = {
+        id: left.id,
+        start: left.start,
+        end: right.end,
+        label: left.label || right.label,
+      };
+      intervals.splice(boundaryIndex - 1, 2, merged);
+      return { ...tier, intervals };
+    }),
+  };
+}
+
+export function deletePoint(grid: TextGrid, tierId: string, pointId: string): TextGrid {
+  return {
+    ...grid,
+    tiers: grid.tiers.map((tier) => {
+      if (tier.id !== tierId || tier.kind !== 'point') return tier;
+      return { ...tier, points: tier.points.filter((p) => p.id !== pointId) };
+    }),
+  };
+}

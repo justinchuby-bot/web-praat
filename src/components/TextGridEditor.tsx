@@ -13,6 +13,11 @@ interface TextGridEditorProps {
   onMoveBoundary: (tierId: string, boundaryIndex: number, time: number) => void;
   onMovePoint: (tierId: string, pointId: string, time: number) => void;
   onEditLabel: (tierId: string, itemId: string, currentLabel: string) => void;
+  onAddTier: (name: string, kind: 'interval' | 'point') => void;
+  onRemoveTier: (tierId: string) => void;
+  onRenameTier: (tierId: string, name: string) => void;
+  onDeleteBoundary: (tierId: string, boundaryIndex: number) => void;
+  onDeletePoint: (tierId: string, pointId: string) => void;
 }
 
 interface BoundaryDragState {
@@ -36,6 +41,11 @@ export function TextGridEditor({
   onMoveBoundary,
   onMovePoint,
   onEditLabel,
+  onAddTier,
+  onRemoveTier,
+  onRenameTier,
+  onDeleteBoundary,
+  onDeletePoint,
 }: TextGridEditorProps) {
   const tierHeight = 54;
   const visibleTierData = useMemo(() => textGrid.tiers, [textGrid.tiers]);
@@ -77,6 +87,14 @@ export function TextGridEditor({
     onActiveTierChange(tier.id);
   };
 
+  const handleAddTier = () => {
+    const name = prompt('Tier name:', `Tier ${textGrid.tiers.length + 1}`);
+    if (!name) return;
+    const kind = prompt('Type: interval or point', 'interval');
+    if (kind !== 'interval' && kind !== 'point') return;
+    onAddTier(name, kind);
+  };
+
   return (
     <section className="textgrid-editor">
       {visibleTierData.map((tier) => (
@@ -85,7 +103,23 @@ export function TextGridEditor({
           className={`textgrid-tier ${activeTierId === tier.id ? 'is-active' : ''}`}
           style={{ height: tierHeight }}
         >
-          <div className="textgrid-tier-label">{tier.name}</div>
+          <div className="textgrid-tier-label">
+            <span
+              onDoubleClick={() => {
+                const name = prompt('Rename tier:', tier.name);
+                if (name) onRenameTier(tier.id, name);
+              }}
+            >
+              {tier.name}
+            </span>
+            <button
+              className="textgrid-tier-remove"
+              title="Remove tier"
+              onClick={(e) => { e.stopPropagation(); onRemoveTier(tier.id); }}
+            >
+              ×
+            </button>
+          </div>
           <div
             className="textgrid-track"
             onClick={(event) => handleTrackClick(tier, event)}
@@ -120,6 +154,11 @@ export function TextGridEditor({
                         onDragStart={(event) =>
                           handleBoundaryDragStart(event, { tierId: tier.id, boundaryIndex: index })
                         }
+                        onContextMenu={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          onDeleteBoundary(tier.id, index);
+                        }}
                       />
                     )}
                   </div>
@@ -134,6 +173,11 @@ export function TextGridEditor({
                   draggable
                   onDragStart={(event) => handlePointDragStart(event, { tierId: tier.id, pointId: point.id })}
                   onDoubleClick={() => onEditLabel(tier.id, point.id, point.label)}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onDeletePoint(tier.id, point.id);
+                  }}
                 >
                   <span className="textgrid-point-mark" />
                   <span className="textgrid-point-label">{point.label}</span>
@@ -142,6 +186,7 @@ export function TextGridEditor({
           </div>
         </div>
       ))}
+      <button className="textgrid-add-tier" onClick={handleAddTier} title="Add tier">+ Add Tier</button>
     </section>
   );
 }

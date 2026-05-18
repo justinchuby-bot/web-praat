@@ -254,6 +254,51 @@ button, input, select {
   color: var(--text-dim);
   border-right: 1px solid var(--border);
   font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.textgrid-tier-label span {
+  cursor: pointer;
+  flex: 1;
+}
+
+.textgrid-tier-remove {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.textgrid-tier:hover .textgrid-tier-remove {
+  opacity: 0.7;
+}
+
+.textgrid-tier-remove:hover {
+  opacity: 1 !important;
+  color: #f44;
+}
+
+.textgrid-add-tier {
+  width: 100%;
+  padding: 6px;
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 12px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.textgrid-add-tier:hover {
+  background: var(--surface-hover, rgba(255,255,255,0.05));
+  color: var(--text);
 }
 
 .textgrid-track {

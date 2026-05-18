@@ -95,3 +95,66 @@ item []:
     }
   });
 });
+
+import { addTier, deleteBoundary, deletePoint, removeTier, renameTier } from '../src/textgrid/parser';
+
+describe('TextGrid tier management', () => {
+  it('adds a new interval tier', () => {
+    let grid = createEmptyTextGrid(2);
+    const initialCount = grid.tiers.length;
+    grid = addTier(grid, 'Phones', 'interval');
+    expect(grid.tiers).toHaveLength(initialCount + 1);
+    const added = grid.tiers[grid.tiers.length - 1];
+    expect(added.name).toBe('Phones');
+    expect(added.kind).toBe('interval');
+    if (added.kind === 'interval') {
+      expect(added.intervals).toHaveLength(1);
+      expect(added.intervals[0].start).toBe(0);
+      expect(added.intervals[0].end).toBe(2);
+    }
+  });
+
+  it('removes a tier', () => {
+    let grid = createEmptyTextGrid(1);
+    const tierId = grid.tiers[0].id;
+    grid = removeTier(grid, tierId);
+    expect(grid.tiers.find((t) => t.id === tierId)).toBeUndefined();
+  });
+
+  it('renames a tier', () => {
+    let grid = createEmptyTextGrid(1);
+    const tierId = grid.tiers[0].id;
+    grid = renameTier(grid, tierId, 'NewName');
+    expect(grid.tiers.find((t) => t.id === tierId)?.name).toBe('NewName');
+  });
+
+  it('deletes a boundary (merges intervals)', () => {
+    let grid = createEmptyTextGrid(1);
+    const tierId = grid.tiers[0].id;
+    grid = splitIntervalTierBoundary(grid, tierId, 0.3);
+    grid = splitIntervalTierBoundary(grid, tierId, 0.7);
+    // Now 3 intervals: [0,0.3], [0.3,0.7], [0.7,1]
+    const tier = grid.tiers[0];
+    expect(tier.kind === 'interval' && tier.intervals.length).toBe(3);
+    grid = deleteBoundary(grid, tierId, 1); // merge first two
+    const updated = grid.tiers[0];
+    expect(updated.kind === 'interval' && updated.intervals.length).toBe(2);
+    if (updated.kind === 'interval') {
+      expect(updated.intervals[0].start).toBeCloseTo(0);
+      expect(updated.intervals[0].end).toBeCloseTo(0.7);
+    }
+  });
+
+  it('deletes a point', () => {
+    let grid = createEmptyTextGrid(1);
+    const pointTierId = grid.tiers[1].id;
+    grid = addPointToTier(grid, pointTierId, 0.5, 'x');
+    const tier = grid.tiers[1];
+    expect(tier.kind === 'point' && tier.points.length).toBe(1);
+    if (tier.kind === 'point') {
+      grid = deletePoint(grid, pointTierId, tier.points[0].id);
+      const updated = grid.tiers[1];
+      expect(updated.kind === 'point' && updated.points.length).toBe(0);
+    }
+  });
+});
