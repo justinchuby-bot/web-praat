@@ -278,7 +278,13 @@ export function computeFormants(
     });
   }
 
-  const tracked = trackFormants(frames, resolved.formant.numberOfFormants);
+  const hopMs = (hopSize / sampleRate) * 1000;
+  const smoothingWindow = Math.max(1, Math.round(resolved.formant.smoothingWindowMs / hopMs)) | 1;
+  const tracked = trackFormants(frames, resolved.formant.numberOfFormants, {
+    transitionCostWeight: resolved.formant.transitionCostWeight,
+    smoothingWindow,
+    medianFilterSize: resolved.formant.medianFilterSize,
+  });
   const [f1, f2, f3] = tracked;
 
   return {

@@ -280,6 +280,39 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
                 onChange={(e) => updateFormant({ numberOfFormants: Number(e.target.value) })}
               />
             </label>
+            <label className="settings-row">
+              <span>Smoothing window (ms)</span>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step={5}
+                value={settings.formant.smoothingWindowMs}
+                onChange={(e) => updateFormant({ smoothingWindowMs: Number(e.target.value) })}
+              />
+            </label>
+            <label className="settings-row">
+              <span>Transition cost weight</span>
+              <input
+                type="number"
+                min={0}
+                max={5}
+                step={0.1}
+                value={settings.formant.transitionCostWeight}
+                onChange={(e) => updateFormant({ transitionCostWeight: Number(e.target.value) })}
+              />
+            </label>
+            <label className="settings-row">
+              <span>Median filter size</span>
+              <input
+                type="number"
+                min={1}
+                max={9}
+                step={2}
+                value={settings.formant.medianFilterSize}
+                onChange={(e) => updateFormant({ medianFilterSize: Number(e.target.value) })}
+              />
+            </label>
           </div>
         </DialogContent>
       </Dialog>

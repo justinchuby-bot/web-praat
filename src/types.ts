@@ -27,6 +27,9 @@ export interface AnalysisSettings {
     maxFrequency: number;
     lpcOrder: number;
     numberOfFormants: number;
+    smoothingWindowMs: number;
+    transitionCostWeight: number;
+    medianFilterSize: number;
   };
 }
 

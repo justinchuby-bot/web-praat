@@ -24,6 +24,9 @@ export const defaultAnalysisSettings: AnalysisSettings = {
     maxFrequency: 5000,
     lpcOrder: 12,
     numberOfFormants: 3,
+    smoothingWindowMs: 20,
+    transitionCostWeight: 1.0,
+    medianFilterSize: 3,
   },
 };
 
