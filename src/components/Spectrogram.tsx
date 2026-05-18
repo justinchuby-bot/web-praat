@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { grayscaleColormap, jetColormap } from '../utils/colormap';
 import type { AnalysisResult, TimeSelection, ViewRange } from '../types';
+import { useZoomPan } from '../hooks/useZoomPan';
 import { timeToX, xToTime } from '../utils/view';
 
 interface SpectrogramProps {
@@ -232,6 +233,9 @@ export function Spectrogram({
     dragModeRef.current = null;
   };
 
+  const zoomPanCallbacks = useMemo(() => ({ onWheelZoom, onPan }), [onWheelZoom, onPan]);
+  useZoomPan(canvasRef, viewRange, zoomPanCallbacks, !!analysis);
+
   return (
     <canvas
       ref={canvasRef}
@@ -241,10 +245,6 @@ export function Spectrogram({
       onMouseUp={handleMouseUp}
       onMouseLeave={() => {
         dragModeRef.current = null;
-      }}
-      onWheel={(event) => {
-        event.preventDefault();
-        onWheelZoom(getTime(event), event.deltaY > 0 ? 1.25 : 0.8);
       }}
     />
   );

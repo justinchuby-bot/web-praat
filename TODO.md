@@ -10,11 +10,10 @@
 
 ## 当前优先任务
 
-- [ ] Zoom & Pan 優化（鼠標滾輪、拖動、fit to window）
+- [ ] Spectrogram 设置面板（FFT size、hop、colormap、dynamic range）
 
 ## Backlog（按优先级）
 
-- [ ] Spectrogram 设置面板（FFT size、hop、colormap、dynamic range）
 - [ ] Pitch 设置（min/max Hz、voicing threshold）
 - [ ] Formant tracking（帧间平滑，连续轨迹）
 - [ ] 导出 CSV/WAV
@@ -43,6 +42,7 @@
 - [x] 引入 shadcn/ui + Tailwind (按钮/slider/dropdown/dialog/tooltip)
 - [x] 键盘快捷键（空格=播放/暂停, Cmd/Ctrl+Z=undo, 方向键=移动选择, zoom, select all）
 - [x] 完善 TextGrid 标注（导入/导出 .TextGrid + tier管理 + 删除boundary/point）
+- [x] Zoom & Pan 優化（滾輪zoom、trackpad橫滑pan、pinch-to-zoom、雙擊zoom in、拖動pan）
 
 ## 规则
 

@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { AnalysisResult, TimeSelection, ViewRange } from '../types';
+import { useZoomPan } from '../hooks/useZoomPan';
 import { timeToX, xToTime } from '../utils/view';
 
 interface WaveformProps {
@@ -135,12 +136,8 @@ export function Waveform({
     dragModeRef.current = null;
   };
 
-  const handleWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
-    if (!analysis) return;
-    event.preventDefault();
-    const pivot = getTime(event);
-    onWheelZoom(pivot, event.deltaY > 0 ? 1.25 : 0.8);
-  };
+  const zoomPanCallbacks = useMemo(() => ({ onWheelZoom, onPan }), [onWheelZoom, onPan]);
+  useZoomPan(canvasRef, viewRange, zoomPanCallbacks, !!analysis);
 
   return (
     <canvas
@@ -150,7 +147,6 @@ export function Waveform({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
-      onWheel={handleWheel}
     />
   );
 }
