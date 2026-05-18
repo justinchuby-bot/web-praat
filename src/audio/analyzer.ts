@@ -85,56 +85,165 @@ export function computeSpectrogram(
   };
 }
 
+interface PitchCandidate {
+  frequency: number; // 0 means unvoiced
+  strength: number;
+}
+
 export function computePitch(
   samples: Float32Array,
   sampleRate: number,
   settings?: Partial<AnalysisSettings>
 ): PitchData {
   const resolved = mergeSettings(settings);
+  const ps = resolved.pitch;
   const frameSize = Math.round(sampleRate * 0.04);
   const hopSize = Math.max(1, Math.round(sampleRate * 0.01));
-  const minLag = Math.round(sampleRate / resolved.pitch.maxHz);
-  const maxLag = Math.round(sampleRate / resolved.pitch.minHz);
+  const minLag = Math.round(sampleRate / ps.maxHz);
+  const maxLag = Math.round(sampleRate / ps.minHz);
+  const timeStep = hopSize / sampleRate;
+
+  // Compute global max amplitude for silence threshold
+  let globalMax = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const a = Math.abs(samples[i]);
+    if (a > globalMax) globalMax = a;
+  }
 
   const times: number[] = [];
-  const frequencies: Array<number | null> = [];
+  const frameCandidates: PitchCandidate[][] = [];
 
+  // Step 1: Collect candidates per frame
   for (let start = 0; start + frameSize <= samples.length; start += hopSize) {
     const time = (start + frameSize / 2) / sampleRate;
     times.push(time);
     const frame = new Float64Array(frameSize);
-    for (let i = 0; i < frameSize; i++) {
-      frame[i] = samples[start + i];
-    }
+    for (let i = 0; i < frameSize; i++) frame[i] = samples[start + i];
     const windowed = hammingWindow(frame);
-    let energy = 0;
-    for (let i = 0; i < windowed.length; i++) energy += windowed[i] * windowed[i];
-    if (energy < 1e-6) {
-      frequencies.push(null);
-      continue;
+
+    // Check silence
+    let frameMax = 0;
+    for (let i = 0; i < windowed.length; i++) {
+      const a = Math.abs(windowed[i]);
+      if (a > frameMax) frameMax = a;
+    }
+    const isSilent = globalMax > 0 && frameMax / globalMax < ps.silenceThreshold;
+
+    // Unvoiced candidate always present
+    const candidates: PitchCandidate[] = [{ frequency: 0, strength: ps.voicingThreshold }];
+
+    if (!isSilent) {
+      // Find autocorrelation peaks
+      const peaks: { lag: number; r: number }[] = [];
+      let prevR = -Infinity;
+      let prevPrevR = -Infinity;
+      for (let lag = minLag; lag <= Math.min(maxLag, frameSize - 1); lag++) {
+        let numerator = 0, d1 = 0, d2 = 0;
+        for (let i = 0; i < frameSize - lag; i++) {
+          numerator += windowed[i] * windowed[i + lag];
+          d1 += windowed[i] * windowed[i];
+          d2 += windowed[i + lag] * windowed[i + lag];
+        }
+        const denom = Math.sqrt(d1 * d2);
+        const r = denom > 0 ? numerator / denom : 0;
+        // Detect local maxima
+        if (prevR > prevPrevR && prevR > r && prevR > 0) {
+          peaks.push({ lag: lag - 1, r: prevR });
+        }
+        prevPrevR = prevR;
+        prevR = r;
+      }
+      // Also check last value
+      if (prevR > prevPrevR && prevR > 0) {
+        peaks.push({ lag: Math.min(maxLag, frameSize - 1), r: prevR });
+      }
+
+      // Sort by strength descending, take top candidates
+      peaks.sort((a, b) => b.r - a.r);
+      const maxVoiced = ps.maxCandidates - 1;
+      for (let i = 0; i < Math.min(peaks.length, maxVoiced); i++) {
+        const freq = sampleRate / peaks[i].lag;
+        // Apply octave cost: favour higher frequencies
+        const strength = peaks[i].r - ps.octaveCost * Math.log2(ps.minHz / freq);
+        candidates.push({ frequency: freq, strength });
+      }
     }
 
-    let bestLag = 0;
-    let bestCorrelation = 0;
-    for (let lag = minLag; lag <= Math.min(maxLag, frameSize - 1); lag++) {
-      let numerator = 0;
-      let denominator1 = 0;
-      let denominator2 = 0;
-      for (let i = 0; i < frameSize - lag; i++) {
-        numerator += windowed[i] * windowed[i + lag];
-        denominator1 += windowed[i] * windowed[i];
-        denominator2 += windowed[i + lag] * windowed[i + lag];
-      }
-      const denom = Math.sqrt(denominator1 * denominator2);
-      const correlation = denom > 0 ? numerator / denom : 0;
-      if (correlation > bestCorrelation) {
-        bestCorrelation = correlation;
-        bestLag = lag;
-      }
-    }
-
-    frequencies.push(bestCorrelation >= resolved.pitch.voicingThreshold && bestLag > 0 ? sampleRate / bestLag : null);
+    frameCandidates.push(candidates);
   }
+
+  // Step 2: Viterbi path finding
+  const nFrames = times.length;
+  if (nFrames === 0) return { times: [], frequencies: [] };
+
+  // Cost arrays: cost[frame][candidateIndex]
+  const cost: number[][] = new Array(nFrames);
+  const backpointer: number[][] = new Array(nFrames);
+
+  // Initialize first frame
+  cost[0] = frameCandidates[0].map(() => 0);
+  backpointer[0] = frameCandidates[0].map(() => -1);
+
+  // Time-step correction factor for transition costs (as per Praat article)
+  const stepCorrection = 0.01 / timeStep;
+
+  for (let f = 1; f < nFrames; f++) {
+    const curr = frameCandidates[f];
+    const prev = frameCandidates[f - 1];
+    cost[f] = new Array(curr.length);
+    backpointer[f] = new Array(curr.length);
+
+    for (let c = 0; c < curr.length; c++) {
+      let bestCost = Infinity;
+      let bestPrev = 0;
+
+      for (let p = 0; p < prev.length; p++) {
+        let transitionCost = 0;
+        const prevIsVoiced = prev[p].frequency > 0;
+        const currIsVoiced = curr[c].frequency > 0;
+
+        if (prevIsVoiced !== currIsVoiced) {
+          // Voiced/unvoiced transition
+          transitionCost += ps.voicedUnvoicedCost * stepCorrection;
+        } else if (prevIsVoiced && currIsVoiced) {
+          // Octave jump cost
+          transitionCost += ps.octaveJumpCost * stepCorrection *
+            Math.abs(Math.log2(curr[c].frequency / prev[p].frequency));
+        }
+
+        const totalCost = cost[f - 1][p] + transitionCost;
+        if (totalCost < bestCost) {
+          bestCost = totalCost;
+          bestPrev = p;
+        }
+      }
+
+      // Local cost: negative strength (we minimize cost)
+      cost[f][c] = bestCost - curr[c].strength;
+      backpointer[f][c] = bestPrev;
+    }
+  }
+
+  // Trace back
+  const bestPath: number[] = new Array(nFrames);
+  let minCost = Infinity;
+  let minIdx = 0;
+  for (let c = 0; c < frameCandidates[nFrames - 1].length; c++) {
+    if (cost[nFrames - 1][c] < minCost) {
+      minCost = cost[nFrames - 1][c];
+      minIdx = c;
+    }
+  }
+  bestPath[nFrames - 1] = minIdx;
+  for (let f = nFrames - 2; f >= 0; f--) {
+    bestPath[f] = backpointer[f + 1][bestPath[f + 1]];
+  }
+
+  // Extract frequencies from best path
+  const frequencies: Array<number | null> = bestPath.map((ci, fi) => {
+    const cand = frameCandidates[fi][ci];
+    return cand.frequency > 0 ? cand.frequency : null;
+  });
 
   return { times, frequencies };
 }

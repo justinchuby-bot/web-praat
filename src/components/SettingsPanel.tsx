@@ -179,6 +179,61 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
                 onChange={(e) => updatePitch({ voicingThreshold: Number(e.target.value) })}
               />
             </label>
+            <label className="settings-field">
+              <span>Silence threshold</span>
+              <input
+                type="number"
+                step={0.01}
+                min={0}
+                max={1}
+                value={settings.pitch.silenceThreshold}
+                onChange={(e) => updatePitch({ silenceThreshold: Number(e.target.value) })}
+              />
+            </label>
+            <label className="settings-field">
+              <span>Octave cost</span>
+              <input
+                type="number"
+                step={0.005}
+                min={0}
+                max={1}
+                value={settings.pitch.octaveCost}
+                onChange={(e) => updatePitch({ octaveCost: Number(e.target.value) })}
+              />
+            </label>
+            <label className="settings-field">
+              <span>Octave-jump cost</span>
+              <input
+                type="number"
+                step={0.05}
+                min={0}
+                max={2}
+                value={settings.pitch.octaveJumpCost}
+                onChange={(e) => updatePitch({ octaveJumpCost: Number(e.target.value) })}
+              />
+            </label>
+            <label className="settings-field">
+              <span>Voiced/unvoiced cost</span>
+              <input
+                type="number"
+                step={0.01}
+                min={0}
+                max={2}
+                value={settings.pitch.voicedUnvoicedCost}
+                onChange={(e) => updatePitch({ voicedUnvoicedCost: Number(e.target.value) })}
+              />
+            </label>
+            <label className="settings-field">
+              <span>Max candidates</span>
+              <input
+                type="number"
+                step={1}
+                min={2}
+                max={30}
+                value={settings.pitch.maxCandidates}
+                onChange={(e) => updatePitch({ maxCandidates: Number(e.target.value) })}
+              />
+            </label>
           </div>
         </DialogContent>
       </Dialog>

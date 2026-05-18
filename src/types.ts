@@ -17,6 +17,11 @@ export interface AnalysisSettings {
     minHz: number;
     maxHz: number;
     voicingThreshold: number;
+    silenceThreshold: number;
+    octaveCost: number;
+    octaveJumpCost: number;
+    voicedUnvoicedCost: number;
+    maxCandidates: number;
   };
   formant: {
     maxFrequency: number;

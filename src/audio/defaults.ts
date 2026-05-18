@@ -13,7 +13,12 @@ export const defaultAnalysisSettings: AnalysisSettings = {
   pitch: {
     minHz: 75,
     maxHz: 600,
-    voicingThreshold: 0.45,
+    voicingThreshold: 0.50,
+    silenceThreshold: 0.09,
+    octaveCost: 0.055,
+    octaveJumpCost: 0.35,
+    voicedUnvoicedCost: 0.14,
+    maxCandidates: 15,
   },
   formant: {
     maxFrequency: 5000,
