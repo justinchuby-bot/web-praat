@@ -456,3 +456,44 @@ button, input, select {
     grid-template-columns: 1fr;
   }
 }
+
+/* Settings Dialog */
+.settings-dialog {
+  max-width: 420px;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+  padding: 8px 0;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.settings-field span {
+  color: var(--text-secondary, #a6adc8);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.settings-field input,
+.settings-field select {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border, #313244);
+  background: var(--bg-secondary, #1e1e2e);
+  color: var(--text, #cdd6f4);
+  font-size: 13px;
+}
+
+.settings-field input:focus,
+.settings-field select:focus {
+  outline: none;
+  border-color: var(--accent, #89b4fa);
+}

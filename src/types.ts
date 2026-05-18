@@ -1,13 +1,17 @@
 export type FilterType = 'none' | 'lowpass' | 'highpass' | 'bandpass';
 export type TextGridTierKind = 'interval' | 'point';
-export type ColormapName = 'jet' | 'grayscale';
+export type ColormapName = 'jet' | 'grayscale' | 'viridis' | 'magma';
+export type WindowFunction = 'hanning' | 'hamming' | 'gaussian' | 'bartlett' | 'rectangular';
 
 export interface AnalysisSettings {
   spectrogram: {
-    fftSize: 256 | 512 | 1024 | 2048;
+    fftSize: 256 | 512 | 1024 | 2048 | 4096;
     hopSize: number;
     dynamicRangeDb: number;
     colormap: ColormapName;
+    windowFunction: WindowFunction;
+    preEmphasis: number;
+    maxViewFrequency: number;
   };
   pitch: {
     minHz: number;

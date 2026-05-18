@@ -1,4 +1,4 @@
-import { fftMagnitude, hammingWindow } from '../utils/fft';
+import { fftMagnitude, hammingWindow, applyWindow, preEmphasis } from '../utils/fft';
 import { defaultAnalysisSettings } from './defaults';
 import { extractFormants } from './lpc';
 import { trackFormants } from './formantTracking';
@@ -59,6 +59,8 @@ export function computeSpectrogram(
   const resolved = mergeSettings(settings);
   const fftSize = resolved.spectrogram.fftSize;
   const hopSize = resolved.spectrogram.hopSize;
+  const windowFunction = resolved.spectrogram.windowFunction;
+  const preEmphasisDb = resolved.spectrogram.preEmphasis;
   const magnitudes: Float64Array[] = [];
   const frameTimes: number[] = [];
   const totalFrames = Math.max(0, Math.floor((samples.length - fftSize) / hopSize) + 1);
@@ -69,7 +71,8 @@ export function computeSpectrogram(
     for (let i = 0; i < fftSize; i++) {
       frame[i] = start + i < samples.length ? samples[start + i] : 0;
     }
-    magnitudes.push(fftMagnitude(hammingWindow(frame), fftSize));
+    const emphasized = preEmphasis(frame, preEmphasisDb);
+    magnitudes.push(fftMagnitude(applyWindow(emphasized, windowFunction), fftSize));
     frameTimes.push((start + fftSize / 2) / sampleRate);
   }
 

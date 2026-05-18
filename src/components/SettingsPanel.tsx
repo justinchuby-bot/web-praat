@@ -1,161 +1,233 @@
-import type { AnalysisSettings } from '../types';
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Button } from './ui/button';
+import type { AnalysisSettings, ColormapName, WindowFunction } from '../types';
 
 interface SettingsPanelProps {
   settings: AnalysisSettings;
   onChange: (settings: AnalysisSettings) => void;
 }
 
+const FFT_SIZES = [256, 512, 1024, 2048, 4096] as const;
+const WINDOW_FUNCTIONS: { value: WindowFunction; label: string }[] = [
+  { value: 'hanning', label: 'Hanning' },
+  { value: 'hamming', label: 'Hamming' },
+  { value: 'gaussian', label: 'Gaussian' },
+  { value: 'bartlett', label: 'Bartlett' },
+  { value: 'rectangular', label: 'Rectangular' },
+];
+const COLORMAPS: { value: ColormapName; label: string }[] = [
+  { value: 'jet', label: 'Jet' },
+  { value: 'grayscale', label: 'Grayscale' },
+  { value: 'viridis', label: 'Viridis' },
+  { value: 'magma', label: 'Magma' },
+];
+
 export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
+  const [open, setOpen] = useState(false);
+
+  const updateSpectrogram = (patch: Partial<AnalysisSettings['spectrogram']>) => {
+    onChange({ ...settings, spectrogram: { ...settings.spectrogram, ...patch } });
+  };
+  const updatePitch = (patch: Partial<AnalysisSettings['pitch']>) => {
+    onChange({ ...settings, pitch: { ...settings.pitch, ...patch } });
+  };
+  const updateFormant = (patch: Partial<AnalysisSettings['formant']>) => {
+    onChange({ ...settings, formant: { ...settings.formant, ...patch } });
+  };
+
   return (
-    <section className="panel">
-      <h3>Settings</h3>
-      <div className="panel-subtitle">Spectrogram</div>
-      <label className="field">
-        <span>FFT size</span>
-        <select
-          value={settings.spectrogram.fftSize}
-          onChange={(event) =>
-            onChange({
-              ...settings,
-              spectrogram: {
-                ...settings.spectrogram,
-                fftSize: Number(event.target.value) as AnalysisSettings['spectrogram']['fftSize'],
-              },
-            })
-          }
-        >
-          {[256, 512, 1024, 2048].map((size) => (
-            <option key={size} value={size}>
-              {size}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="field">
-        <span>Hop size</span>
-        <input
-          type="number"
-          value={settings.spectrogram.hopSize}
-          onChange={(event) =>
-            onChange({
-              ...settings,
-              spectrogram: { ...settings.spectrogram, hopSize: Number(event.target.value) },
-            })
-          }
-        />
-      </label>
-      <label className="field">
-        <span>Dynamic range</span>
-        <input
-          type="number"
-          value={settings.spectrogram.dynamicRangeDb}
-          onChange={(event) =>
-            onChange({
-              ...settings,
-              spectrogram: { ...settings.spectrogram, dynamicRangeDb: Number(event.target.value) },
-            })
-          }
-        />
-      </label>
-      <label className="field">
-        <span>Colormap</span>
-        <select
-          value={settings.spectrogram.colormap}
-          onChange={(event) =>
-            onChange({
-              ...settings,
-              spectrogram: {
-                ...settings.spectrogram,
-                colormap: event.target.value as AnalysisSettings['spectrogram']['colormap'],
-              },
-            })
-          }
-        >
-          <option value="jet">Jet</option>
-          <option value="grayscale">Grayscale</option>
-        </select>
-      </label>
+    <div className="sidebar-section">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="w-full">
+            ⚙ Spectrogram Settings…
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="settings-dialog">
+          <DialogHeader>
+            <DialogTitle>Spectrogram Settings</DialogTitle>
+          </DialogHeader>
 
-      <div className="panel-subtitle">Pitch</div>
-      <label className="field">
-        <span>Min Hz</span>
-        <input
-          type="number"
-          value={settings.pitch.minHz}
-          onChange={(event) =>
-            onChange({ ...settings, pitch: { ...settings.pitch, minHz: Number(event.target.value) } })
-          }
-        />
-      </label>
-      <label className="field">
-        <span>Max Hz</span>
-        <input
-          type="number"
-          value={settings.pitch.maxHz}
-          onChange={(event) =>
-            onChange({ ...settings, pitch: { ...settings.pitch, maxHz: Number(event.target.value) } })
-          }
-        />
-      </label>
-      <label className="field">
-        <span>Voicing threshold</span>
-        <input
-          type="number"
-          step="0.05"
-          min="0"
-          max="1"
-          value={settings.pitch.voicingThreshold}
-          onChange={(event) =>
-            onChange({
-              ...settings,
-              pitch: { ...settings.pitch, voicingThreshold: Number(event.target.value) },
-            })
-          }
-        />
-      </label>
+          <div className="settings-grid">
+            <label className="settings-field">
+              <span>Window function</span>
+              <select
+                value={settings.spectrogram.windowFunction}
+                onChange={(e) => updateSpectrogram({ windowFunction: e.target.value as WindowFunction })}
+              >
+                {WINDOW_FUNCTIONS.map((w) => (
+                  <option key={w.value} value={w.value}>{w.label}</option>
+                ))}
+              </select>
+            </label>
 
-      <div className="panel-subtitle">Formants</div>
-      <label className="field">
-        <span>Max frequency</span>
-        <input
-          type="number"
-          value={settings.formant.maxFrequency}
-          onChange={(event) =>
-            onChange({
-              ...settings,
-              formant: { ...settings.formant, maxFrequency: Number(event.target.value) },
-            })
-          }
-        />
-      </label>
-      <label className="field">
-        <span>LPC order</span>
-        <input
-          type="number"
-          value={settings.formant.lpcOrder}
-          onChange={(event) =>
-            onChange({
-              ...settings,
-              formant: { ...settings.formant, lpcOrder: Number(event.target.value) },
-            })
-          }
-        />
-      </label>
-      <label className="field">
-        <span>Formants</span>
-        <input
-          type="number"
-          min={1}
-          max={5}
-          value={settings.formant.numberOfFormants}
-          onChange={(event) =>
-            onChange({
-              ...settings,
-              formant: { ...settings.formant, numberOfFormants: Number(event.target.value) },
-            })
-          }
-        />
-      </label>
-    </section>
+            <label className="settings-field">
+              <span>FFT size</span>
+              <select
+                value={settings.spectrogram.fftSize}
+                onChange={(e) => updateSpectrogram({ fftSize: Number(e.target.value) as typeof settings.spectrogram.fftSize })}
+              >
+                {FFT_SIZES.map((size) => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="settings-field">
+              <span>Hop size</span>
+              <input
+                type="number"
+                min={32}
+                max={2048}
+                step={32}
+                value={settings.spectrogram.hopSize}
+                onChange={(e) => updateSpectrogram({ hopSize: Number(e.target.value) })}
+              />
+            </label>
+
+            <label className="settings-field">
+              <span>Dynamic range (dB)</span>
+              <input
+                type="number"
+                min={20}
+                max={120}
+                step={5}
+                value={settings.spectrogram.dynamicRangeDb}
+                onChange={(e) => updateSpectrogram({ dynamicRangeDb: Number(e.target.value) })}
+              />
+            </label>
+
+            <label className="settings-field">
+              <span>Max view frequency (Hz)</span>
+              <input
+                type="number"
+                min={500}
+                max={22050}
+                step={500}
+                value={settings.spectrogram.maxViewFrequency}
+                onChange={(e) => updateSpectrogram({ maxViewFrequency: Number(e.target.value) })}
+              />
+            </label>
+
+            <label className="settings-field">
+              <span>Pre-emphasis (dB/oct)</span>
+              <input
+                type="number"
+                min={0}
+                max={12}
+                step={1}
+                value={settings.spectrogram.preEmphasis}
+                onChange={(e) => updateSpectrogram({ preEmphasis: Number(e.target.value) })}
+              />
+            </label>
+
+            <label className="settings-field">
+              <span>Colormap</span>
+              <select
+                value={settings.spectrogram.colormap}
+                onChange={(e) => updateSpectrogram({ colormap: e.target.value as ColormapName })}
+              >
+                {COLORMAPS.map((c) => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="w-full mt-2">
+            🎵 Pitch Settings…
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="settings-dialog">
+          <DialogHeader>
+            <DialogTitle>Pitch Settings</DialogTitle>
+          </DialogHeader>
+          <div className="settings-grid">
+            <label className="settings-field">
+              <span>Min Hz</span>
+              <input
+                type="number"
+                min={30}
+                max={500}
+                value={settings.pitch.minHz}
+                onChange={(e) => updatePitch({ minHz: Number(e.target.value) })}
+              />
+            </label>
+            <label className="settings-field">
+              <span>Max Hz</span>
+              <input
+                type="number"
+                min={100}
+                max={2000}
+                value={settings.pitch.maxHz}
+                onChange={(e) => updatePitch({ maxHz: Number(e.target.value) })}
+              />
+            </label>
+            <label className="settings-field">
+              <span>Voicing threshold</span>
+              <input
+                type="number"
+                step={0.05}
+                min={0}
+                max={1}
+                value={settings.pitch.voicingThreshold}
+                onChange={(e) => updatePitch({ voicingThreshold: Number(e.target.value) })}
+              />
+            </label>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="w-full mt-2">
+            📊 Formant Settings…
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="settings-dialog">
+          <DialogHeader>
+            <DialogTitle>Formant Settings</DialogTitle>
+          </DialogHeader>
+          <div className="settings-grid">
+            <label className="settings-field">
+              <span>Max frequency (Hz)</span>
+              <input
+                type="number"
+                min={3000}
+                max={8000}
+                step={500}
+                value={settings.formant.maxFrequency}
+                onChange={(e) => updateFormant({ maxFrequency: Number(e.target.value) })}
+              />
+            </label>
+            <label className="settings-field">
+              <span>LPC order</span>
+              <input
+                type="number"
+                min={6}
+                max={24}
+                value={settings.formant.lpcOrder}
+                onChange={(e) => updateFormant({ lpcOrder: Number(e.target.value) })}
+              />
+            </label>
+            <label className="settings-field">
+              <span>Number of formants</span>
+              <input
+                type="number"
+                min={1}
+                max={5}
+                value={settings.formant.numberOfFormants}
+                onChange={(e) => updateFormant({ numberOfFormants: Number(e.target.value) })}
+              />
+            </label>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { grayscaleColormap, jetColormap } from '../utils/colormap';
+import { getColormap } from '../utils/colormap';
 import type { AnalysisResult, TimeSelection, ViewRange } from '../types';
 import { useZoomPan } from '../hooks/useZoomPan';
 import { timeToX, xToTime } from '../utils/view';
@@ -56,7 +56,7 @@ export function Spectrogram({
 
     const { spectrogram } = analysis;
     if (spectrogram.magnitudes.length === 0) return;
-    const maxDisplayFreq = Math.min(analysis.settings.formant.maxFrequency, spectrogram.maxFreq);
+    const maxDisplayFreq = Math.min(analysis.settings.spectrogram.maxViewFrequency, spectrogram.maxFreq);
     const binsToShow = Math.min(
       spectrogram.magnitudes[0].length,
       Math.ceil(maxDisplayFreq / spectrogram.freqStep)
@@ -70,8 +70,7 @@ export function Spectrogram({
       return frameMax;
     }, 1e-6);
 
-    const colorForValue =
-      analysis.settings.spectrogram.colormap === 'grayscale' ? grayscaleColormap : jetColormap;
+    const colorForValue = getColormap(analysis.settings.spectrogram.colormap);
     const rowHeight = height / binsToShow;
 
     for (let frameIndex = 0; frameIndex < spectrogram.magnitudes.length; frameIndex++) {

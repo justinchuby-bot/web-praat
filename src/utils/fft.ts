@@ -81,3 +81,70 @@ export function hammingWindow(signal: Float64Array): Float64Array {
   }
   return out;
 }
+
+/**
+ * Apply Hanning (Hann) window to a signal.
+ */
+export function hanningWindow(signal: Float64Array): Float64Array {
+  const N = signal.length;
+  const out = new Float64Array(N);
+  for (let i = 0; i < N; i++) {
+    out[i] = signal[i] * (0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (N - 1)));
+  }
+  return out;
+}
+
+/**
+ * Apply Gaussian window (sigma = 0.4) to a signal.
+ */
+export function gaussianWindow(signal: Float64Array): Float64Array {
+  const N = signal.length;
+  const out = new Float64Array(N);
+  const sigma = 0.4;
+  for (let i = 0; i < N; i++) {
+    const t = (i - (N - 1) / 2) / ((N - 1) / 2 / (1 / sigma));
+    out[i] = signal[i] * Math.exp(-0.5 * t * t);
+  }
+  return out;
+}
+
+/**
+ * Apply Bartlett (triangular) window to a signal.
+ */
+export function bartlettWindow(signal: Float64Array): Float64Array {
+  const N = signal.length;
+  const out = new Float64Array(N);
+  for (let i = 0; i < N; i++) {
+    out[i] = signal[i] * (1 - Math.abs((2 * i - (N - 1)) / (N - 1)));
+  }
+  return out;
+}
+
+/**
+ * Apply the specified window function.
+ */
+export function applyWindow(signal: Float64Array, windowType: string): Float64Array {
+  switch (windowType) {
+    case 'hamming': return hammingWindow(signal);
+    case 'hanning': return hanningWindow(signal);
+    case 'gaussian': return gaussianWindow(signal);
+    case 'bartlett': return bartlettWindow(signal);
+    case 'rectangular': return Float64Array.from(signal);
+    default: return hanningWindow(signal);
+  }
+}
+
+/**
+ * Apply pre-emphasis filter: y[n] = x[n] - alpha * x[n-1]
+ */
+export function preEmphasis(signal: Float64Array, factorDb: number): Float64Array {
+  if (factorDb <= 0) return signal;
+  // Convert dB/octave to coefficient (Praat uses 6 dB/oct → alpha ≈ 0.97)
+  const alpha = 1 - Math.pow(10, -factorDb / 20);
+  const out = new Float64Array(signal.length);
+  out[0] = signal[0];
+  for (let i = 1; i < signal.length; i++) {
+    out[i] = signal[i] - alpha * signal[i - 1];
+  }
+  return out;
+}

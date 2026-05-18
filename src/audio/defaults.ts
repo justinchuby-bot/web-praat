@@ -6,6 +6,9 @@ export const defaultAnalysisSettings: AnalysisSettings = {
     hopSize: 256,
     dynamicRangeDb: 70,
     colormap: 'jet',
+    windowFunction: 'hanning',
+    preEmphasis: 6,
+    maxViewFrequency: 5000,
   },
   pitch: {
     minHz: 75,
