@@ -7,13 +7,10 @@
 **Repo:** justinchuby-bot/web-praat (public)
 **参考源码:** ~/clawspace/praat.github.io/
 
-## 基础设施
-
-- [ ] 引入 shadcn/ui + Tailwind (按钮/slider/dropdown/dialog/tooltip)
 
 ## 当前优先任务
 
-- [ ] 键盘快捷键（空格=播放/暂停, Cmd+Z=undo, 方向键=移动选择）
+- [ ] 引入 shadcn/ui + Tailwind (按钮/slider/dropdown/dialog/tooltip)
 
 ## Backlog（按优先级）
 
@@ -45,6 +42,7 @@
 - [x] 深色主题 UI
 - [x] 7 个单元测试通过
 - [x] WebGPU FFT 加速 (src/utils/fft-gpu.ts) — compute shader + CPU fallback + 4 tests
+- [x] 键盘快捷键（空格=播放/暂停, Cmd/Ctrl+Z=undo, 方向键=移动选择, zoom, select all）
 
 ## 规则
 

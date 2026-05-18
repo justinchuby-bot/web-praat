@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { analyzeAudio } from './audio/analyzer';
 import { defaultAnalysisSettings, defaultFilterSettings, createEmptyTextGrid } from './audio/defaults';
 import { AudioEditorHistory, ReplaceRangeCommand } from './audio/editor';
@@ -323,6 +324,76 @@ export default function App() {
     cancelAnimationFrame(animFrameRef.current);
     audioCtxRef.current?.close();
   }, []);
+
+  const handleSelectAll = useCallback(() => {
+    if (!analysis) return;
+    setSelection({ start: 0, end: analysis.duration });
+  }, [analysis]);
+
+  const handleMoveSelectionLeft = useCallback(() => {
+    if (!analysis) return;
+    const step = (viewEnd - viewStart) * 0.05;
+    if (selection) {
+      const shift = Math.min(step, selection.start);
+      setSelection({ start: selection.start - shift, end: selection.end - shift });
+    } else {
+      const next = panViewRange(viewRange, -step, analysis.duration);
+      setViewStart(next.start);
+      setViewEnd(next.end);
+    }
+  }, [analysis, selection, viewEnd, viewStart, viewRange]);
+
+  const handleMoveSelectionRight = useCallback(() => {
+    if (!analysis) return;
+    const step = (viewEnd - viewStart) * 0.05;
+    if (selection) {
+      const shift = Math.min(step, analysis.duration - selection.end);
+      setSelection({ start: selection.start + shift, end: selection.end + shift });
+    } else {
+      const next = panViewRange(viewRange, step, analysis.duration);
+      setViewStart(next.start);
+      setViewEnd(next.end);
+    }
+  }, [analysis, selection, viewEnd, viewStart, viewRange]);
+
+  const handleZoomIn = useCallback(() => {
+    if (!analysis) return;
+    const center = (viewStart + viewEnd) / 2;
+    const next = zoomAroundPoint(viewRange, center, 0.8, analysis.duration);
+    setViewStart(next.start);
+    setViewEnd(next.end);
+  }, [analysis, viewEnd, viewStart, viewRange]);
+
+  const handleZoomOut = useCallback(() => {
+    if (!analysis) return;
+    const center = (viewStart + viewEnd) / 2;
+    const next = zoomAroundPoint(viewRange, center, 1.25, analysis.duration);
+    setViewStart(next.start);
+    setViewEnd(next.end);
+  }, [analysis, viewEnd, viewStart, viewRange]);
+
+  const handlePlayPause = useCallback(() => {
+    if (isPlaying) handlePause();
+    else handlePlay();
+  }, [isPlaying, handlePause, handlePlay]);
+
+  const shortcutHandlers = useMemo(() => ({
+    onPlayPause: handlePlayPause,
+    onUndo: handleUndo,
+    onRedo: handleRedo,
+    onCut: handleCut,
+    onCopy: handleCopy,
+    onPaste: handlePaste,
+    onDelete: handleDelete,
+    onSelectAll: handleSelectAll,
+    onMoveSelectionLeft: handleMoveSelectionLeft,
+    onMoveSelectionRight: handleMoveSelectionRight,
+    onZoomIn: handleZoomIn,
+    onZoomOut: handleZoomOut,
+    onFitToWindow: handleFitToWindow,
+  }), [handlePlayPause, handleUndo, handleRedo, handleCut, handleCopy, handlePaste, handleDelete, handleSelectAll, handleMoveSelectionLeft, handleMoveSelectionRight, handleZoomIn, handleZoomOut, handleFitToWindow]);
+
+  useKeyboardShortcuts(shortcutHandlers, true);
 
   return (
     <div className="app">
