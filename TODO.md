@@ -10,11 +10,9 @@
 
 ## 当前優先任務
 
-- [ ] Formant tracking（帧间平滑，连续轨迹）
+- [ ] 导出 CSV/WAV
 
 ## Backlog（按優先級）
-
-- [ ] 导出 CSV/WAV
 - [ ] 录音编辑（剪切/复制/粘贴/Undo）
 - [ ] Jitter/Shimmer 嗓音质量面板
 - [ ] 滤波器（低通/高通/带通）
@@ -43,6 +41,7 @@
 - [x] Spectrogram 设置面板（FFT size、hop、window function、colormap、dynamic range、max view freq、pre-emphasis）— shadcn Dialog UI
 - [x] Pitch 設置 — 完整 Viterbi path-finding（min/max Hz、voicing threshold、silence threshold、octave cost、octave-jump cost、voiced/unvoiced cost、max candidates）
 - [x] Zoom & Pan 優化（滾輪zoom、trackpad橫滑pan、pinch-to-zoom、雙擊zoom in、拖動pan）
+- [x] Formant tracking — Viterbi + Gaussian smoothing + median filter + configurable settings UI
 
 ## 规则
 
