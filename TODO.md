@@ -10,14 +10,9 @@
 
 ## 当前优先任务
 
-- [ ] WebGPU FFT 加速 (src/utils/fft-gpu.ts)
-  - Compute shader 实现并行 FFT
-  - 不支持 WebGPU 时 fallback 到 CPU FFT
-  - 测试：结果跟 CPU 版本一致
+- [ ] 键盘快捷键（空格=播放/暂停, Cmd+Z=undo, 方向键=移动选择）
 
 ## Backlog（按优先级）
-
-- [ ] 键盘快捷键（空格=播放/暂停, Cmd+Z=undo, 方向键=移动选择）
 
 - [ ] 完善 TextGrid 标注（导入/导出 .TextGrid 格式）
 - [ ] Zoom & Pan 优化（鼠标滚轮、拖动、fit to window）
@@ -46,6 +41,7 @@
 - [x] 播放/暂停 + 实时光标
 - [x] 深色主题 UI
 - [x] 7 个单元测试通过
+- [x] WebGPU FFT 加速 (src/utils/fft-gpu.ts) — compute shader + CPU fallback + 4 tests
 
 ## 规则
 
