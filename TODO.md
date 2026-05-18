@@ -13,6 +13,8 @@
 
 ## Backlog（按优先级）
 
+- [ ] 键盘快捷键（空格=播放/暂停, Cmd+Z=undo, 方向键=移动选择）
+
 - [ ] 完善 TextGrid 标注（导入/导出 .TextGrid 格式）
 - [ ] Zoom & Pan 优化（鼠标滚轮、拖动、fit to window）
 - [ ] Spectrogram 设置面板（FFT size、hop、colormap、dynamic range）
