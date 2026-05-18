@@ -15,6 +15,7 @@ import { Spectrogram } from './components/Spectrogram';
 import { SpectrumSlice } from './components/SpectrumSlice';
 import { TextGridEditor } from './components/TextGridEditor';
 import { TimeRuler } from './components/TimeRuler';
+import { HarmonicityPanel } from './components/HarmonicityPanel';
 import { VoiceQualityPanel } from './components/VoiceQualityPanel';
 import { Waveform } from './components/Waveform';
 import {
@@ -432,6 +433,7 @@ export default function App() {
           <section className="bottom-panels">
             <SpectrumSlice slice={analysis.spectrumSlice} />
             <VoiceQualityPanel metrics={analysis.voiceQuality} />
+            <HarmonicityPanel data={analysis.harmonicity} viewStart={viewStart} viewEnd={viewEnd} />
             <RhythmPanel metrics={rhythmMetrics} />
           </section>
         )}

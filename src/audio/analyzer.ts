@@ -2,6 +2,7 @@ import { fftMagnitude, hammingWindow } from '../utils/fft';
 import { defaultAnalysisSettings } from './defaults';
 import { extractFormants } from './lpc';
 import { trackFormants } from './formantTracking';
+import { computeHarmonicity } from './harmonicity';
 import { computeVoiceQuality } from './voiceQuality';
 import type {
   AnalysisResult,
@@ -32,6 +33,7 @@ export function analyzeAudio(
   const pitch = computePitch(samples, sampleRate, resolved);
   const formants = computeFormants(samples, sampleRate, resolved);
   const intensity = computeIntensity(samples, sampleRate);
+  const harmonicity = computeHarmonicity(samples, sampleRate);
   const voiceQuality = computeVoiceQuality(samples, sampleRate);
 
   return {
@@ -42,6 +44,7 @@ export function analyzeAudio(
     pitch,
     formants,
     intensity,
+    harmonicity,
     voiceQuality,
     spectrumSlice: null,
     settings: resolved,

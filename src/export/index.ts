@@ -1,5 +1,5 @@
 import { serializeTextGrid } from '../textgrid/parser';
-import type { FormantData, IntensityData, PitchData, TextGrid } from '../types';
+import type { FormantData, HarmonicityData, IntensityData, PitchData, TextGrid } from '../types';
 
 function csvEscape(value: string): string {
   return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
@@ -21,6 +21,15 @@ export function exportIntensityCsv(intensity: IntensityData): string {
   const rows = ['time,intensity_db'];
   for (let i = 0; i < intensity.times.length; i++) {
     rows.push(`${intensity.times[i]},${intensity.values[i]}`);
+  }
+  return `${rows.join('\n')}\n`;
+}
+
+export function exportHarmonicityCsv(harmonicity: HarmonicityData): string {
+  const rows = ['time,hnr_db'];
+  for (let i = 0; i < harmonicity.times.length; i++) {
+    const val = harmonicity.values[i] === -200 ? '' : harmonicity.values[i].toFixed(2);
+    rows.push(`${harmonicity.times[i].toFixed(4)},${val}`);
   }
   return `${rows.join('\n')}\n`;
 }

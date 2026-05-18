@@ -57,6 +57,13 @@ export interface FormantFrame {
   candidates: number[];
 }
 
+export interface HarmonicityData {
+  times: number[];
+  values: number[];
+  meanHnrDb: number;
+  medianHnrDb: number;
+}
+
 export interface AnalysisResult {
   waveform: Float32Array;
   sampleRate: number;
@@ -65,6 +72,7 @@ export interface AnalysisResult {
   pitch: PitchData;
   formants: FormantData;
   intensity: IntensityData;
+  harmonicity: HarmonicityData;
   voiceQuality: VoiceQualityMetrics;
   spectrumSlice: SpectrumSliceData | null;
   settings: AnalysisSettings;
