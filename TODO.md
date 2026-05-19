@@ -26,7 +26,8 @@
 - [x] **WebGPU FFT 接入** — fft-adapter.ts 统一接口 + worker 自动探测 GPU + CPU fallback
 - [x] **Excitation pattern** — 听觉激励模式可视化
 - [x] **SpeechSynthesizer（TTS）** — Web Speech API 集成
-- [ ] **Pitch sonification** — 听 pitch track，验证准确性
+- [x] **Pitch sonification** — 听 pitch track，验证准确性
+- [ ] **Note transcription** — pitch → 音符/半音转写
 
 ## Backlog（按优先级）
 
@@ -40,7 +41,6 @@
 - [ ] SpeechSynthesizer（TTS）
 
 ### 中优先（借鉴 Tony + ELAN）
-- [ ] Pitch sonification（听 pitch track，验证准确性）
 - [ ] Note transcription（pitch → 音符/半音）
 - [ ] Hierarchical tiers（tier parent-child 关系）
 - [ ] ELAN (.eaf) 导入导出
@@ -105,6 +105,7 @@
 - [x] **WebGPU FFT 接入** — fft-adapter.ts 统一接口; analysis worker 自动探测 WebGPU 并切换 GPU FFT; CPU fallback 透明; 5 新测试
 - [x] **波形交互改进** — region selection (draggable edges + move)、minimap (viewport nav)、drag选区
 - [x] **Excitation pattern** — Spectrum → Bark-band power → auditory masking convolution → phon; RightSidebar tab + loudness (sones)
+- [x] **Pitch sonification** — sine/hum/pulse 三模式 + WAV 导出 + 7 tests (355 total)
 - [x] **SpeechSynthesizer（TTS）** — Web Speech API + voice selection + rate/pitch/volume + word boundaries + 10 tests
 
 ## 规则
