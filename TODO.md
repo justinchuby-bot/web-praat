@@ -16,6 +16,7 @@
 
 ## 当前优先任务
 
+- [ ] Wire BottomSheet + useIsMobile to App.tsx（移动端显示 BottomSheet 替代 Sidebar）
 - [ ] JS API 补全（intensity, spectrogram, textGrid, mfcc, resample, getMin/getMax, fft/ifft）
 - [ ] Shiki 语法高亮（Praat Script TextMate grammar）
 - [ ] MCP Server 层（暴露语音分析给 AI agent）
