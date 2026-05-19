@@ -16,6 +16,8 @@
 
 ## 当前优先任务
 
+- [ ] **Formant 显示修复** — 曲线加粗 + 加圆点标记，确认跟语谱图显示范围匹配
+- [ ] **自动 IPA 标注** — 根据 F1/F2 值自动在语谱图/波形图上标注国际音标元音符号
 - [ ] **MenuBar hover 切换** — 打开菜单后 hover 其他菜单项立即切换；实现 Amazon triangle trick（防止斜向移动误触发切换）
 - [ ] **布局修复**：波形/语谱图区域默认应占主视图 60-70% 高度；下方面板（Spectrum Slice/Voice Quality/HNR/Rhythm）默认折叠或 tab 切换，不同时全部展开挤占空间
 - [ ] Wire BottomSheet + useIsMobile to App.tsx（移动端显示 BottomSheet 替代 Sidebar）
