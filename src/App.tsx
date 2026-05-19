@@ -597,6 +597,7 @@ export default function App() {
 
           {analysis && (
             <>
+              <div className="audio-visualizations">
               <TimeRuler duration={analysis.duration} viewRange={viewRange} />
               <Waveform
                 analysis={analysis}
@@ -631,6 +632,7 @@ export default function App() {
                   onSpectrumSliceSelect={handleSpectrumSliceSelect}
                 />
               )}
+              </div>
               <TextGridEditor
                 textGrid={textGrid}
                 viewRange={viewRange}

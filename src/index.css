@@ -233,9 +233,17 @@ button, input, select {
   border-bottom: 1px solid var(--border);
 }
 
+.audio-visualizations {
+  flex: 7;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .waveform-canvas {
   width: 100%;
-  height: 180px;
+  height: 35%;
+  min-height: 100px;
   border-bottom: 1px solid var(--border);
   cursor: crosshair;
 }
@@ -243,12 +251,15 @@ button, input, select {
 .spectrogram-canvas {
   width: 100%;
   flex: 1;
-  min-height: 220px;
+  min-height: 140px;
   border-bottom: 1px solid var(--border);
   cursor: crosshair;
 }
 
 .textgrid-editor {
+  flex: 3;
+  min-height: 0;
+  overflow-y: auto;
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
 }
@@ -986,11 +997,12 @@ select:focus-visible {
   }
 
   .waveform-canvas {
-    height: 120px;
+    height: 30%;
+    min-height: 80px;
   }
 
   .spectrogram-canvas {
-    min-height: 160px;
+    min-height: 120px;
   }
 
   .bottom-panels {
