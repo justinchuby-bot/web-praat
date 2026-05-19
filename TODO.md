@@ -28,7 +28,8 @@
 - [x] **SpeechSynthesizer（TTS）** — Web Speech API 集成
 - [x] **Pitch sonification** — 听 pitch track，验证准确性
 - [x] **Note transcription** — pitch → 音符/半音转写
-- [ ] **Hierarchical tiers** — tier parent-child 关系（借鉴 ELAN）
+- [x] **Hierarchical tiers** — tier parent-child 关系（借鉴 ELAN）
+- [ ] **ELAN (.eaf) 导入导出** — 支持 ELAN 注释格式互转
 
 ## Backlog（按优先级）
 
@@ -42,7 +43,7 @@
 - [ ] SpeechSynthesizer（TTS）
 
 ### 中优先（借鉴 Tony + ELAN）
-- [ ] Hierarchical tiers（tier parent-child 关系）
+- [x] Hierarchical tiers（tier parent-child 关系）
 - [ ] ELAN (.eaf) 导入导出
 - [ ] Video sync（标注跟视频对齐）
 - [ ] Controlled vocabulary（标注预定义词表）
@@ -107,6 +108,7 @@
 - [x] **Excitation pattern** — Spectrum → Bark-band power → auditory masking convolution → phon; RightSidebar tab + loudness (sones)
 - [x] **Pitch sonification** — sine/hum/pulse 三模式 + WAV 导出 + 7 tests (355 total)
 - [x] **Note transcription** — Hz→MIDI, note names, cents deviation, pitch track → note events + export TXT + UI panel (375 tests)
+- [x] **Hierarchical tiers** — parentId on tiers, hierarchy.ts (validate, tree, cycle detection), TextGridEditor indentation + Set Parent UI, 23 tests (398 total)
 
 ## 规则
 
