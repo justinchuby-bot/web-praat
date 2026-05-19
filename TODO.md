@@ -23,6 +23,7 @@
 - [x] JS API 补全（intensity, spectrogram, textGrid, mfcc, resample, getMin/getMax, fft/ifft）
 - [x] Shiki 语法高亮（Praat Script TextMate grammar）
 - [ ] MCP Server 层（暴露语音分析给 AI agent）
+- [ ] **WebGPU FFT 接入** — fft-gpu.ts 已写好但没被主分析路径调用；当 WebGPU 可用时自动切换 GPU FFT（旋风冲锋🌪️）
 
 ## Backlog（按优先级）
 
