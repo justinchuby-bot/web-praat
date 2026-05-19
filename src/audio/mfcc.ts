@@ -3,7 +3,7 @@
  * Standard implementation: windowing → FFT → Mel filterbank → log → DCT.
  */
 
-import { fftMagnitude, hammingWindow } from '../utils/fft';
+import { fftMagnitude, hammingWindow, batchFftMagnitude } from '../utils/fft';
 
 export interface MfccResult {
   /** MFCC matrix: [frameIndex][coeffIndex] */
@@ -145,6 +145,74 @@ export function computeMfcc(
 
     coefficients.push(cepstral);
     times.push((start + fftSize / 2) / sampleRate);
+  }
+
+  return { coefficients, times, numCoeffs };
+}
+
+/**
+ * GPU-accelerated MFCC computation using batch FFT.
+ */
+export async function computeMfccAsync(
+  samples: Float32Array,
+  sampleRate: number,
+  options?: MfccOptions
+): Promise<MfccResult> {
+  const numCoeffs = options?.numCoeffs ?? 13;
+  const fftSize = nextPowerOfTwo(options?.fftSize ?? 512);
+  const hopSize = options?.hopSize ?? 160;
+  const numFilters = options?.numFilters ?? 26;
+  const lowFreq = options?.lowFreq ?? 0;
+  const highFreq = options?.highFreq ?? sampleRate / 2;
+
+  const filters = melFilterbank(numFilters, fftSize, sampleRate, lowFreq, highFreq);
+  const fftBins = fftSize / 2 + 1;
+
+  const totalFrames = Math.max(0, Math.floor((samples.length - fftSize) / hopSize) + 1);
+  const times: number[] = [];
+
+  // Prepare all windowed frames
+  const windowedFrames: Float64Array[] = [];
+  for (let f = 0; f < totalFrames; f++) {
+    const start = f * hopSize;
+    const frame = new Float64Array(fftSize);
+    for (let i = 0; i < fftSize; i++) {
+      frame[i] = start + i < samples.length ? samples[start + i] : 0;
+    }
+    windowedFrames.push(hammingWindow(frame));
+    times.push((start + fftSize / 2) / sampleRate);
+  }
+
+  // Batch FFT
+  const mags = await batchFftMagnitude(windowedFrames, fftSize);
+
+  // Process each frame's FFT result
+  const coefficients: number[][] = [];
+  for (let f = 0; f < totalFrames; f++) {
+    const mag = mags[f];
+    const power = new Float64Array(fftBins);
+    for (let i = 0; i < fftBins; i++) {
+      power[i] = (mag[i] * mag[i]) / fftSize;
+    }
+
+    const melEnergies = new Float64Array(numFilters);
+    for (let m = 0; m < numFilters; m++) {
+      let sum = 0;
+      for (let k = 0; k < fftBins; k++) {
+        sum += filters[m][k] * power[k];
+      }
+      melEnergies[m] = Math.log(Math.max(sum, 1e-10));
+    }
+
+    const cepstral: number[] = [];
+    for (let n = 0; n < numCoeffs; n++) {
+      let sum = 0;
+      for (let m = 0; m < numFilters; m++) {
+        sum += melEnergies[m] * Math.cos((Math.PI * n * (m + 0.5)) / numFilters);
+      }
+      cepstral.push(sum);
+    }
+    coefficients.push(cepstral);
   }
 
   return { coefficients, times, numCoeffs };

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { initGpuFft } from './utils/fft-gpu';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useStreamingRecording } from './hooks/useStreamingRecording';
 import { useAnalysisWorker } from './hooks/useAnalysisWorker';
@@ -164,6 +165,11 @@ export default function App() {
     },
     [processSamples]
   );
+
+  // Preload WebGPU device at mount to avoid first-analysis delay
+  useEffect(() => {
+    initGpuFft();
+  }, []);
 
   useEffect(() => {
     if (!currentSamplesRef.current) return;

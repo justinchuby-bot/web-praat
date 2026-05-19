@@ -6,7 +6,7 @@
  * the long-term spectral shape.
  */
 
-import { hammingWindow, fftMagnitude } from '../utils/fft';
+import { hammingWindow, fftMagnitude, batchFftMagnitude } from '../utils/fft';
 
 export interface LtasData {
   /** Frequency values (Hz) for each bin */
@@ -89,6 +89,73 @@ export function computeLtas(
   }
 
   // Average and convert to dB
+  const frequencyResolution = sampleRate / fftSize;
+  const maxBin = Math.min(bins, Math.round(maxFreq / frequencyResolution) + 1);
+
+  const frequencies = new Float64Array(maxBin);
+  const values = new Float64Array(maxBin);
+
+  for (let i = 0; i < maxBin; i++) {
+    frequencies[i] = i * frequencyResolution;
+    const avgPower = powerSum[i] / frameCount;
+    values[i] = avgPower > 0 ? 10 * Math.log10(avgPower) : -100;
+  }
+
+  return {
+    frequencies,
+    values,
+    maxFrequency: maxFreq,
+    frequencyResolution,
+  };
+}
+
+/**
+ * GPU-accelerated LTAS computation using batch FFT.
+ */
+export async function computeLtasAsync(
+  samples: Float32Array,
+  sampleRate: number,
+  settings?: Partial<LtasSettings>
+): Promise<LtasData> {
+  const s = { ...defaultLtasSettings, ...settings };
+  const fftSize = nextPowerOfTwo(s.fftSize);
+  const hopSize = Math.max(1, Math.round(fftSize * s.hopFraction));
+  const bins = fftSize / 2 + 1;
+  const nyquist = sampleRate / 2;
+  const maxFreq = s.maxFrequency > 0 ? Math.min(s.maxFrequency, nyquist) : nyquist;
+
+  // Prepare all windowed frames
+  const windowedFrames: Float64Array[] = [];
+  for (let start = 0; start + fftSize <= samples.length; start += hopSize) {
+    const frame = new Float64Array(fftSize);
+    for (let i = 0; i < fftSize; i++) {
+      frame[i] = samples[start + i];
+    }
+    windowedFrames.push(hammingWindow(frame));
+  }
+
+  // Handle too-short signal
+  if (windowedFrames.length === 0) {
+    const frame = new Float64Array(fftSize);
+    for (let i = 0; i < Math.min(samples.length, fftSize); i++) {
+      frame[i] = samples[i];
+    }
+    windowedFrames.push(hammingWindow(frame));
+  }
+
+  // Batch FFT
+  const mags = await batchFftMagnitude(windowedFrames, fftSize);
+
+  // Accumulate power
+  const powerSum = new Float64Array(bins);
+  for (let f = 0; f < mags.length; f++) {
+    const mag = mags[f];
+    for (let i = 0; i < bins; i++) {
+      powerSum[i] += mag[i] * mag[i];
+    }
+  }
+
+  const frameCount = mags.length;
   const frequencyResolution = sampleRate / fftSize;
   const maxBin = Math.min(bins, Math.round(maxFreq / frequencyResolution) + 1);
 
