@@ -246,7 +246,14 @@ export function computePitch(
         const r = denom > 0 ? numerator / denom : 0;
         // Detect local maxima
         if (prevR > prevPrevR && prevR > r && prevR > 0) {
-          peaks.push({ lag: lag - 1, r: prevR });
+          // Parabolic interpolation for sub-sample accuracy
+          const denom2 = prevPrevR - 2 * prevR + r;
+          let refinedLag = lag - 1;
+          if (denom2 !== 0) {
+            const delta = 0.5 * (prevPrevR - r) / denom2;
+            refinedLag = (lag - 1) + delta;
+          }
+          peaks.push({ lag: refinedLag, r: prevR });
         }
         prevPrevR = prevR;
         prevR = r;
