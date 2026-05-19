@@ -903,3 +903,61 @@ select:focus-visible {
     min-width: 44px;
   }
 }
+
+/* Modal overlay for tool panels */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.modal-panel {
+  position: relative;
+  background: var(--bg-primary, #fff);
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 90vw;
+  max-height: 85vh;
+  overflow: auto;
+  padding: 24px;
+  min-width: 400px;
+}
+
+.modal-panel-lg {
+  min-width: 700px;
+  min-height: 500px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: var(--text-secondary, #666);
+  z-index: 1;
+}
+
+.modal-close:hover {
+  color: var(--text-primary, #000);
+}
+
+@media (prefers-color-scheme: dark) {
+  .modal-panel {
+    background: #1a1a2e;
+    color: #e0e0e0;
+  }
+  .modal-close {
+    color: #999;
+  }
+  .modal-close:hover {
+    color: #fff;
+  }
+}

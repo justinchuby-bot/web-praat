@@ -13,7 +13,7 @@ interface ManipulationPanelProps {
 export function ManipulationPanel({ samples, sampleRate, pitchData, duration, onApply }: ManipulationPanelProps) {
   const [pitchTier, setPitchTier] = useState<PitchTierPoint[]>([]);
   const [durationTier, setDurationTier] = useState<DurationTierPoint[]>([]);
-  const [dragging, setDragging] = useState<{ type: 'pitch' | 'duration'; index: number } | null>(null);
+  const [_dragging, _setDragging] = useState<{ type: 'pitch' | 'duration'; index: number } | null>(null);
   const pitchCanvasRef = useRef<HTMLCanvasElement>(null);
   const durCanvasRef = useRef<HTMLCanvasElement>(null);
 

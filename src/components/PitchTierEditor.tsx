@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import TierEditorBase, { TierPoint, TierTrack } from './TierEditorBase';
 import { detectPitchMarks } from '../audio/psola';
 

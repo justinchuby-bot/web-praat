@@ -22,6 +22,16 @@ import { TextGridEditor } from './components/TextGridEditor';
 import { TimeRuler } from './components/TimeRuler';
 import { Toolbar } from './components/Toolbar';
 import { HarmonicityPanel } from './components/HarmonicityPanel';
+import ManipulationEditor from './components/ManipulationEditor';
+import PitchTierEditor from './components/PitchTierEditor';
+import FormantGridEditor from './components/FormantGridEditor';
+import DurationTierEditor from './components/DurationTierEditor';
+import AmplitudeTierEditor from './components/AmplitudeTierEditor';
+import { VocalTractEditor } from './components/VocalTractEditor';
+import { SpectrumEditor } from './components/SpectrumEditor';
+import { ExperimentDesigner } from './components/ExperimentDesigner';
+import { ExperimentMFC } from './components/ExperimentMFC';
+import { ScriptEditor } from './components/ScriptEditor';
 import { VoiceQualityPanel } from './components/VoiceQualityPanel';
 import { Waveform } from './components/Waveform';
 import {
@@ -60,6 +70,16 @@ export default function App() {
   const [showFormants, setShowFormants] = useState(true);
   const [showIntensity, setShowIntensity] = useState(true);
   const [showCochleagram, setShowCochleagram] = useState(false);
+  const [showManipulation, setShowManipulation] = useState(false);
+  const [showPitchTier, setShowPitchTier] = useState(false);
+  const [showFormantGrid, setShowFormantGrid] = useState(false);
+  const [showDurationTier, setShowDurationTier] = useState(false);
+  const [showAmplitudeTier, setShowAmplitudeTier] = useState(false);
+  const [showVocalTract, setShowVocalTract] = useState(false);
+  const [showSpectrumEditor, setShowSpectrumEditor] = useState(false);
+  const [showExperiment, setShowExperiment] = useState(false);
+  const [showScriptEditor, setShowScriptEditor] = useState(false);
+  const [experimentConfig, setExperimentConfig] = useState<{ config: any; audioMap: Record<string, string> } | null>(null);
   const [settings, setSettings] = useState<AnalysisSettings>(defaultAnalysisSettings);
   const [filterSettings, setFilterSettings] = useState<FilterSettings>(defaultFilterSettings);
   const [textGrid, setTextGrid] = useState<TextGrid>(createEmptyTextGrid(1));
@@ -460,6 +480,15 @@ export default function App() {
         showIntensity={showIntensity}
         showCochleagram={showCochleagram}
         onToggleCochleagram={() => setShowCochleagram((v) => !v)}
+        onOpenManipulation={() => setShowManipulation(true)}
+        onOpenPitchTier={() => setShowPitchTier(true)}
+        onOpenFormantGrid={() => setShowFormantGrid(true)}
+        onOpenDurationTier={() => setShowDurationTier(true)}
+        onOpenAmplitudeTier={() => setShowAmplitudeTier(true)}
+        onOpenVocalTract={() => setShowVocalTract(true)}
+        onOpenSpectrumEditor={() => setShowSpectrumEditor(true)}
+        onOpenExperiment={() => setShowExperiment(true)}
+        onOpenScriptEditor={() => setShowScriptEditor(true)}
       />
 
       <Toolbar
@@ -627,6 +656,88 @@ export default function App() {
         streamDuration={streaming.streamDuration}
       />
       <KeyboardShortcutsDialog />
+
+      {/* Tool Panels */}
+      {showManipulation && currentSamplesRef.current && (
+        <div className="modal-overlay" onClick={() => setShowManipulation(false)}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowManipulation(false)}>✕</button>
+            <ManipulationEditor samples={currentSamplesRef.current} sampleRate={sampleRate} onSynthesized={(output) => { commitSamples(output); setShowManipulation(false); }} />
+          </div>
+        </div>
+      )}
+      {showPitchTier && currentSamplesRef.current && (
+        <div className="modal-overlay" onClick={() => setShowPitchTier(false)}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowPitchTier(false)}>✕</button>
+            <PitchTierEditor samples={currentSamplesRef.current} sampleRate={sampleRate} onApply={() => setShowPitchTier(false)} />
+          </div>
+        </div>
+      )}
+      {showFormantGrid && analysis && (
+        <div className="modal-overlay" onClick={() => setShowFormantGrid(false)}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowFormantGrid(false)}>✕</button>
+            <FormantGridEditor duration={analysis.duration} onApply={() => setShowFormantGrid(false)} />
+          </div>
+        </div>
+      )}
+      {showDurationTier && analysis && (
+        <div className="modal-overlay" onClick={() => setShowDurationTier(false)}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowDurationTier(false)}>✕</button>
+            <DurationTierEditor duration={analysis.duration} onApply={() => setShowDurationTier(false)} />
+          </div>
+        </div>
+      )}
+      {showAmplitudeTier && analysis && (
+        <div className="modal-overlay" onClick={() => setShowAmplitudeTier(false)}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowAmplitudeTier(false)}>✕</button>
+            <AmplitudeTierEditor duration={analysis.duration} onApply={() => setShowAmplitudeTier(false)} />
+          </div>
+        </div>
+      )}
+      {showVocalTract && (
+        <div className="modal-overlay" onClick={() => setShowVocalTract(false)}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowVocalTract(false)}>✕</button>
+            <VocalTractEditor />
+          </div>
+        </div>
+      )}
+      {showSpectrumEditor && (
+        <div className="modal-overlay" onClick={() => setShowSpectrumEditor(false)}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowSpectrumEditor(false)}>✕</button>
+            <SpectrumEditor slice={analysis?.spectrumSlice ?? null} samples={currentSamplesRef.current ?? null} sampleRate={sampleRate} onApplyFilter={(filtered) => { commitSamples(filtered); setShowSpectrumEditor(false); }} />
+          </div>
+        </div>
+      )}
+      {showExperiment && !experimentConfig && (
+        <div className="modal-overlay" onClick={() => setShowExperiment(false)}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowExperiment(false)}>✕</button>
+            <ExperimentDesigner onStart={(config, audioMap) => setExperimentConfig({ config, audioMap })} />
+          </div>
+        </div>
+      )}
+      {showExperiment && experimentConfig && (
+        <div className="modal-overlay" onClick={() => { setShowExperiment(false); setExperimentConfig(null); }}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => { setShowExperiment(false); setExperimentConfig(null); }}>✕</button>
+            <ExperimentMFC config={experimentConfig.config} audioMap={experimentConfig.audioMap} onComplete={() => { setShowExperiment(false); setExperimentConfig(null); }} />
+          </div>
+        </div>
+      )}
+      {showScriptEditor && (
+        <div className="modal-overlay" onClick={() => setShowScriptEditor(false)}>
+          <div className="modal-panel modal-panel-lg" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowScriptEditor(false)}>✕</button>
+            <ScriptEditor />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

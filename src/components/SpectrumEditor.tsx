@@ -33,10 +33,6 @@ const DEFAULT_CONFIG: FilterConfig = {
   customCurve: null,
 };
 
-function nextPowerOfTwo(n: number): number {
-  return 2 ** Math.ceil(Math.log2(Math.max(2, n)));
-}
-
 /**
  * Compute the filtered spectrum preview (magnitude) by applying gain curve.
  */

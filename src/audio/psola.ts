@@ -91,7 +91,7 @@ export function interpolatePitch(pitchTier: PitchPoint[], time: number): number 
 /**
  * Compute duration mapping: original time → new time using duration tier.
  */
-export function mapDuration(durationTier: DurationPoint[], originalDuration: number, originalTime: number): number {
+export function mapDuration(durationTier: DurationPoint[], _originalDuration: number, originalTime: number): number {
   if (durationTier.length === 0) return originalTime;
 
   // Integrate the duration factor from 0 to originalTime

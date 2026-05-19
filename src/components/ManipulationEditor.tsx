@@ -1,11 +1,10 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   PitchPoint,
   DurationPoint,
   ManipulationState,
   psolaResynthesize,
   detectPitchMarks,
-  interpolatePitch,
 } from '../audio/psola';
 
 interface ManipulationEditorProps {
@@ -21,7 +20,8 @@ interface ManipulationEditorProps {
 export default function ManipulationEditor({ samples, sampleRate, onSynthesized }: ManipulationEditorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [pitchTier, setPitchTier] = useState<PitchPoint[]>([]);
-  const [durationTier, setDurationTier] = useState<DurationPoint[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [durationTier, _setDurationTier] = useState<DurationPoint[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);

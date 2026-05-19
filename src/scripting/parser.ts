@@ -334,12 +334,6 @@ export function parse(tokens: Token[]): ASTNode[] {
     // Collect the command name (may be multi-word before colon)
     let name = advance().value;
 
-    // Continue collecting words (identifiers or keyword tokens used as part of command name)
-    const isWordToken = (t: Token) =>
-      t.type === TokenType.Identifier ||
-      t.type === TokenType.To ||
-      t.type === TokenType.From;
-
     // Read until colon or newline to build multi-word command name
     while (
       current().type !== TokenType.Colon &&
@@ -357,14 +351,6 @@ export function parse(tokens: Token[]): ASTNode[] {
     }
     expectNewlineOrEOF();
     return { type: "Call", name: name.trim(), args, line: startToken.line };
-  }
-
-  function hasColonAhead(): boolean {
-    for (let i = pos; i < tokens.length; i++) {
-      if (tokens[i].type === TokenType.Colon) return true;
-      if (tokens[i].type === TokenType.Newline || tokens[i].type === TokenType.EOF) return false;
-    }
-    return false;
   }
 
   function parseArgList(): ExprNode[] {

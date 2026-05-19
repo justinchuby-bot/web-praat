@@ -20,7 +20,7 @@ export function VocalTractEditor({
   tractLength = 17.5,
   onAreasChange,
 }: VocalTractEditorProps) {
-  const [areas, setAreas] = useState<number[]>(() => getVowelTract('ə', numSections));
+  const [areas, setAreas] = useState<number[]>(() => Array.from(getVowelTract('ə', numSections)));
   const [selectedVowel, setSelectedVowel] = useState('ə');
   const tractCanvasRef = useRef<HTMLCanvasElement>(null);
   const spectrumCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -178,7 +178,7 @@ export function VocalTractEditor({
   const handleVowelSelect = useCallback(
     (vowel: string) => {
       setSelectedVowel(vowel);
-      const newAreas = getVowelTract(vowel, numSections);
+      const newAreas = Array.from(getVowelTract(vowel, numSections));
       setAreas(newAreas);
       onAreasChange?.(newAreas);
     },

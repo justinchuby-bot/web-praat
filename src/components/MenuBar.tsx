@@ -38,6 +38,15 @@ interface MenuBarProps {
   showFormants: boolean;
   showIntensity: boolean;
   showCochleagram: boolean;
+  onOpenManipulation?: () => void;
+  onOpenPitchTier?: () => void;
+  onOpenFormantGrid?: () => void;
+  onOpenDurationTier?: () => void;
+  onOpenAmplitudeTier?: () => void;
+  onOpenVocalTract?: () => void;
+  onOpenSpectrumEditor?: () => void;
+  onOpenExperiment?: () => void;
+  onOpenScriptEditor?: () => void;
 }
 
 function FileInput({ accept, onFile, children }: { accept: string; onFile: (f: File) => void; children: React.ReactNode }) {
@@ -58,6 +67,9 @@ export function MenuBar(props: MenuBarProps) {
     onZoomIn, onZoomOut, onFitToWindow, onZoomToSelection,
     onTogglePitch, onToggleFormants, onToggleIntensity, onToggleCochleagram,
     showPitch, showFormants, showIntensity, showCochleagram,
+    onOpenManipulation, onOpenPitchTier, onOpenFormantGrid,
+    onOpenDurationTier, onOpenAmplitudeTier, onOpenVocalTract,
+    onOpenSpectrumEditor, onOpenExperiment, onOpenScriptEditor,
   } = props;
 
   return (
@@ -125,6 +137,24 @@ export function MenuBar(props: MenuBarProps) {
           <DropdownMenuItem onClick={onToggleCochleagram}>
             {showCochleagram ? '✓ ' : ''}Cochleagram (Bark)
           </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Tools */}
+      <DropdownMenu>
+        <DropdownMenuTrigger className="menubar-item">Tools</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem disabled={!hasAudio} onClick={onOpenManipulation}>Manipulation Editor</DropdownMenuItem>
+          <DropdownMenuItem disabled={!hasAudio} onClick={onOpenPitchTier}>Pitch Tier Editor</DropdownMenuItem>
+          <DropdownMenuItem disabled={!hasAudio} onClick={onOpenFormantGrid}>Formant Grid Editor</DropdownMenuItem>
+          <DropdownMenuItem disabled={!hasAudio} onClick={onOpenDurationTier}>Duration Tier Editor</DropdownMenuItem>
+          <DropdownMenuItem disabled={!hasAudio} onClick={onOpenAmplitudeTier}>Amplitude Tier Editor</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={onOpenVocalTract}>Vocal Tract Editor</DropdownMenuItem>
+          <DropdownMenuItem disabled={!hasAudio} onClick={onOpenSpectrumEditor}>Spectrum Editor</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={onOpenExperiment}>Experiment (MFC)</DropdownMenuItem>
+          <DropdownMenuItem onClick={onOpenScriptEditor}>Script Editor</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
