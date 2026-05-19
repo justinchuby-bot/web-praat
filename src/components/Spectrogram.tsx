@@ -54,7 +54,9 @@ export const Spectrogram = React.memo(function Spectrogram({
     canvas.height = height * window.devicePixelRatio;
     ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
 
-    ctx.fillStyle = '#11111b';
+    const style = getComputedStyle(document.documentElement);
+    const shouldInvert = style.getPropertyValue('--colormap-invert').trim() === '1';
+    ctx.fillStyle = style.getPropertyValue('--spectrogram-bg').trim() || '#11111b';
     ctx.fillRect(0, 0, width, height);
 
     const { spectrogram } = analysis;
@@ -91,7 +93,8 @@ export const Spectrogram = React.memo(function Spectrogram({
           0,
           Math.min(1, 1 - Math.abs(db) / Math.max(analysis.settings.spectrogram.dynamicRangeDb, 1))
         );
-        const [r, g, b] = colorForValue(normalized);
+        const mapInput = shouldInvert ? 1 - normalized : normalized;
+        const [r, g, b] = colorForValue(mapInput);
         ctx.fillStyle = `rgb(${r},${g},${b})`;
         const y = height - (bin + 1) * rowHeight;
         ctx.fillRect(x, y, colWidth + 1, rowHeight + 1);
@@ -99,7 +102,7 @@ export const Spectrogram = React.memo(function Spectrogram({
     }
 
     if (showPitch) {
-      ctx.strokeStyle = '#89b4fa';
+      ctx.strokeStyle = style.getPropertyValue('--accent').trim() || '#89b4fa';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       let started = false;
@@ -147,7 +150,7 @@ export const Spectrogram = React.memo(function Spectrogram({
     }
 
     if (showIntensity) {
-      ctx.strokeStyle = '#a6e3a1';
+      ctx.strokeStyle = style.getPropertyValue('--intensity-color').trim() || '#a6e3a1';
       ctx.lineWidth = 1.2;
       ctx.beginPath();
       let started = false;
@@ -170,7 +173,7 @@ export const Spectrogram = React.memo(function Spectrogram({
     if (selection) {
       const x1 = timeToX(selection.start, width, viewRange);
       const x2 = timeToX(selection.end, width, viewRange);
-      ctx.fillStyle = 'rgba(137, 180, 250, 0.1)';
+      ctx.fillStyle = style.getPropertyValue('--selection-bg').trim() || 'rgba(137, 180, 250, 0.1)';
       ctx.fillRect(x1, 0, x2 - x1, height);
     }
 
@@ -193,14 +196,14 @@ export const Spectrogram = React.memo(function Spectrogram({
         const f1Y = height - (ann.f1 / maxDisplayFreq) * height;
         const labelY = Math.max(14, f1Y - 6);
         const alpha = 0.5 + ann.confidence * 0.5;
-        ctx.fillStyle = `rgba(205, 214, 244, ${alpha})`;
+        ctx.fillStyle = style.getPropertyValue('--text-overlay').trim() || `rgba(205, 214, 244, ${alpha})`;
         ctx.fillText(ann.symbol, x, labelY);
       }
     }
 
     if (currentTime >= viewRange.start && currentTime <= viewRange.end) {
       const x = timeToX(currentTime, width, viewRange);
-      ctx.strokeStyle = '#cdd6f4';
+      ctx.strokeStyle = style.getPropertyValue('--playhead-color').trim() || '#cdd6f4';
       ctx.beginPath();
       ctx.moveTo(x + 0.5, 0);
       ctx.lineTo(x + 0.5, height);
