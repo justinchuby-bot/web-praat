@@ -738,7 +738,7 @@ export default function App() {
                 currentTime={currentTime}
                 viewRange={viewRange}
                 onSelectionChange={setSelection}
-                onCursorChange={setCurrentTime}
+                onCursorChange={(time: number) => { setCurrentTime(time); handleSpectrumSliceSelect(time); }}
                 onWheelZoom={handleWheelZoom}
                 onPan={handlePan}
                 onZoomSelection={handleZoomSelection}

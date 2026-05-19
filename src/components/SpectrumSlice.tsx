@@ -14,17 +14,21 @@ export function SpectrumSlice({ slice }: SpectrumSliceProps) {
     );
   }
 
-  const maxMagnitude = Math.max(...Array.from(slice.fftMagnitudes), 1e-6);
-  const points = Array.from(slice.fftMagnitudes).map((magnitude, index) => {
-    const x = (index / Math.max(slice.fftMagnitudes.length - 1, 1)) * 100;
-    const y = 100 - (magnitude / maxMagnitude) * 100;
+  // Convert to dB scale for display (both FFT and LPC on same scale)
+  const fftDb = Array.from(slice.fftMagnitudes).map(m => m > 0 ? 20 * Math.log10(m) : -120);
+  const envDb = Array.from(slice.lpcEnvelope).map(v => v > 0 ? 20 * Math.log10(v) : -120);
+  const allDb = [...fftDb, ...envDb];
+  const maxDb = Math.max(...allDb);
+  const minDb = maxDb - 80; // 80 dB dynamic range
+
+  const points = fftDb.map((db, index) => {
+    const x = (index / Math.max(fftDb.length - 1, 1)) * 100;
+    const y = 100 - Math.max(0, Math.min(1, (db - minDb) / (maxDb - minDb))) * 100;
     return `${x},${y}`;
   });
-  const envelopeMin = Math.min(...Array.from(slice.lpcEnvelope));
-  const envelopeMax = Math.max(...Array.from(slice.lpcEnvelope));
-  const envelopePoints = Array.from(slice.lpcEnvelope).map((value, index) => {
-    const x = (index / Math.max(slice.lpcEnvelope.length - 1, 1)) * 100;
-    const y = 100 - ((value - envelopeMin) / Math.max(envelopeMax - envelopeMin, 1e-6)) * 100;
+  const envelopePoints = envDb.map((db, index) => {
+    const x = (index / Math.max(envDb.length - 1, 1)) * 100;
+    const y = 100 - Math.max(0, Math.min(1, (db - minDb) / (maxDb - minDb))) * 100;
     return `${x},${y}`;
   });
 
