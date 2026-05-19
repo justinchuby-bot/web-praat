@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useStreamingRecording } from './hooks/useStreamingRecording';
-import { analyzeAudio } from './audio/analyzer';
+import { useAnalysisWorker } from './hooks/useAnalysisWorker';
 import { defaultAnalysisSettings, defaultFilterSettings, createEmptyTextGrid } from './audio/defaults';
 import { AudioEditorHistory, ReplaceRangeCommand } from './audio/editor';
 import { applyBiquadFilter } from './audio/filters';
@@ -70,6 +70,7 @@ export default function App() {
   settingsRef.current = settings;
 
   const streaming = useStreamingRecording(settings);
+  const { analyze: analyzeInWorker } = useAnalysisWorker();
   const audioCtxRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
   const animFrameRef = useRef<number>(0);
@@ -86,30 +87,37 @@ export default function App() {
     setCanRedo(editorRef.current.canRedo());
   }, []);
 
+  const [analyzing, setAnalyzing] = useState(false);
+
   const processSamples = useCallback(
     (samples: Float32Array, nextSampleRate: number, resetEditor = false) => {
       currentSamplesRef.current = Float32Array.from(samples);
       setSampleRate(nextSampleRate);
-      const nextAnalysis = analyzeAudio(samples, nextSampleRate, settingsRef.current);
-      setAnalysis(nextAnalysis);
-      setSelection(null);
-      setCurrentTime(0);
-      const nextGrid =
-        textGridRef.current.xmax > 0 && textGridRef.current.xmax !== 1 && !resetEditor
-          ? { ...textGridRef.current, xmax: nextAnalysis.duration }
-          : createEmptyTextGrid(nextAnalysis.duration);
-      textGridRef.current = nextGrid;
-      setTextGrid(nextGrid);
-      setActiveTierId(nextGrid.tiers[0]?.id ?? null);
-      const fitted = fitToWindow(nextAnalysis.duration);
-      setViewStart(fitted.start);
-      setViewEnd(fitted.end);
-      if (resetEditor) {
-        editorRef.current.setSamples(samples);
-        syncHistoryFlags();
-      }
+      setAnalyzing(true);
+      // Copy samples since we transfer the buffer to the worker
+      const copy = Float32Array.from(samples);
+      analyzeInWorker(copy, nextSampleRate, settingsRef.current).then((nextAnalysis) => {
+        setAnalyzing(false);
+        setAnalysis(nextAnalysis);
+        setSelection(null);
+        setCurrentTime(0);
+        const nextGrid =
+          textGridRef.current.xmax > 0 && textGridRef.current.xmax !== 1 && !resetEditor
+            ? { ...textGridRef.current, xmax: nextAnalysis.duration }
+            : createEmptyTextGrid(nextAnalysis.duration);
+        textGridRef.current = nextGrid;
+        setTextGrid(nextGrid);
+        setActiveTierId(nextGrid.tiers[0]?.id ?? null);
+        const fitted = fitToWindow(nextAnalysis.duration);
+        setViewStart(fitted.start);
+        setViewEnd(fitted.end);
+        if (resetEditor) {
+          editorRef.current.setSamples(samples);
+          syncHistoryFlags();
+        }
+      });
     },
-    [syncHistoryFlags]
+    [syncHistoryFlags, analyzeInWorker]
   );
 
   const processAudioBuffer = useCallback(
@@ -499,6 +507,12 @@ export default function App() {
                 onSpectrumSliceSelect={() => {}}
               />
             </>
+          )}
+
+          {analyzing && (
+            <div className="flex items-center justify-center py-8 text-zinc-400">
+              <span className="animate-pulse">Analyzing…</span>
+            </div>
           )}
 
           {analysis && (
