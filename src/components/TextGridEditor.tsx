@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import type { TextGrid, TextGridTier, TimeSelection, ViewRange } from '../types';
 import { timeToX, xToTime } from '../utils/view';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu';
+import { getTierDepth } from '../textgrid/hierarchy';
 
 interface TextGridEditorProps {
   textGrid: TextGrid;
@@ -20,6 +21,7 @@ interface TextGridEditorProps {
   onDeleteBoundary: (tierId: string, boundaryIndex: number) => void;
   onDeletePoint: (tierId: string, pointId: string) => void;
   onMoveTier?: (tierId: string, direction: 'up' | 'down') => void;
+  onSetTierParent?: (tierId: string, parentId: string | null) => void;
 }
 
 interface BoundaryDragState {
@@ -63,6 +65,7 @@ export function TextGridEditor({
   onDeleteBoundary,
   onDeletePoint,
   onMoveTier,
+  onSetTierParent,
 }: TextGridEditorProps) {
   const tierHeight = 54;
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
@@ -229,11 +232,13 @@ export function TextGridEditor({
 
   return (
     <section className="textgrid-editor" onClick={() => { setSelectedItem(null); setTierMenuOpen(null); }}>
-      {textGrid.tiers.map((tier, tierIndex) => (
+      {textGrid.tiers.map((tier, tierIndex) => {
+        const depth = getTierDepth(textGrid, tier.id);
+        return (
         <div
           key={tier.id}
           className={`textgrid-tier ${activeTierId === tier.id ? 'is-active' : ''}`}
-          style={{ height: tierHeight }}
+          style={{ height: tierHeight, paddingLeft: depth * 12 }}
         >
           <div className="textgrid-tier-label">
             <span
@@ -259,6 +264,21 @@ export function TextGridEditor({
                 )}
                 {onMoveTier && tierIndex < textGrid.tiers.length - 1 && (
                   <button onClick={() => { onMoveTier(tier.id, 'down'); setTierMenuOpen(null); }}>Move Down</button>
+                )}
+                {onSetTierParent && (
+                  <button onClick={() => {
+                    const parentOptions = textGrid.tiers.filter((t) => t.id !== tier.id && t.kind === 'interval');
+                    const choices = ['(none)', ...parentOptions.map((t) => t.name)].join(', ');
+                    const chosen = prompt(`Set parent tier for "${tier.name}":\nOptions: ${choices}`, tier.parentId ? (textGrid.tiers.find((t) => t.id === tier.parentId)?.name || '') : '');
+                    if (chosen === null) { setTierMenuOpen(null); return; }
+                    if (chosen === '' || chosen === '(none)') {
+                      onSetTierParent(tier.id, null);
+                    } else {
+                      const target = parentOptions.find((t) => t.name === chosen);
+                      if (target) onSetTierParent(tier.id, target.id);
+                    }
+                    setTierMenuOpen(null);
+                  }}>Set Parent</button>
                 )}
                 <button className="is-danger" onClick={() => { onRemoveTier(tier.id); setTierMenuOpen(null); }}>Delete</button>
               </div>
@@ -339,7 +359,8 @@ export function TextGridEditor({
               })}
           </div>
         </div>
-      ))}
+        );
+      })}
       <div className="textgrid-add-tier-row">
         <button className="textgrid-add-tier" onClick={() => handleAddTier('interval')} title="Add interval tier">+ Interval Tier</button>
         <button className="textgrid-add-tier" onClick={() => handleAddTier('point')} title="Add point tier">+ Point Tier</button>

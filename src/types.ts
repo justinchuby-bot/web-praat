@@ -146,6 +146,7 @@ export interface IntervalTier {
   name: string;
   kind: 'interval';
   intervals: Interval[];
+  parentId?: string;
 }
 
 export interface PointTier {
@@ -153,6 +154,7 @@ export interface PointTier {
   name: string;
   kind: 'point';
   points: Point[];
+  parentId?: string;
 }
 
 export type TextGridTier = IntervalTier | PointTier;
