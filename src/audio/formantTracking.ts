@@ -145,14 +145,32 @@ function trackSingleFormant(
  */
 export function trackFormants(
   frames: FormantFrame[],
-  numberOfFormants = 3,
+  numberOfFormants = 5,
   options?: Partial<TrackingOptions>
 ): Array<Array<number | null>> {
   const opts: TrackingOptions = { ...defaultOptions, ...options };
   const expected = [500, 1500, 2500, 3500, 4500];
   const tracks: Array<Array<number | null>> = [];
+
+  // Track formants sequentially, removing assigned candidates to prevent overlap
+  const remainingFrames = frames.map((f) => ({ ...f, candidates: [...f.candidates] }));
+
   for (let i = 0; i < numberOfFormants; i++) {
-    tracks.push(trackSingleFormant(frames, expected[i] ?? expected[expected.length - 1], opts));
+    const track = trackSingleFormant(remainingFrames, expected[i] ?? expected[expected.length - 1], opts);
+    tracks.push(track);
+
+    // Remove the chosen candidate from each frame to avoid reuse
+    for (let frameIdx = 0; frameIdx < remainingFrames.length; frameIdx++) {
+      const chosen = track[frameIdx];
+      if (chosen !== null) {
+        const idx = remainingFrames[frameIdx].candidates.findIndex(
+          (c) => Math.abs(c - chosen) < 1
+        );
+        if (idx !== -1) {
+          remainingFrames[frameIdx].candidates.splice(idx, 1);
+        }
+      }
+    }
   }
   return tracks;
 }

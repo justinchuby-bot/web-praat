@@ -21,9 +21,9 @@ export const defaultAnalysisSettings: AnalysisSettings = {
     maxCandidates: 15,
   },
   formant: {
-    maxFrequency: 5000,
-    lpcOrder: 12,
-    numberOfFormants: 3,
+    maxFrequency: 5500,
+    lpcOrder: 10,
+    numberOfFormants: 5,
     smoothingWindowMs: 20,
     transitionCostWeight: 1.0,
     medianFilterSize: 3,
