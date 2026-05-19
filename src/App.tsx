@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useStreamingRecording } from './hooks/useStreamingRecording';
 import { useAnalysisWorker } from './hooks/useAnalysisWorker';
+import { useIsMobile } from './hooks/useIsMobile';
+import { BottomSheet } from './components/BottomSheet';
 import { defaultAnalysisSettings, defaultFilterSettings, createEmptyTextGrid } from './audio/defaults';
 import { AudioEditorHistory, ReplaceRangeCommand } from './audio/editor';
 import { applyBiquadFilter } from './audio/filters';
@@ -63,6 +65,7 @@ function createAudioBufferFromSamples(samples: Float32Array, sampleRate: number)
 }
 
 export default function App() {
+  const isMobile = useIsMobile();
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [selection, setSelection] = useState<TimeSelection | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -522,18 +525,20 @@ export default function App() {
       />
 
       <div className="app-body">
-        <Sidebar
-          showPitch={showPitch}
-          showFormants={showFormants}
-          showIntensity={showIntensity}
-          showIpa={showIpa}
-          showCochleagram={showCochleagram}
-          onTogglePitch={() => setShowPitch((value) => !value)}
-          onToggleFormants={() => setShowFormants((value) => !value)}
-          onToggleIntensity={() => setShowIntensity((value) => !value)}
-          onToggleIpa={() => setShowIpa((value) => !value)}
-          onToggleCochleagram={() => setShowCochleagram((value) => !value)}
-        />
+        {!isMobile && (
+          <Sidebar
+            showPitch={showPitch}
+            showFormants={showFormants}
+            showIntensity={showIntensity}
+            showIpa={showIpa}
+            showCochleagram={showCochleagram}
+            onTogglePitch={() => setShowPitch((value) => !value)}
+            onToggleFormants={() => setShowFormants((value) => !value)}
+            onToggleIntensity={() => setShowIntensity((value) => !value)}
+            onToggleIpa={() => setShowIpa((value) => !value)}
+            onToggleCochleagram={() => setShowCochleagram((value) => !value)}
+          />
+        )}
 
         <main className="main-area" role="main" aria-label="Audio editor">
           <div className="visualizations">
@@ -661,7 +666,7 @@ export default function App() {
 
         </main>
 
-        {analysis && (
+        {analysis && !isMobile && (
           <RightSidebar>
             {{
               spectrum: <SpectrumSlice slice={analysis.spectrumSlice} />,
@@ -678,6 +683,48 @@ export default function App() {
           </RightSidebar>
         )}
       </div>
+
+      {isMobile && (
+        <BottomSheet trigger="⚙️">
+          <div className="bottom-sheet-content">
+            <div className="sidebar-section">
+              <h3>Overlays</h3>
+              <label className="toggle-label">
+                <input type="checkbox" checked={showPitch} onChange={() => setShowPitch((v) => !v)} />
+                <span className="toggle-indicator pitch" />
+                Pitch
+              </label>
+              <label className="toggle-label">
+                <input type="checkbox" checked={showFormants} onChange={() => setShowFormants((v) => !v)} />
+                <span className="toggle-indicator formants" />
+                Formants
+              </label>
+              <label className="toggle-label">
+                <input type="checkbox" checked={showIntensity} onChange={() => setShowIntensity((v) => !v)} />
+                <span className="toggle-indicator intensity" />
+                Intensity
+              </label>
+              <label className="toggle-label">
+                <input type="checkbox" checked={showIpa} onChange={() => setShowIpa((v) => !v)} />
+                <span className="toggle-indicator ipa" />
+                IPA Vowels
+              </label>
+              <label className="toggle-label">
+                <input type="checkbox" checked={showCochleagram} onChange={() => setShowCochleagram((v) => !v)} />
+                <span className="toggle-indicator" style={{ backgroundColor: '#94e2d5' }} />
+                Cochleagram
+              </label>
+            </div>
+            {analysis && (
+              <div className="sidebar-section">
+                <h3>Settings</h3>
+                <SettingsPanel settings={settings} onChange={setSettings} />
+                <FilterPanel settings={filterSettings} onChange={setFilterSettings} onApply={handleApplyFilter} onReset={handleResetFilter} />
+              </div>
+            )}
+          </div>
+        </BottomSheet>
+      )}
 
       <StatusBar
         hasAudio={!!analysis}

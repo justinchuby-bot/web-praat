@@ -19,7 +19,7 @@
 - [x] **自动 IPA 标注** — 根据 F1/F2 值自动在语谱图/波形图上标注国际音标元音符号
 - [x] **MenuBar hover 切换** — 打开菜单后 hover 其他菜单项立即切换；实现 Amazon triangle trick（防止斜向移动误触发切换）
 - [x] **布局修复**：波形/語谱图区域默认占主视图 ~65% 高度（flex:7）；TextGrid 区域 ~35%（flex:3，可滚动）；RightSidebar 已默认折叠 + tab 切换
-- [ ] Wire BottomSheet + useIsMobile to App.tsx（移动端显示 BottomSheet 替代 Sidebar）
+- [x] Wire BottomSheet + useIsMobile to App.tsx（移动端显示 BottomSheet 替代 Sidebar）
 - [ ] JS API 补全（intensity, spectrogram, textGrid, mfcc, resample, getMin/getMax, fft/ifft）
 - [ ] Shiki 语法高亮（Praat Script TextMate grammar）
 - [ ] MCP Server 层（暴露语音分析给 AI agent）
@@ -85,6 +85,7 @@
 - [x] **Praat Script 引擎** — lexer + parser + interpreter (for/while/if/procedure)
 - [x] **JavaScript Scripting** — `praat.*` API + 沙箱 + 语言切换 tab
 - [x] **移动端适配** — 响应式布局 + 触摸手势 + BottomSheet
+- [x] **BottomSheet wiring** — useIsMobile hides Sidebar+RightSidebar on mobile, shows BottomSheet FAB with overlay toggles + settings
 - [x] **React 性能优化** — React.memo on heavy components + ref patterns
 - [x] **全功能集成到 UI** — Tools 菜单入口（所有 9 个新组件）
 - [x] **Deps 全线升级** — React 19, TS 6, Vite 8, vitest 4.1
