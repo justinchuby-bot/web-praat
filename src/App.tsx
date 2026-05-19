@@ -392,6 +392,8 @@ export default function App() {
   useEffect(() => {
     const handleDragEnter = (event: DragEvent) => {
       event.preventDefault();
+      // Only show drop overlay for external file drops, not internal boundary drags
+      if (!event.dataTransfer?.types.includes('Files')) return;
       dragCounterRef.current++;
       if (dragCounterRef.current === 1) {
         setDragFileType(detectFileType(event));
