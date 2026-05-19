@@ -16,6 +16,36 @@
 - [ ] 性能优化：Web Worker for heavy DSP
 - [ ] 移动端适配
 
+
+## 缺失的 Praat 功能（需要新增）
+
+### 高优先
+- [ ] Manipulation（pitch/duration 编辑 + 重合成）
+- [ ] Long-Term Average Spectrum (LTAS)
+- [ ] Harmonicity (HNR) 显示
+- [ ] PointProcess（声门脉冲标记）
+- [ ] Sound enhance（降噪、预加重、去静音）
+
+### 中优先
+- [ ] Cochleagram（听觉频谱图）
+- [ ] Excitation pattern
+- [ ] VocalTract 模型（声道面积函数→频谱）
+- [ ] Spectrum 编辑（频域滤波、手动修改）
+- [ ] FormantGrid 编辑（手动画 formant 轨迹）
+- [ ] PitchTier 编辑（手动调 pitch 曲线）
+- [ ] DurationTier（时长修改）
+- [ ] AmplitudeTier（振幅包络）
+- [ ] Sound → PointProcess（自动检测声门脉冲）
+- [ ] Pitch → PitchTier → Sound（pitch 合成）
+
+### 低优先
+- [ ] SpeechSynthesizer（TTS）
+- [ ] ExperimentMFC（感知实验）
+- [ ] SpellingChecker
+- [ ] Distributions & Transition（统计）
+- [ ] Polygon / Photo / Movie 支持
+- [ ] Praat Script 脚本引擎
+
 ## 已完成 ✅
 
 - [x] 基础框架 (React + TypeScript + Vite)
