@@ -32,6 +32,14 @@
 - [ ] Excitation pattern
 - [ ] SpeechSynthesizer（TTS）
 
+### 中优先（借鉴 Tony + ELAN）
+- [ ] Pitch sonification（听 pitch track，验证准确性）
+- [ ] Note transcription（pitch → 音符/半音）
+- [ ] Hierarchical tiers（tier parent-child 关系）
+- [ ] ELAN (.eaf) 导入导出
+- [ ] Video sync（标注跟视频对齐）
+- [ ] Controlled vocabulary（标注预定义词表）
+
 ### 低优先
 - [ ] SpellingChecker
 - [ ] Distributions & Transition（统计）
