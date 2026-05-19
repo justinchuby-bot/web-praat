@@ -40,6 +40,7 @@ import { ExperimentMFC } from './components/ExperimentMFC';
 import { ScriptEditor } from './components/ScriptEditor';
 import { VoiceQualityPanel } from './components/VoiceQualityPanel';
 import { Waveform } from './components/Waveform';
+import { DropOverlay, DropFileType } from './components/DropOverlay';
 import { Minimap } from './components/Minimap';
 import { FilterPanel } from './components/FilterPanel';
 import {
@@ -369,25 +370,61 @@ export default function App() {
   }, [activeTierId, textGrid.tiers]);
   const rhythmMetrics = useMemo(() => computeRhythmMetrics(intervalDurations), [intervalDurations]);
 
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [dragFileType, setDragFileType] = useState<DropFileType>('audio');
+  const dragCounterRef = useRef(0);
+
+  const detectFileType = useCallback((event: DragEvent): DropFileType => {
+    const items = event.dataTransfer?.items;
+    if (items && items.length > 0) {
+      const item = items[0];
+      if (item.type.startsWith('audio/') || /\.(wav|mp3|flac|ogg)$/i.test(item.type)) return 'audio';
+      // Can't reliably read filename from items during dragenter, check type
+      if (item.type === '' || item.type === 'text/plain') return 'audio'; // default guess
+    }
+    return 'audio';
+  }, []);
+
   useEffect(() => {
+    const handleDragEnter = (event: DragEvent) => {
+      event.preventDefault();
+      dragCounterRef.current++;
+      if (dragCounterRef.current === 1) {
+        setDragFileType(detectFileType(event));
+        setIsDragOver(true);
+      }
+    };
+    const handleDragLeave = (event: DragEvent) => {
+      event.preventDefault();
+      dragCounterRef.current--;
+      if (dragCounterRef.current === 0) {
+        setIsDragOver(false);
+      }
+    };
     const handleDrop = (event: DragEvent) => {
       event.preventDefault();
+      dragCounterRef.current = 0;
+      setIsDragOver(false);
       const file = event.dataTransfer?.files[0];
       if (!file) return;
       if (file.name.endsWith('.TextGrid')) {
         void handleImportTextGrid(file);
-      } else if (file.type.startsWith('audio/')) {
+      } else if (file.type.startsWith('audio/') || /\.(wav|mp3|flac|ogg)$/i.test(file.name)) {
         void handleLoadFile(file);
       }
     };
     const prevent = (event: DragEvent) => event.preventDefault();
+    document.addEventListener('dragenter', handleDragEnter);
+    document.addEventListener('dragleave', handleDragLeave);
     document.addEventListener('drop', handleDrop);
     document.addEventListener('dragover', prevent);
     return () => {
+      document.removeEventListener('dragenter', handleDragEnter);
+      document.removeEventListener('dragleave', handleDragLeave);
       document.removeEventListener('drop', handleDrop);
       document.removeEventListener('dragover', prevent);
     };
-  }, [handleImportTextGrid, handleLoadFile]);
+  }, [handleImportTextGrid, handleLoadFile, detectFileType]);
 
   useEffect(() => () => {
     cancelAnimationFrame(animFrameRef.current);
@@ -522,6 +559,7 @@ export default function App() {
 
   return (
     <div className="app-layout">
+      <DropOverlay visible={isDragOver} fileType={dragFileType} />
       <input ref={audioFileInputRef} type="file" accept="audio/*" hidden onChange={(e) => e.target.files?.[0] && handleLoadFile(e.target.files[0])} />
       <input ref={textGridFileInputRef} type="file" accept=".TextGrid,.textgrid,text/plain" hidden onChange={(e) => e.target.files?.[0] && handleImportTextGrid(e.target.files[0])} />
       <MenuBar
