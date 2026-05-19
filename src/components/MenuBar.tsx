@@ -165,7 +165,9 @@ export function MenuBar(props: MenuBarProps) {
           <DropdownMenuItem onClick={() => document.dispatchEvent(new CustomEvent('open-shortcuts-dialog'))}>
             Keyboard Shortcuts
           </DropdownMenuItem>
-          <DropdownMenuItem disabled>About Web-Praat</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => document.dispatchEvent(new CustomEvent('open-about-dialog'))}>
+            About Web-Praat
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </nav>

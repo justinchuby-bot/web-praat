@@ -9,6 +9,7 @@ import { computeRhythmMetrics } from './audio/rhythm';
 import { loadAudioFile } from './audio/recorder';
 import { computeSpectrumSlice } from './audio/spectrum';
 import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog';
+import { AboutDialog } from "./components/AboutDialog";
 import { MenuBar } from './components/MenuBar';
 import { RhythmPanel } from './components/RhythmPanel';
 import { RightSidebar } from './components/RightSidebar';
@@ -677,6 +678,7 @@ export default function App() {
         streamDuration={streaming.streamDuration}
       />
       <KeyboardShortcutsDialog />
+      <AboutDialog />
 
       {/* Tool Panels */}
       {showManipulation && currentSamplesRef.current && (
