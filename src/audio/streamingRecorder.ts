@@ -1,6 +1,8 @@
 /**
  * Streaming audio recorder that provides real-time sample data
  * for live spectrogram visualization during recording.
+ *
+ * Uses AudioWorkletNode (modern, non-deprecated) for raw sample access.
  */
 
 export interface StreamingRecorderCallbacks {
@@ -12,7 +14,7 @@ export class StreamingRecorder {
   private audioContext: AudioContext | null = null;
   private mediaStream: MediaStream | null = null;
   private sourceNode: MediaStreamAudioSourceNode | null = null;
-  private scriptNode: ScriptProcessorNode | null = null;
+  private workletNode: AudioWorkletNode | null = null;
   private chunks: Float32Array[] = [];
   private _isRecording = false;
   private callbacks: StreamingRecorderCallbacks | null = null;
@@ -34,28 +36,30 @@ export class StreamingRecorder {
     this.audioContext = new AudioContext();
     this.sourceNode = this.audioContext.createMediaStreamSource(stream);
 
-    // Use ScriptProcessorNode for raw sample access (AudioWorklet would be better
-    // but requires separate file and more complexity)
-    const bufferSize = 4096;
-    this.scriptNode = this.audioContext.createScriptProcessor(bufferSize, 1, 1);
+    // Load AudioWorklet processor module
+    await this.audioContext.audioWorklet.addModule('/recording-processor.js');
 
-    this.scriptNode.onaudioprocess = (event) => {
+    this.workletNode = new AudioWorkletNode(this.audioContext, 'recording-processor');
+
+    this.workletNode.port.onmessage = (event) => {
       if (!this._isRecording) return;
-      const inputData = event.inputBuffer.getChannelData(0);
-      const copy = Float32Array.from(inputData);
-      this.chunks.push(copy);
-      this.callbacks?.onData(copy, this.audioContext!.sampleRate);
+      const samples = event.data as Float32Array;
+      this.chunks.push(samples);
+      this.callbacks?.onData(samples, this.audioContext!.sampleRate);
     };
 
-    this.sourceNode.connect(this.scriptNode);
-    this.scriptNode.connect(this.audioContext.destination);
+    this.sourceNode.connect(this.workletNode);
+    // AudioWorkletNode must be connected to destination to keep processing
+    this.workletNode.connect(this.audioContext.destination);
     this._isRecording = true;
   }
 
   stop(): { samples: Float32Array; sampleRate: number } {
     this._isRecording = false;
 
-    this.scriptNode?.disconnect();
+    // Signal the worklet processor to stop
+    this.workletNode?.port.postMessage('stop');
+    this.workletNode?.disconnect();
     this.sourceNode?.disconnect();
     this.mediaStream?.getTracks().forEach((t) => t.stop());
 
@@ -74,7 +78,7 @@ export class StreamingRecorder {
     this.audioContext = null;
     this.mediaStream = null;
     this.sourceNode = null;
-    this.scriptNode = null;
+    this.workletNode = null;
     this.callbacks = null;
 
     return { samples, sampleRate };
