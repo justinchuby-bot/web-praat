@@ -8,9 +8,11 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:mcp": "tsc --project tsconfig.mcp.json"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-menubar": "^1.1.16",
@@ -28,6 +30,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.0",
+    "@types/node": "^25.9.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
@@ -41,5 +44,8 @@
     "vite": "^8.0.13",
     "vitest": "^4.1.6"
   },
-  "license": "GPL-3.0-only"
+  "license": "GPL-3.0-only",
+  "bin": {
+    "web-praat-mcp": "./dist/mcp/server.js"
+  }
 }
