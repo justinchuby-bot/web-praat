@@ -4,9 +4,11 @@ interface SidebarProps {
   showPitch: boolean;
   showFormants: boolean;
   showIntensity: boolean;
+  showCochleagram: boolean;
   onTogglePitch: () => void;
   onToggleFormants: () => void;
   onToggleIntensity: () => void;
+  onToggleCochleagram: () => void;
   children?: ReactNode;
 }
 
@@ -14,9 +16,11 @@ export function Sidebar({
   showPitch,
   showFormants,
   showIntensity,
+  showCochleagram,
   onTogglePitch,
   onToggleFormants,
   onToggleIntensity,
+  onToggleCochleagram,
   children,
 }: SidebarProps) {
   return (
@@ -42,6 +46,15 @@ export function Sidebar({
           <input type="checkbox" checked={showIntensity} onChange={onToggleIntensity} />
           <span className="toggle-indicator intensity" />
           Intensity
+        </label>
+      </div>
+
+      <div className="sidebar-section">
+        <h3>Display Mode</h3>
+        <label className="toggle-label">
+          <input type="checkbox" checked={showCochleagram} onChange={onToggleCochleagram} />
+          <span className="toggle-indicator" style={{ backgroundColor: '#94e2d5' }} />
+          Cochleagram (Bark scale)
         </label>
       </div>
 

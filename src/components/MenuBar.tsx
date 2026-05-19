@@ -33,9 +33,11 @@ interface MenuBarProps {
   onTogglePitch: () => void;
   onToggleFormants: () => void;
   onToggleIntensity: () => void;
+  onToggleCochleagram: () => void;
   showPitch: boolean;
   showFormants: boolean;
   showIntensity: boolean;
+  showCochleagram: boolean;
 }
 
 function FileInput({ accept, onFile, children }: { accept: string; onFile: (f: File) => void; children: React.ReactNode }) {
@@ -54,8 +56,8 @@ export function MenuBar(props: MenuBarProps) {
     onExportPitchCsv, onExportFormantCsv, onExportIntensityCsv, onExportHarmonicityCsv,
     onUndo, onRedo, onCut, onCopy, onPaste, onDelete,
     onZoomIn, onZoomOut, onFitToWindow, onZoomToSelection,
-    onTogglePitch, onToggleFormants, onToggleIntensity,
-    showPitch, showFormants, showIntensity,
+    onTogglePitch, onToggleFormants, onToggleIntensity, onToggleCochleagram,
+    showPitch, showFormants, showIntensity, showCochleagram,
   } = props;
 
   return (
@@ -119,6 +121,9 @@ export function MenuBar(props: MenuBarProps) {
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onToggleIntensity}>
             {showIntensity ? '✓ ' : ''}Intensity Overlay
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onToggleCochleagram}>
+            {showCochleagram ? '✓ ' : ''}Cochleagram (Bark)
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
