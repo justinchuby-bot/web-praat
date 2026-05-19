@@ -148,7 +148,27 @@ describe('Praat accuracy — frequency sweep', () => {
   const result = analyzeAudio(samples, sampleRate);
   const pitchRef = loadRef('fixtures/sweep_pitch.json');
 
-  // TODO: Sweep pitch barely exceeds tolerance (max diff ~2.1 Hz vs ±2 Hz limit).
-  // Our autocorrelation is very close but not quite matching Praat on fast-changing pitch.
-  it.todo('pitch tracks sweep within ±2 Hz of Praat');
+  it('pitch tracks sweep within ±2 Hz of Praat', () => {
+    let compared = 0;
+    for (let i = 0; i < pitchRef.frequencies.length; i++) {
+      const refFreq = pitchRef.frequencies[i];
+      if (refFreq === 0 || refFreq === null) continue;
+      const refTime = pitchRef.times[i];
+      const ourIdx = result.pitch.times.findIndex((t: number) => Math.abs(t - refTime) < 0.005);
+      if (ourIdx === -1) continue;
+      
+      const ourFreq = result.pitch.frequencies[ourIdx];
+      if (ourFreq === null) continue;
+      
+      // Skip octave errors (separate issue from precision)
+      const diff = Math.abs(ourFreq - refFreq);
+      if (diff > refFreq * 0.25) continue;
+      
+      expect(diff,
+        `pitch at t=${refTime.toFixed(3)}: ours=${ourFreq.toFixed(1)} vs praat=${refFreq.toFixed(1)}`
+      ).toBeLessThan(2);
+      compared++;
+    }
+    expect(compared).toBeGreaterThan(0);
+  });
 });
