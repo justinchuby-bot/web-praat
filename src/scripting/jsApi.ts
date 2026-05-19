@@ -3,19 +3,22 @@
  * The `praat` object gives access to audio analysis functions.
  */
 
-import { computePitch, computeFormants, computeIntensity } from '../audio/analyzer';
+import { computePitch, computeFormants, computeIntensity, computeSpectrogram } from '../audio/analyzer';
 import { computeHarmonicity } from '../audio/harmonicity';
 import { computeLtas } from '../audio/ltas';
 import { reduceNoise, preEmphasis, removeSilence } from '../audio/soundEnhance';
 import { applyButterworthFilter } from '../audio/filters';
 import { computeVoiceQuality } from '../audio/voiceQuality';
 import { computePointProcess } from '../audio/pointprocess';
-import type { PitchData, FormantData, IntensityData } from '../types';
+import { computeMfcc } from '../audio/mfcc';
+import { fftInPlace, ifftInPlace } from '../utils/fft';
+import type { PitchData, FormantData, IntensityData, SpectrogramData, TextGrid } from '../types';
 
 export interface JsApiContext {
   samples: Float32Array;
   sampleRate: number;
   files?: Array<{ name: string; samples: Float32Array; sampleRate: number }>;
+  textGrid?: TextGrid | null;
 }
 
 export interface JsApiResult {
@@ -240,6 +243,79 @@ export function createPraatApi(context: JsApiContext, result: JsApiResult) {
         out[i] = samples[samples.length - 1 - i];
       }
       return out;
+    },
+
+    // Spectrogram
+    spectrogram(
+      audio?: Float32Array,
+      options?: { fftSize?: 256 | 512 | 1024 | 2048 | 4096; hopSize?: number; windowFunction?: 'hanning' | 'hamming' | 'gaussian' | 'bartlett' | 'rectangular' }
+    ): SpectrogramData {
+      const samples = audio ?? context.samples;
+      return computeSpectrogram(samples, context.sampleRate, {
+        spectrogram: {
+          fftSize: options?.fftSize ?? 512,
+          hopSize: options?.hopSize ?? 128,
+          windowFunction: options?.windowFunction ?? 'gaussian',
+          preEmphasis: 6,
+          dynamicRangeDb: 70,
+          colormap: 'jet',
+          maxViewFrequency: context.sampleRate / 2,
+        },
+      });
+    },
+
+    // MFCC
+    mfcc(
+      audio?: Float32Array,
+      options?: { numCoeffs?: number; fftSize?: number; hopSize?: number; numFilters?: number }
+    ) {
+      const samples = audio ?? context.samples;
+      return computeMfcc(samples, context.sampleRate, options);
+    },
+
+    // FFT — returns { real, imag } arrays
+    fft(audio?: Float32Array, size?: number) {
+      const samples = audio ?? context.samples;
+      const n = size ?? (function nextPow2(v: number) { let p = 1; while (p < v) p <<= 1; return p; })(samples.length);
+      const re = new Float64Array(n);
+      const im = new Float64Array(n);
+      for (let i = 0; i < Math.min(samples.length, n); i++) re[i] = samples[i];
+      fftInPlace(re, im);
+      return { real: re, imag: im, length: n };
+    },
+
+    // IFFT — takes { real, imag } and returns Float32Array
+    ifft(spectrum: { real: Float64Array; imag: Float64Array }): Float32Array {
+      const re = Float64Array.from(spectrum.real);
+      const im = Float64Array.from(spectrum.imag);
+      ifftInPlace(re, im);
+      const out = new Float32Array(re.length);
+      for (let i = 0; i < re.length; i++) out[i] = re[i];
+      return out;
+    },
+
+    // TextGrid access
+    textGrid: {
+      get data(): TextGrid | null {
+        return context.textGrid ?? null;
+      },
+      getTierByName(name: string) {
+        return context.textGrid?.tiers.find(t => t.name === name) ?? null;
+      },
+      getTierByIndex(index: number) {
+        return context.textGrid?.tiers[index] ?? null;
+      },
+      get numTiers(): number {
+        return context.textGrid?.tiers.length ?? 0;
+      },
+      getLabels(tierNameOrIndex: string | number): string[] {
+        const tier = typeof tierNameOrIndex === 'string'
+          ? context.textGrid?.tiers.find(t => t.name === tierNameOrIndex)
+          : context.textGrid?.tiers[tierNameOrIndex];
+        if (!tier) return [];
+        if (tier.kind === 'interval') return tier.intervals.map(i => i.label);
+        return tier.points.map(p => p.label);
+      },
     },
   };
 

@@ -71,6 +71,21 @@ export function fftInPlace(re: Float64Array, im: Float64Array): void {
 }
 
 /**
+ * In-place inverse FFT. Conjugate → FFT → conjugate → scale by 1/N.
+ */
+export function ifftInPlace(re: Float64Array, im: Float64Array): void {
+  const n = re.length;
+  // Conjugate
+  for (let i = 0; i < n; i++) im[i] = -im[i];
+  fftInPlace(re, im);
+  // Conjugate and scale
+  for (let i = 0; i < n; i++) {
+    re[i] /= n;
+    im[i] = -im[i] / n;
+  }
+}
+
+/**
  * Apply Hamming window to a signal.
  */
 export function hammingWindow(signal: Float64Array): Float64Array {

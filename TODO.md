@@ -9,10 +9,10 @@
 
 ## 当前状态
 
-- **248 tests**, 70+ 源文件, 9300+ 行 TypeScript
+- **256 tests**, 70+ 源文件, 9500+ 行 TypeScript
 - **React 19 + TypeScript 6 + Vite 8 + vitest 4.1**
 - Coverage: 84% statements, 93% audio module
-- Build: 460KB / 143KB gzip
+- Build: 467KB / 145KB gzip
 
 ## 当前优先任务
 
@@ -20,7 +20,7 @@
 - [x] **MenuBar hover 切换** — 打开菜单后 hover 其他菜单项立即切换；实现 Amazon triangle trick（防止斜向移动误触发切换）
 - [x] **布局修复**：波形/語谱图区域默认占主视图 ~65% 高度（flex:7）；TextGrid 区域 ~35%（flex:3，可滚动）；RightSidebar 已默认折叠 + tab 切换
 - [x] Wire BottomSheet + useIsMobile to App.tsx（移动端显示 BottomSheet 替代 Sidebar）
-- [ ] JS API 补全（intensity, spectrogram, textGrid, mfcc, resample, getMin/getMax, fft/ifft）
+- [x] JS API 补全（intensity, spectrogram, textGrid, mfcc, resample, getMin/getMax, fft/ifft）
 - [ ] Shiki 语法高亮（Praat Script TextMate grammar）
 - [ ] MCP Server 层（暴露语音分析给 AI agent）
 
@@ -95,6 +95,7 @@
 - [x] **Formant 显示修复** — 曲线加粗 (2.5px) + 圆点标记 + 确认跟语谱图 maxDisplayFreq 匹配
 - [x] **MenuBar hover 切换** — Radix Menubar 原生支持 hover 切换 + pointer grace area (triangle trick)
 - [x] **布局修复** — 波形/語谱图区域 flex:7 (~65% 高度) + TextGrid flex:3 (可滚动) + RightSidebar 默认折叠 tab 切换
+- [x] **JS API 补全** — spectrogram, mfcc, fft/ifft, textGrid.* (+ existing intensity, resample, getMin/getMax)
 
 ## 规则
 
