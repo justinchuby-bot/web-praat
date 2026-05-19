@@ -4,3 +4,7 @@ export { parse, ParseError } from "./parser";
 export type { ASTNode, ExprNode } from "./parser";
 export { Interpreter, RuntimeError, runPraatScript } from "./interpreter";
 export type { InterpreterResult, PraatObject } from "./interpreter";
+export { runJavaScript } from "./jsRunner";
+export type { JsRunnerResult } from "./jsRunner";
+export { createPraatApi } from "./jsApi";
+export type { JsApiContext, JsApiResult } from "./jsApi";
