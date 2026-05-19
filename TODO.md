@@ -19,7 +19,7 @@
 
 ## 当前优先任务
 
-- [ ] Manipulation（pitch/duration 编辑 + 重合成）
+- [ ] Long-Term Average Spectrum (LTAS)
 
 ## Backlog（按優先級）
 - [ ] 移动端适配
@@ -28,7 +28,6 @@
 ## 缺失的 Praat 功能（需要新增）
 
 ### 高优先
-- [ ] Manipulation（pitch/duration 编辑 + 重合成）
 - [ ] Long-Term Average Spectrum (LTAS)
 - [ ] Harmonicity (HNR) 显示
 - [ ] PointProcess（声门脉冲标记）
@@ -82,6 +81,7 @@
 - [x] React 性能优化：useMemo/useCallback 依赖修复（settings ref、移除无意义 useMemo）
 - [x] 性能优化：Web Worker for heavy DSP — analysis.worker.ts + useAnalysisWorker hook + loading indicator
 - [x] 界面打磨：动画、快捷键、accessibility
+- [x] Manipulation（TD-PSOLA pitch/duration 编辑 + 重合成）— ManipulationPanel + psola.ts + 4 tests
 
 ## 规则
 

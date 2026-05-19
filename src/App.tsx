@@ -12,6 +12,7 @@ import { loadAudioFile } from './audio/recorder';
 import { computeSpectrumSlice } from './audio/spectrum';
 import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog';
 import { FilterPanel } from './components/FilterPanel';
+import { ManipulationPanel } from './components/ManipulationPanel';
 import { MenuBar } from './components/MenuBar';
 import { RhythmPanel } from './components/RhythmPanel';
 import { SettingsPanel } from './components/SettingsPanel';
@@ -474,6 +475,15 @@ export default function App() {
       >
         <SettingsPanel settings={settings} onChange={setSettings} />
         <FilterPanel settings={filterSettings} onChange={setFilterSettings} onApply={handleApplyFilter} onReset={handleResetFilter} />
+        {analysis && currentSamplesRef.current && (
+          <ManipulationPanel
+            samples={currentSamplesRef.current}
+            sampleRate={sampleRate}
+            pitchData={analysis.pitch}
+            duration={analysis.duration}
+            onApply={commitSamples}
+          />
+        )}
       </Sidebar>
     </>
   );
