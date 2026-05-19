@@ -100,7 +100,7 @@ export const Spectrogram = React.memo(function Spectrogram({
 
     if (showPitch) {
       ctx.strokeStyle = '#89b4fa';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
       let started = false;
       for (let i = 0; i < analysis.pitch.times.length; i++) {
@@ -123,47 +123,27 @@ export const Spectrogram = React.memo(function Spectrogram({
     }
 
     if (showFormants) {
-      const colors = ['#ff3333', '#00ff66', '#3399ff'];
+      const colors = ['#ff4444', '#44cc44', '#4488ff'];
       analysis.formants.tracked.forEach((track, index) => {
-        const color = colors[index] ?? '#ff3333';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-        ctx.shadowBlur = 4;
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        let started = false;
-        const dots: Array<{ x: number; y: number }> = [];
+        const color = colors[index] ?? '#ff4444';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 2;
+        ctx.fillStyle = color;
+        // Draw as dots only (Praat style) — no connecting lines
         track.forEach((frequency, frameIndex) => {
           const time = analysis.formants.times[frameIndex];
           if (frequency === null || time < viewRange.start || time > viewRange.end || frequency > maxDisplayFreq) {
-            started = false;
             return;
           }
           const x = timeToX(time, width, viewRange);
           const y = height - (frequency / maxDisplayFreq) * height;
-          dots.push({ x, y });
-          if (!started) {
-            ctx.moveTo(x, y);
-            started = true;
-          } else {
-            ctx.lineTo(x, y);
-          }
-        });
-        ctx.stroke();
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-
-        // Draw dot markers
-        ctx.fillStyle = color;
-        const dotRadius = 3;
-        // Limit dots to avoid over-drawing when zoomed out
-        const step = dots.length > 200 ? Math.ceil(dots.length / 200) : 1;
-        for (let i = 0; i < dots.length; i += step) {
           ctx.beginPath();
-          ctx.arc(dots[i].x, dots[i].y, dotRadius, 0, Math.PI * 2);
+          ctx.arc(x, y, 1.5, 0, Math.PI * 2);
           ctx.fill();
-        }
+        });
       });
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
     }
 
     if (showIntensity) {
