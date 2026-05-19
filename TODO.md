@@ -9,7 +9,7 @@
 
 ## 当前状态
 
-- **375 tests**, 70+ 源文件, 10000+ 行 TypeScript
+- **419 tests**, 70+ 源文件, 10000+ 行 TypeScript
 - **React 19 + TypeScript 6 + Vite 8 + vitest 4.1**
 - Coverage: 84% statements, 93% audio module
 - Build: 467KB / 145KB gzip
@@ -30,7 +30,8 @@
 - [x] **Note transcription** — pitch → 音符/半音转写
 - [x] **Hierarchical tiers** — tier parent-child 关系（借鉴 ELAN）
 - [x] **ELAN (.eaf) 导入导出** — 支持 ELAN 注释格式互转
-- [ ] **Video sync** — 标注跟视频对齐
+- [x] **Video sync** — 标注跟视频对齐
+- [ ] **Controlled vocabulary** — 标注预定义词表
 
 ## Backlog（按优先级）
 
@@ -46,7 +47,7 @@
 ### 中优先（借鉴 Tony + ELAN）
 - [x] Hierarchical tiers（tier parent-child 关系）
 - [x] ELAN (.eaf) 导入导出
-- [ ] Video sync（标注跟视频对齐）
+- [x] Video sync（标注跟视频对齐）
 - [ ] Controlled vocabulary（标注预定义词表）
 
 ### 低优先
@@ -111,6 +112,7 @@
 - [x] **Note transcription** — Hz→MIDI, note names, cents deviation, pitch track → note events + export TXT + UI panel (375 tests)
 - [x] **Hierarchical tiers** — parentId on tiers, hierarchy.ts (validate, tree, cycle detection), TextGridEditor indentation + Set Parent UI, 23 tests (398 total)
 - [x] **ELAN (.eaf) 导入导出** — parseElan (XML→TextGrid) + serializeElan (TextGrid→XML) + parent tier mapping + 15 tests (413 total)
+- [x] **Video sync** — VideoSync component in RightSidebar; load video, extract audio, bidirectional time sync (muted video + main audio); 6 tests (419 total)
 
 ## 规则
 

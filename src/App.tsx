@@ -43,6 +43,7 @@ import { PluginManager } from './components/PluginManager';
 import SpeechSynthesizerPanel from './components/SpeechSynthesizerPanel';
 import PitchSonificationPanel from './components/PitchSonificationPanel';
 import NoteTranscriptionPanel from './components/NoteTranscriptionPanel';
+import { VideoSync } from './components/VideoSync';
 import { VoiceQualityPanel } from './components/VoiceQualityPanel';
 import { Waveform } from './components/Waveform';
 import { DropOverlay, DropFileType } from './components/DropOverlay';
@@ -827,6 +828,7 @@ export default function App() {
               voice: <VoiceQualityPanel metrics={analysis.voiceQuality} />,
               hnr: <HarmonicityPanel data={analysis.harmonicity} viewStart={viewStart} viewEnd={viewEnd} />,
               rhythm: <RhythmPanel metrics={rhythmMetrics} />,
+              video: <VideoSync currentTime={currentTime} isPlaying={isPlaying} onAudioExtracted={(samples, sr) => { currentSamplesRef.current = samples; setSampleRate(sr); }} onSeek={(t) => setCurrentTime(t)} />,
               settings: (
                 <>
                   <SettingsPanel settings={settings} onChange={setSettings} />
