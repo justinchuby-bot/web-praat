@@ -2,7 +2,8 @@
  * LPC analysis using Burg's method.
  */
 
-const INTERNAL_SAMPLE_RATE = 11025;
+const DEFAULT_MAX_FORMANT = 5500;
+const PRE_EMPHASIS_FROM = 50;
 
 function downsample(signal: Float64Array, factor: number): Float64Array {
   if (factor <= 1) return Float64Array.from(signal);
@@ -18,7 +19,8 @@ function downsample(signal: Float64Array, factor: number): Float64Array {
   return out;
 }
 
-function preEmphasis(signal: Float64Array, alpha = 0.97): Float64Array {
+function preEmphasis(signal: Float64Array, sampleRate: number, fromHz = PRE_EMPHASIS_FROM): Float64Array {
+  const alpha = Math.exp(-2 * Math.PI * fromHz / sampleRate);
   const out = new Float64Array(signal.length);
   out[0] = signal[0];
   for (let i = 1; i < signal.length; i++) {
@@ -27,11 +29,16 @@ function preEmphasis(signal: Float64Array, alpha = 0.97): Float64Array {
   return out;
 }
 
-function hammingWindow(signal: Float64Array): Float64Array {
+function gaussianWindow(signal: Float64Array): Float64Array {
   const size = signal.length;
   const out = new Float64Array(size);
+  // Praat uses a Gaussian with effective duration = windowLength/2
+  // sigma such that at edges the window ≈ exp(-12) ≈ 0
+  const midpoint = (size - 1) / 2;
+  const sigma = midpoint / 3.5; // approx Praat's Gaussian shape
   for (let i = 0; i < size; i++) {
-    out[i] = signal[i] * (0.54 - 0.46 * Math.cos((2 * Math.PI * i) / (size - 1)));
+    const x = (i - midpoint) / sigma;
+    out[i] = signal[i] * Math.exp(-0.5 * x * x);
   }
   return out;
 }
@@ -124,8 +131,9 @@ function findRoots(coefficients: Float64Array, order: number): Array<{ re: numbe
   return roots;
 }
 
-function prepareFrame(frame: Float64Array, sampleRate: number): { windowed: Float64Array; effectiveRate: number } | null {
-  const factor = Math.max(1, Math.round(sampleRate / INTERNAL_SAMPLE_RATE));
+function prepareFrame(frame: Float64Array, sampleRate: number, maxFrequency = DEFAULT_MAX_FORMANT): { windowed: Float64Array; effectiveRate: number } | null {
+  const targetRate = 2 * maxFrequency; // Praat downsamples to 2*maxFormant
+  const factor = Math.max(1, Math.round(sampleRate / targetRate));
   const effectiveRate = factor > 1 ? sampleRate / factor : sampleRate;
   const downsampled = downsample(frame, factor);
   if (downsampled.length < 4) return null;
@@ -134,8 +142,9 @@ function prepareFrame(frame: Float64Array, sampleRate: number): { windowed: Floa
   for (let i = 0; i < downsampled.length; i++) energy += downsampled[i] * downsampled[i];
   if (energy / downsampled.length < 1e-8) return null;
 
+  const emphasized = preEmphasis(downsampled, effectiveRate);
   return {
-    windowed: hammingWindow(preEmphasis(downsampled)),
+    windowed: gaussianWindow(emphasized),
     effectiveRate,
   };
 }
@@ -155,10 +164,10 @@ export interface FormantResult {
 function extractFormantCandidates(
   frame: Float64Array,
   sampleRate: number,
-  lpcOrder = 12,
-  maxFrequency = 5000
+  lpcOrder = 10,
+  maxFrequency = DEFAULT_MAX_FORMANT
 ): FormantCandidate[] {
-  const prepared = prepareFrame(frame, sampleRate);
+  const prepared = prepareFrame(frame, sampleRate, maxFrequency);
   if (!prepared || prepared.windowed.length < lpcOrder + 1) return [];
 
   const coefficients = burgMethod(prepared.windowed, lpcOrder);
@@ -183,8 +192,8 @@ function extractFormantCandidates(
 export function extractFormants(
   frame: Float64Array,
   sampleRate: number,
-  lpcOrder = 12,
-  maxFrequency = 5000
+  lpcOrder = 10,
+  maxFrequency = DEFAULT_MAX_FORMANT
 ): FormantResult | null {
   const candidates = extractFormantCandidates(frame, sampleRate, lpcOrder, maxFrequency);
   if (candidates.length < 2) return null;

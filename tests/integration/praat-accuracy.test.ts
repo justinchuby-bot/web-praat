@@ -145,11 +145,45 @@ describe('Praat accuracy — vowel /a/', () => {
 
   // TODO: Formant extraction differs significantly from Praat (ours=773 vs Praat=1095 for F1).
   // Our LPC order/window settings likely differ from Praat's Burg method defaults.
-  it.todo('F1 within ±50 Hz of Praat');
+  it('F1 within ±50 Hz of Praat', () => {
+    const formantRef = loadRef('fixtures/vowel_a_formants.json');
+    let compared = 0;
+    for (let i = 0; i < formantRef.times.length; i++) {
+      const refF1 = formantRef.f1[i];
+      if (refF1 === null || refF1 === undefined) continue;
+      const refTime = formantRef.times[i];
+      const ourIdx = result.formants?.times?.findIndex((t: number) => Math.abs(t - refTime) < 0.005);
+      if (ourIdx === undefined || ourIdx === -1) continue;
+      const ourF1 = result.formants?.f1?.[ourIdx];
+      if (ourF1 === null || ourF1 === undefined) continue;
+      expect(Math.abs(ourF1 - refF1),
+        `F1 at t=${refTime.toFixed(3)}: ours=${ourF1.toFixed(1)} vs praat=${refF1.toFixed(1)}`
+      ).toBeLessThan(50);
+      compared++;
+    }
+    expect(compared).toBeGreaterThan(0);
+  });
 
   // TODO: F2 also diverges heavily (ours=1214 vs Praat=2634).
   // Same root cause as F1 — LPC parameter mismatch.
-  it.todo('F2 within ±50 Hz of Praat');
+  it('F2 within ±50 Hz of Praat', () => {
+    const formantRef = loadRef('fixtures/vowel_a_formants.json');
+    let compared = 0;
+    for (let i = 0; i < formantRef.times.length; i++) {
+      const refF2 = formantRef.f2[i];
+      if (refF2 === null || refF2 === undefined) continue;
+      const refTime = formantRef.times[i];
+      const ourIdx = result.formants?.times?.findIndex((t: number) => Math.abs(t - refTime) < 0.005);
+      if (ourIdx === undefined || ourIdx === -1) continue;
+      const ourF2 = result.formants?.f2?.[ourIdx];
+      if (ourF2 === null || ourF2 === undefined) continue;
+      expect(Math.abs(ourF2 - refF2),
+        `F2 at t=${refTime.toFixed(3)}: ours=${ourF2.toFixed(1)} vs praat=${refF2.toFixed(1)}`
+      ).toBeLessThan(50);
+      compared++;
+    }
+    expect(compared).toBeGreaterThan(0);
+  });
 
   it('intensity within ±1 dB of Praat', () => {
     const intRef = loadRef('fixtures/vowel_a_intensity.json');
