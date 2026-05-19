@@ -16,7 +16,6 @@
 
 ## 当前优先任务
 
-- [ ] **Replace ScriptProcessorNode → AudioWorkletNode** in streamingRecorder.ts（Chrome deprecation warning）
 - [ ] **MenuBar hover 切换** — 打开菜单后 hover 其他菜单项立即切换；实现 Amazon triangle trick（防止斜向移动误触发切换）
 - [ ] **布局修复**：波形/语谱图区域默认应占主视图 60-70% 高度；下方面板（Spectrum Slice/Voice Quality/HNR/Rhythm）默认折叠或 tab 切换，不同时全部展开挤占空间
 - [ ] Wire BottomSheet + useIsMobile to App.tsx（移动端显示 BottomSheet 替代 Sidebar）
@@ -89,6 +88,7 @@
 - [x] **全功能集成到 UI** — Tools 菜单入口（所有 9 个新组件）
 - [x] **Deps 全线升级** — React 19, TS 6, Vite 8, vitest 4.1
 - [x] **Code cleanup** — 删除 6 unused 文件 (-602 行) + dead code
+- [x] **AudioWorkletNode migration** — streamingRecorder.ts: ScriptProcessorNode → AudioWorkletNode (no more Chrome deprecation warning)
 
 ## 规则
 
