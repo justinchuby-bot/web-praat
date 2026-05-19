@@ -10,17 +10,25 @@ export function useAnalysisWorker() {
   const workerRef = useRef<Worker | null>(null);
   const idRef = useRef(0);
   const pendingRef = useRef<Map<number, (r: AnalysisResult) => void>>(new Map());
+  const progressRef = useRef<Map<number, (v: number) => void>>(new Map());
 
   useEffect(() => {
     const worker = new Worker(new URL('../workers/analysis.worker.ts', import.meta.url), {
       type: 'module',
     });
-    worker.onmessage = (e: MessageEvent<{ id: number; result: AnalysisResult }>) => {
-      const { id, result } = e.data;
+    worker.onmessage = (e: MessageEvent<{ type?: string; id: number; result?: AnalysisResult; value?: number }>) => {
+      const { type, id } = e.data;
+      if (type === 'progress') {
+        const cb = progressRef.current.get(id);
+        if (cb && e.data.value !== undefined) cb(e.data.value);
+        return;
+      }
+      // type === 'result' or legacy
       const resolve = pendingRef.current.get(id);
-      if (resolve) {
+      if (resolve && e.data.result) {
         pendingRef.current.delete(id);
-        resolve(result);
+        progressRef.current.delete(id);
+        resolve(e.data.result);
       }
     };
     workerRef.current = worker;
@@ -28,22 +36,23 @@ export function useAnalysisWorker() {
       worker.terminate();
       workerRef.current = null;
       pendingRef.current.clear();
+      progressRef.current.clear();
     };
   }, []);
 
   const analyze = useCallback(
-    (samples: Float32Array, sampleRate: number, settings: Partial<AnalysisSettings>): Promise<AnalysisResult> => {
+    (samples: Float32Array, sampleRate: number, settings: Partial<AnalysisSettings>, onProgress?: (v: number) => void): Promise<AnalysisResult> => {
       return new Promise((resolve) => {
         const id = ++idRef.current;
         const worker = workerRef.current;
         if (!worker) {
-          // Fallback: import synchronously (shouldn't happen in practice)
           import('../audio/analyzer').then(({ analyzeAudio }) => {
             resolve(analyzeAudio(samples, sampleRate, settings));
           });
           return;
         }
         pendingRef.current.set(id, resolve);
+        if (onProgress) progressRef.current.set(id, onProgress);
         const msg: AnalysisWorkerRequest = { id, samples, sampleRate, settings };
         worker.postMessage(msg, [samples.buffer]);
       });

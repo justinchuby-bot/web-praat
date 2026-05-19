@@ -27,14 +27,30 @@ export function analyzeAudio(
   sampleRate: number,
   settings?: Partial<AnalysisSettings>
 ): AnalysisResult {
+  return analyzeAudioWithProgress(samples, sampleRate, settings);
+}
+
+export function analyzeAudioWithProgress(
+  samples: Float32Array,
+  sampleRate: number,
+  settings?: Partial<AnalysisSettings>,
+  onProgress?: (value: number) => void
+): AnalysisResult {
   const resolved = mergeSettings(settings);
   const duration = samples.length / sampleRate;
+
+  onProgress?.(0);
   const spectrogram = computeSpectrogram(samples, sampleRate, resolved);
+  onProgress?.(20);
   const pitch = computePitch(samples, sampleRate, resolved);
+  onProgress?.(40);
   const formants = computeFormants(samples, sampleRate, resolved);
+  onProgress?.(60);
   const intensity = computeIntensity(samples, sampleRate);
   const harmonicity = computeHarmonicity(samples, sampleRate);
+  onProgress?.(80);
   const voiceQuality = computeVoiceQuality(samples, sampleRate);
+  onProgress?.(100);
 
   return {
     waveform: Float32Array.from(samples),

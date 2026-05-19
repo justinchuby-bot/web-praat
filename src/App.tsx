@@ -114,16 +114,19 @@ export default function App() {
   }, []);
 
   const [analyzing, setAnalyzing] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const processSamples = useCallback(
     (samples: Float32Array, nextSampleRate: number, resetEditor = false) => {
       currentSamplesRef.current = Float32Array.from(samples);
       setSampleRate(nextSampleRate);
       setAnalyzing(true);
+      setProgress(0);
       // Copy samples since we transfer the buffer to the worker
       const copy = Float32Array.from(samples);
-      analyzeInWorker(copy, nextSampleRate, settingsRef.current).then((nextAnalysis) => {
+      analyzeInWorker(copy, nextSampleRate, settingsRef.current, (v) => setProgress(v)).then((nextAnalysis) => {
         setAnalyzing(false);
+        setProgress(100);
         setAnalysis(nextAnalysis);
         setSelection(null);
         setCurrentTime(0);
@@ -570,8 +573,17 @@ export default function App() {
           )}
 
           {analyzing && (
-            <div className="flex items-center justify-center py-8 text-zinc-400">
-              <span className="animate-pulse">Analyzing…</span>
+            <div className="w-full px-4 py-2">
+              <div className="relative w-full h-1 bg-zinc-700 rounded overflow-hidden">
+                <div
+                  className="absolute inset-y-0 left-0 rounded transition-all duration-200 ease-out"
+                  style={{
+                    width: `${progress}%`,
+                    background: 'linear-gradient(90deg, #1e40af, #059669)',
+                  }}
+                />
+              </div>
+              <p className="text-xs text-zinc-400 mt-1 text-center">Analyzing… {progress}%</p>
             </div>
           )}
 
