@@ -122,10 +122,12 @@ export const Spectrogram = React.memo(function Spectrogram({
     if (showFormants) {
       const colors = ['#f38ba8', '#fab387', '#f9e2af'];
       analysis.formants.tracked.forEach((track, index) => {
-        ctx.strokeStyle = colors[index] ?? '#f38ba8';
-        ctx.lineWidth = 1.5;
+        const color = colors[index] ?? '#f38ba8';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
         let started = false;
+        const dots: Array<{ x: number; y: number }> = [];
         track.forEach((frequency, frameIndex) => {
           const time = analysis.formants.times[frameIndex];
           if (frequency === null || time < viewRange.start || time > viewRange.end || frequency > maxDisplayFreq) {
@@ -134,6 +136,7 @@ export const Spectrogram = React.memo(function Spectrogram({
           }
           const x = timeToX(time, width, viewRange);
           const y = height - (frequency / maxDisplayFreq) * height;
+          dots.push({ x, y });
           if (!started) {
             ctx.moveTo(x, y);
             started = true;
@@ -142,6 +145,17 @@ export const Spectrogram = React.memo(function Spectrogram({
           }
         });
         ctx.stroke();
+
+        // Draw dot markers
+        ctx.fillStyle = color;
+        const dotRadius = 2.5;
+        // Limit dots to avoid over-drawing when zoomed out
+        const step = dots.length > 200 ? Math.ceil(dots.length / 200) : 1;
+        for (let i = 0; i < dots.length; i += step) {
+          ctx.beginPath();
+          ctx.arc(dots[i].x, dots[i].y, dotRadius, 0, Math.PI * 2);
+          ctx.fill();
+        }
       });
     }
 
