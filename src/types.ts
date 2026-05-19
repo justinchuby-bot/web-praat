@@ -96,6 +96,7 @@ export interface SpectrogramData {
   freqStep: number;
   maxFreq: number;
   frameTimes: number[];
+  gpuAccelerated?: boolean;
 }
 
 export interface PitchData {

@@ -9,7 +9,7 @@
 
 ## 当前状态
 
-- **256 tests**, 70+ 源文件, 9500+ 行 TypeScript
+- **296 tests**, 70+ 源文件, 9500+ 行 TypeScript
 - **React 19 + TypeScript 6 + Vite 8 + vitest 4.1**
 - Coverage: 84% statements, 93% audio module
 - Build: 467KB / 145KB gzip
@@ -22,8 +22,9 @@
 - [x] Wire BottomSheet + useIsMobile to App.tsx（移动端显示 BottomSheet 替代 Sidebar）
 - [x] JS API 补全（intensity, spectrogram, textGrid, mfcc, resample, getMin/getMax, fft/ifft）
 - [x] Shiki 语法高亮（Praat Script TextMate grammar）
-- [ ] MCP Server 层（暴露语音分析给 AI agent）
-- [ ] **WebGPU FFT 接入** — fft-gpu.ts 已写好但没被主分析路径调用；当 WebGPU 可用时自动切换 GPU FFT（旋风冲锋🌪️）
+- [x] MCP Server 层（暴露语音分析给 AI agent）
+- [x] **WebGPU FFT 接入** — fft-adapter.ts 统一接口 + worker 自动探测 GPU + CPU fallback
+- [ ] **波形交互改进** — 参考 wavesurfer.js 加 region selection、minimap、拖动选区
 
 ## Backlog（按优先级）
 
@@ -98,6 +99,8 @@
 - [x] **布局修复** — 波形/語谱图区域 flex:7 (~65% 高度) + TextGrid flex:3 (可滚动) + RightSidebar 默认折叠 tab 切换
 - [x] **JS API 补全** — spectrogram, mfcc, fft/ifft, textGrid.* (+ existing intensity, resample, getMin/getMax)
 - [x] **Shiki 语法高亮** — TextMate grammar for Praat Script + Shiki overlay in ScriptEditor (JS uses built-in)
+- [x] **MCP Server** — 9 tools (pitch, formants, intensity, harmonicity, voice quality, spectrum, vowels, praat script, JS script) via @modelcontextprotocol/sdk + stdio transport
+- [x] **WebGPU FFT 接入** — fft-adapter.ts 统一接口; analysis worker 自动探测 WebGPU 并切换 GPU FFT; CPU fallback 透明; 5 新测试
 
 ## 规则
 

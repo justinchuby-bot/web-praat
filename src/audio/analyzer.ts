@@ -1,4 +1,5 @@
 import { fftMagnitude, hammingWindow, applyWindow, preEmphasis } from '../utils/fft';
+import { fftMagnitudeBatch, isGpuFftActive } from '../utils/fft-adapter';
 import { defaultAnalysisSettings } from './defaults';
 import { extractFormants } from './lpc';
 import { trackFormants } from './formantTracking';
@@ -98,6 +99,89 @@ export function computeSpectrogram(
     freqStep: sampleRate / fftSize,
     maxFreq: sampleRate / 2,
     frameTimes,
+    gpuAccelerated: false,
+  };
+}
+
+/**
+ * GPU-accelerated spectrogram computation.
+ * Falls back to CPU automatically if WebGPU is unavailable.
+ * Call initFft() before first use.
+ */
+export async function computeSpectrogramGpu(
+  samples: Float32Array,
+  sampleRate: number,
+  settings?: Partial<AnalysisSettings>
+): Promise<SpectrogramData> {
+  const resolved = mergeSettings(settings);
+  const fftSize = resolved.spectrogram.fftSize;
+  const hopSize = resolved.spectrogram.hopSize;
+  const windowFunction = resolved.spectrogram.windowFunction;
+  const preEmphasisDb = resolved.spectrogram.preEmphasis;
+  const totalFrames = Math.max(0, Math.floor((samples.length - fftSize) / hopSize) + 1);
+  const frameTimes: number[] = [];
+  const frames: Float64Array[] = [];
+
+  for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
+    const start = frameIndex * hopSize;
+    const frame = new Float64Array(fftSize);
+    for (let i = 0; i < fftSize; i++) {
+      frame[i] = start + i < samples.length ? samples[start + i] : 0;
+    }
+    const emphasized = preEmphasis(frame, preEmphasisDb);
+    frames.push(applyWindow(emphasized, windowFunction));
+    frameTimes.push((start + fftSize / 2) / sampleRate);
+  }
+
+  const magnitudes = await fftMagnitudeBatch(frames, fftSize);
+
+  return {
+    magnitudes,
+    timeStep: hopSize / sampleRate,
+    freqStep: sampleRate / fftSize,
+    maxFreq: sampleRate / 2,
+    frameTimes,
+    gpuAccelerated: isGpuFftActive(),
+  };
+}
+
+/**
+ * Async analysis that uses GPU FFT for spectrogram when available.
+ */
+export async function analyzeAudioAsync(
+  samples: Float32Array,
+  sampleRate: number,
+  settings?: Partial<AnalysisSettings>,
+  onProgress?: (value: number) => void
+): Promise<AnalysisResult> {
+  const resolved = mergeSettings(settings);
+  const duration = samples.length / sampleRate;
+
+  onProgress?.(0);
+  const spectrogram = await computeSpectrogramGpu(samples, sampleRate, resolved);
+  onProgress?.(20);
+  const pitch = computePitch(samples, sampleRate, resolved);
+  onProgress?.(40);
+  const formants = computeFormants(samples, sampleRate, resolved);
+  onProgress?.(60);
+  const intensity = computeIntensity(samples, sampleRate);
+  const harmonicity = computeHarmonicity(samples, sampleRate);
+  onProgress?.(80);
+  const voiceQuality = computeVoiceQuality(samples, sampleRate);
+  onProgress?.(100);
+
+  return {
+    waveform: Float32Array.from(samples),
+    sampleRate,
+    duration,
+    spectrogram,
+    pitch,
+    formants,
+    intensity,
+    harmonicity,
+    voiceQuality,
+    spectrumSlice: null,
+    settings: resolved,
   };
 }
 
