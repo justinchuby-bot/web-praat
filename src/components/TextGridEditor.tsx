@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+
 import type { TextGrid, TextGridTier, TimeSelection, ViewRange } from '../types';
 import { timeToX, xToTime } from '../utils/view';
 
@@ -48,7 +48,7 @@ export function TextGridEditor({
   onDeletePoint,
 }: TextGridEditorProps) {
   const tierHeight = 54;
-  const visibleTierData = useMemo(() => textGrid.tiers, [textGrid.tiers]);
+  const visibleTierData = textGrid.tiers;
 
   const handleTrackClick = (tier: TextGridTier, event: React.MouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();

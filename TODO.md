@@ -10,10 +10,9 @@
 
 ## 当前優先任務
 
-- [ ] React 性能优化：修复 useMemo/useCallback 依赖问题（settings 对象引用、无意义 useMemo）
+- [ ] 性能优化：Web Worker for heavy DSP
 
 ## Backlog（按優先級）
-- [ ] 性能优化：Web Worker for heavy DSP
 - [ ] 移动端适配
 
 
@@ -71,6 +70,7 @@
 - [x] Jitter/Shimmer 嗓音质量面板 — VoiceQualityPanel + pulse detection + all metrics
 - [x] 滤波器（低通/高通/带通）— biquad filter + FilterPanel UI + apply/reset
 - [x] 实时录音模式（streaming spectrogram）— StreamingRecorder + useStreamingRecording hook + live analysis every 250ms
+- [x] React 性能优化：useMemo/useCallback 依赖修复（settings ref、移除无意义 useMemo）
 - [x] 界面打磨：动画、快捷键、accessibility — button transitions, focus-visible, ARIA labels, keyboard shortcuts dialog (?)
 
 ## 规则

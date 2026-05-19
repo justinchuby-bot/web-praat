@@ -66,6 +66,9 @@ export default function App() {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
 
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+
   const streaming = useStreamingRecording(settings);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
@@ -87,7 +90,7 @@ export default function App() {
     (samples: Float32Array, nextSampleRate: number, resetEditor = false) => {
       currentSamplesRef.current = Float32Array.from(samples);
       setSampleRate(nextSampleRate);
-      const nextAnalysis = analyzeAudio(samples, nextSampleRate, settings);
+      const nextAnalysis = analyzeAudio(samples, nextSampleRate, settingsRef.current);
       setAnalysis(nextAnalysis);
       setSelection(null);
       setCurrentTime(0);
@@ -106,7 +109,7 @@ export default function App() {
         syncHistoryFlags();
       }
     },
-    [settings, syncHistoryFlags]
+    [syncHistoryFlags]
   );
 
   const processAudioBuffer = useCallback(
