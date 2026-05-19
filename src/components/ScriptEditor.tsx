@@ -3,7 +3,12 @@ import { runPraatScript, InterpreterResult, runJavaScript, JsRunnerResult } from
 
 type ScriptLanguage = "praat" | "javascript";
 
-export function ScriptEditor() {
+interface ScriptEditorProps {
+  samples?: Float32Array;
+  sampleRate?: number;
+}
+
+export function ScriptEditor({ samples, sampleRate }: ScriptEditorProps) {
   const [language, setLanguage] = useState<ScriptLanguage>("praat");
   const [code, setCode] = useState(
     `# Praat Script Example\nfor i from 1 to 5\n  appendInfoLine: "Iteration ", i\nendfor\n`
@@ -37,8 +42,8 @@ praat.log(\`Mean F0 = \${mean} Hz\`);
     } else {
       // JS mode — provide empty audio context if no audio loaded
       const context = {
-        samples: new Float32Array(0),
-        sampleRate: 44100,
+        samples: samples ?? new Float32Array(0),
+        sampleRate: sampleRate ?? 44100,
       };
       const r = runJavaScript(code, context);
       setJsResult(r);

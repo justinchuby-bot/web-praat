@@ -741,7 +741,7 @@ export default function App() {
         <div className="modal-overlay" onClick={() => setShowScriptEditor(false)}>
           <div className="modal-panel modal-panel-lg" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowScriptEditor(false)}>✕</button>
-            <ScriptEditor />
+            <ScriptEditor samples={currentSamplesRef.current ?? undefined} sampleRate={sampleRate} />
           </div>
         </div>
       )}
