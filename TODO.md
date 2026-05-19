@@ -8,7 +8,16 @@
 **参考源码:** ~/clawspace/praat.github.io/
 
 
-## 当前優先任務
+## 🚨 紧急修复
+
+- [ ] 录音卡顿修复（main thread 被 DSP 阻塞，用 Web Worker 或 AudioWorklet 处理）
+- [ ] UI 重新设计：
+  - 按钮改用 icon（Lucide icons）
+  - 加顶部菜单栏（File / Edit / View / Analysis / Help）
+  - 更现代的布局：toolbar + main canvas + sidebar panels
+  - 参考 Audacity 或 Logic Pro 的 UI 风格
+
+## 当前优先任务
 
 - [ ] Manipulation（pitch/duration 编辑 + 重合成）
 
