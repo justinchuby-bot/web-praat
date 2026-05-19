@@ -41,6 +41,7 @@ import { ExperimentMFC } from './components/ExperimentMFC';
 import { ScriptEditor } from './components/ScriptEditor';
 import { PluginManager } from './components/PluginManager';
 import SpeechSynthesizerPanel from './components/SpeechSynthesizerPanel';
+import PitchSonificationPanel from './components/PitchSonificationPanel';
 import { VoiceQualityPanel } from './components/VoiceQualityPanel';
 import { Waveform } from './components/Waveform';
 import { DropOverlay, DropFileType } from './components/DropOverlay';
@@ -96,6 +97,7 @@ export default function App() {
   const [showSpectrumEditor, setShowSpectrumEditor] = useState(false);
   const [showExperiment, setShowExperiment] = useState(false);
   const [showSpeechSynthesizer, setShowSpeechSynthesizer] = useState(false);
+  const [showPitchSonification, setShowPitchSonification] = useState(false);
   const [showScriptEditor, setShowScriptEditor] = useState(false);
   const [showPlugins, setShowPlugins] = useState(false);
   const [experimentConfig, setExperimentConfig] = useState<{ config: any; audioMap: Record<string, string> } | null>(null);
@@ -568,6 +570,7 @@ export default function App() {
     { id: 'tools.spectrum-editor', label: 'Spectrum Editor', category: 'Tools', action: () => setShowSpectrumEditor(true) },
     { id: 'tools.experiment', label: 'Experiment', category: 'Tools', action: () => setShowExperiment(true) },
     { id: 'tools.speechSynthesizer', label: 'SpeechSynthesizer (TTS)', category: 'Tools', action: () => setShowSpeechSynthesizer(true) },
+    { id: 'tools.pitchSonification', label: 'Pitch Sonification', category: 'Tools', action: () => setShowPitchSonification(true) },
     { id: 'tools.script-editor', label: 'Script Editor', category: 'Tools', action: () => setShowScriptEditor(true) },
     { id: 'tools.plugins', label: 'Plugins', category: 'Tools', action: () => setShowPlugins(true) },
     { id: 'analysis.compute-hnr', label: 'Compute HNR', category: 'Analysis', action: () => {} },
@@ -632,6 +635,7 @@ export default function App() {
         onOpenSpectrumEditor={() => setShowSpectrumEditor(true)}
         onOpenExperiment={() => setShowExperiment(true)}
         onOpenSpeechSynthesizer={() => setShowSpeechSynthesizer(true)}
+        onOpenPitchSonification={() => setShowPitchSonification(true)}
         onOpenScriptEditor={() => setShowScriptEditor(true)}
         onOpenPlugins={() => setShowPlugins(true)}
         themeSetting={themeSetting}
@@ -972,6 +976,14 @@ export default function App() {
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowSpeechSynthesizer(false)}>✕</button>
             <SpeechSynthesizerPanel onClose={() => setShowSpeechSynthesizer(false)} />
+          </div>
+        </div>
+      )}
+      {showPitchSonification && (
+        <div className="modal-overlay" onClick={() => setShowPitchSonification(false)}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowPitchSonification(false)}>✕</button>
+            <PitchSonificationPanel pitch={analysis?.pitch ?? null} onClose={() => setShowPitchSonification(false)} />
           </div>
         </div>
       )}
