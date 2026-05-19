@@ -68,7 +68,6 @@ export function Sidebar({
       </div>
 
       <div className="sidebar-footer">
-        <span className="footer-text">No external DSP libraries. All analysis is implemented in TypeScript.</span>
       </div>
     </aside>
   );
