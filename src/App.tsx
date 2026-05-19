@@ -957,7 +957,7 @@ export default function App() {
         </div>
       )}
 
-      {showPlugins && <PluginManager onClose={() => setShowPlugins(false)} />}
+      {showPlugins && <PluginManager onClose={() => setShowPlugins(false)} samples={currentSamplesRef.current ?? undefined} sampleRate={sampleRate} />}
     </div>
   );
 }

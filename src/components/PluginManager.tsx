@@ -3,9 +3,11 @@ import { getPlugins, getPlugin, runPlugin, loadUserPlugin, PluginManifest } from
 
 interface PluginManagerProps {
   onClose: () => void;
+  samples?: Float32Array;
+  sampleRate?: number;
 }
 
-export function PluginManager({ onClose }: PluginManagerProps) {
+export function PluginManager({ onClose, samples, sampleRate }: PluginManagerProps) {
   const [plugins] = useState(getPlugins);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [params, setParams] = useState<Record<string, number>>({});
@@ -26,7 +28,8 @@ export function PluginManager({ onClose }: PluginManagerProps) {
 
   function handleRun() {
     if (!selected) return;
-    const result = runPlugin(selected, params);
+    const audio = samples && sampleRate ? { samples, sampleRate } : undefined;
+    const result = runPlugin(selected, params, audio);
     setOutput(result.output);
     setErrors(result.errors || []);
   }

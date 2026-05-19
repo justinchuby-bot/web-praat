@@ -93,7 +93,7 @@ praat.log("Done! Tip: F1 correlates with vowel height, F2 with frontness.");
 
   const handleRun = () => {
     if (language === "praat") {
-      const r = runPraatScript(code);
+      const r = runPraatScript(code, samples && sampleRate ? { samples, sampleRate } : undefined);
       setResult(r);
       setJsResult(null);
     } else {

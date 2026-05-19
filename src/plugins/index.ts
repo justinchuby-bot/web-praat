@@ -32,7 +32,8 @@ export function getPlugin(id: string): PluginManifest | undefined {
  */
 export function runPlugin(
   plugin: PluginManifest,
-  params: Record<string, number>
+  params: Record<string, number>,
+  audio?: { samples: Float32Array; sampleRate: number }
 ): PluginResult {
   // Inject parameters as Praat variable assignments
   const paramLines = plugin.parameters.map(p => {
@@ -42,7 +43,7 @@ export function runPlugin(
 
   const fullScript = paramLines + '\n\n' + plugin.script;
 
-  const result = runPraatScript(fullScript);
+  const result = runPraatScript(fullScript, audio);
 
   return {
     output: result.output,

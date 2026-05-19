@@ -21,6 +21,9 @@ export enum TokenType {
   To = "to",
   From = "from",
   Then = "then",
+  Include = "include",
+  Repeat = "repeat",
+  Until = "until",
 
   // Operators
   Equals = "=",
@@ -42,9 +45,12 @@ export enum TokenType {
   // Punctuation
   LeftParen = "(",
   RightParen = ")",
+  LeftBracket = "[",
+  RightBracket = "]",
   Comma = ",",
   Colon = ":",
   Dot = ".",
+  At = "@",
 
   // Special
   Newline = "Newline",
@@ -74,6 +80,9 @@ const KEYWORDS: Record<string, TokenType> = {
   to: TokenType.To,
   from: TokenType.From,
   then: TokenType.Then,
+  include: TokenType.Include,
+  repeat: TokenType.Repeat,
+  until: TokenType.Until,
   and: TokenType.And,
   or: TokenType.Or,
   not: TokenType.Not,
@@ -119,14 +128,36 @@ export function tokenize(source: string): Token[] {
       continue;
     }
 
-    // Comments: # or ;
-    if (ch === "#" || ch === ";") {
+    // Comments: ; or line starting with #  
+    // In Praat, # is comment only at start of token when not part of identifier
+    if (ch === ";") {
+      while (pos < source.length && peek() !== "\n") advance();
+      continue;
+    }
+
+    // # as comment: only if previous non-whitespace on this line is not an identifier char
+    // Simple heuristic: # is comment if preceded by space/start-of-line and not followed by identifier-forming chars immediately after a word with #
+    if (ch === "#") {
+      // Check if this could be part of a vector variable (e.g. after identifier)
+      // If previous token on this line is an identifier that doesn't end with #, this is a comment
+      const lastToken = tokens.length > 0 ? tokens[tokens.length - 1] : null;
+      if (lastToken && lastToken.line === startLine && lastToken.type === TokenType.Identifier && !lastToken.value.endsWith("#")) {
+        // This is a comment
+        while (pos < source.length && peek() !== "\n") advance();
+        continue;
+      }
+      if (!lastToken || lastToken.type === TokenType.Newline || lastToken.line !== startLine) {
+        // Start of line — comment
+        while (pos < source.length && peek() !== "\n") advance();
+        continue;
+      }
+      // Otherwise treat as comment (safe default)
       while (pos < source.length && peek() !== "\n") advance();
       continue;
     }
 
     // Strings
-    if (ch === '"' || ch === "'") {
+    if (ch === '"') {
       const quote = advance();
       let str = "";
       while (pos < source.length && peek() !== quote && peek() !== "\n") {
@@ -137,13 +168,59 @@ export function tokenize(source: string): Token[] {
       continue;
     }
 
+    // Single-quote strings — but in Praat, single quotes are variable interpolation 'var$'
+    // We'll handle them as string literals for now to avoid breaking things
+    if (ch === "'") {
+      advance();
+      let str = "";
+      while (pos < source.length && peek() !== "'" && peek() !== "\n") {
+        str += advance();
+      }
+      if (peek() === "'") advance();
+      // Treat as interpolation marker - emit as special identifier
+      tokens.push({ type: TokenType.Identifier, value: `'${str}'`, line: startLine, column: startCol });
+      continue;
+    }
+
     // Numbers
     if (ch >= "0" && ch <= "9") {
       let num = "";
       while (pos < source.length && ((peek() >= "0" && peek() <= "9") || peek() === ".")) {
         num += advance();
       }
+      // Check for e/E notation
+      if (peek() === "e" || peek() === "E") {
+        num += advance();
+        if (peek() === "+" || peek() === "-") num += advance();
+        while (pos < source.length && peek() >= "0" && peek() <= "9") num += advance();
+      }
       tokens.push({ type: TokenType.Number, value: num, line: startLine, column: startCol });
+      continue;
+    }
+
+    // @ sign for procedure calls
+    if (ch === "@") {
+      advance();
+      tokens.push({ type: TokenType.At, value: "@", line: startLine, column: startCol });
+      continue;
+    }
+
+    // Dot-prefix variables (.varName) 
+    if (ch === "." && pos + 1 < source.length && ((source[pos + 1] >= "a" && source[pos + 1] <= "z") || (source[pos + 1] >= "A" && source[pos + 1] <= "Z") || source[pos + 1] === "_")) {
+      advance(); // skip .
+      let id = ".";
+      while (
+        pos < source.length &&
+        ((peek() >= "a" && peek() <= "z") ||
+          (peek() >= "A" && peek() <= "Z") ||
+          (peek() >= "0" && peek() <= "9") ||
+          peek() === "_" ||
+          peek() === "$" ||
+          peek() === "#")
+      ) {
+        id += advance();
+      }
+      tokens.push({ type: TokenType.Identifier, value: id, line: startLine, column: startCol });
       continue;
     }
 
@@ -157,13 +234,23 @@ export function tokenize(source: string): Token[] {
           (peek() >= "0" && peek() <= "9") ||
           peek() === "_" ||
           peek() === "$" ||
-          peek() === "#")
+          peek() === "#" ||
+          peek() === ".")
       ) {
-        id += advance();
+        // Allow dot only if followed by letter (for proc.var access)
+        if (peek() === ".") {
+          if (pos + 1 < source.length && ((source[pos + 1] >= "a" && source[pos + 1] <= "z") || (source[pos + 1] >= "A" && source[pos + 1] <= "Z") || source[pos + 1] === "_")) {
+            id += advance();
+          } else {
+            break;
+          }
+        } else {
+          id += advance();
+        }
       }
       const lower = id.toLowerCase();
       const kwType = KEYWORDS[lower];
-      if (kwType && !id.endsWith("$") && !id.endsWith("#")) {
+      if (kwType && !id.endsWith("$") && !id.endsWith("#") && !id.includes(".")) {
         tokens.push({ type: kwType, value: id, line: startLine, column: startCol });
       } else {
         tokens.push({ type: TokenType.Identifier, value: id, line: startLine, column: startCol });
@@ -182,6 +269,11 @@ export function tokenize(source: string): Token[] {
       tokens.push({ type: TokenType.NotEqual, value: "!=", line: startLine, column: startCol });
       continue;
     }
+    if (ch === "<" && source[pos + 1] === ">") {
+      advance(); advance();
+      tokens.push({ type: TokenType.NotEqual, value: "<>", line: startLine, column: startCol });
+      continue;
+    }
     if (ch === "<" && source[pos + 1] === "=") {
       advance(); advance();
       tokens.push({ type: TokenType.LessEqual, value: "<=", line: startLine, column: startCol });
@@ -190,6 +282,12 @@ export function tokenize(source: string): Token[] {
     if (ch === ">" && source[pos + 1] === "=") {
       advance(); advance();
       tokens.push({ type: TokenType.GreaterEqual, value: ">=", line: startLine, column: startCol });
+      continue;
+    }
+    if (ch === "." && source[pos + 1] === "." && source[pos + 2] === ".") {
+      advance(); advance(); advance();
+      // Ellipsis — used in old-style commands like "Remove column... name"
+      tokens.push({ type: TokenType.Identifier, value: "...", line: startLine, column: startCol });
       continue;
     }
 
@@ -204,6 +302,8 @@ export function tokenize(source: string): Token[] {
       ">": TokenType.Greater,
       "(": TokenType.LeftParen,
       ")": TokenType.RightParen,
+      "[": TokenType.LeftBracket,
+      "]": TokenType.RightBracket,
       ",": TokenType.Comma,
       ":": TokenType.Colon,
       ".": TokenType.Dot,

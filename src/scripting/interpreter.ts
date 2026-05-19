@@ -1,7 +1,7 @@
 // Praat Script Interpreter
 
 import { tokenize } from "./lexer";
-import { parse, ASTNode, ExprNode, ParseError, CallNode } from "./parser";
+import { parse, ASTNode, ExprNode, ParseError, CallNode, IndexExpr } from "./parser";
 
 export class RuntimeError extends Error {
   line: number;
@@ -25,24 +25,32 @@ export interface InterpreterResult {
 }
 
 export class ExitScriptError extends Error {
-  constructor() { super('exitScript'); }
+  constructor(public msg?: string) { super(msg || 'exitScript'); }
 }
 
 export class Interpreter {
-  private variables: Map<string, number | string> = new Map();
+  private variables: Map<string, number | string | number[]> = new Map();
   private procedures: Map<string, { params: string[]; body: ASTNode[] }> = new Map();
   private objects: PraatObject[] = [];
   private selectedObject: PraatObject | null = null;
   private nextId = 1;
   private output = "";
   private maxIterations = 100000;
+  // For procedure local scope
+  private localScopes: Map<string, number | string | number[]>[] = [];
+  private currentProcName: string | null = null;
 
   private mathFunctions: Record<string, (args: number[]) => number> = {
     sqrt: (a) => Math.sqrt(a[0]),
     abs: (a) => Math.abs(a[0]),
     sin: (a) => Math.sin(a[0]),
     cos: (a) => Math.cos(a[0]),
+    tan: (a) => Math.tan(a[0]),
+    arctan: (a) => Math.atan(a[0]),
+    arctan2: (a) => Math.atan2(a[0], a[1]),
     log: (a) => Math.log(a[0]),
+    log2: (a) => Math.log2(a[0]),
+    log10: (a) => Math.log10(a[0]),
     exp: (a) => Math.exp(a[0]),
     ln: (a) => Math.log(a[0]),
     floor: (a) => Math.floor(a[0]),
@@ -52,15 +60,39 @@ export class Interpreter {
     max: (a) => Math.max(a[0], a[1]),
     randomUniform: (a) => a[0] + Math.random() * (a[1] - a[0]),
     randomInteger: (a) => Math.floor(a[0] + Math.random() * (a[1] - a[0] + 1)),
+    randomGauss: (a) => {
+      // Box-Muller
+      const u1 = Math.random(), u2 = Math.random();
+      return a[0] + a[1] * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    },
+    undefined: () => NaN,
   };
 
-  execute(source: string): InterpreterResult {
+  execute(source: string, preloadedSound?: { samples: Float32Array; sampleRate: number }): InterpreterResult {
     this.variables.clear();
     this.procedures.clear();
     this.objects = [];
     this.selectedObject = null;
     this.nextId = 1;
     this.output = "";
+    this.localScopes = [];
+    this.currentProcName = null;
+
+    // Pre-load audio as a Sound object if provided
+    if (preloadedSound && preloadedSound.samples.length > 0) {
+      const sound: PraatObject = {
+        id: this.nextId++,
+        type: 'Sound',
+        name: 'untitled',
+        data: {
+          samples: preloadedSound.samples,
+          sampleRate: preloadedSound.sampleRate,
+          duration: preloadedSound.samples.length / preloadedSound.sampleRate,
+        },
+      };
+      this.objects.push(sound);
+      this.selectedObject = sound;
+    }
 
     const errors: { line: number; message: string }[] = [];
 
@@ -79,7 +111,9 @@ export class Interpreter {
       this.executeBlock(ast);
     } catch (e) {
       if (e instanceof ExitScriptError) {
-        // Normal script exit
+        if (e.msg && e.msg !== 'exitScript') {
+          this.output += e.msg;
+        }
       } else if (e instanceof ParseError || e instanceof RuntimeError) {
         errors.push({ line: e.line, message: e.message });
       } else {
@@ -88,6 +122,29 @@ export class Interpreter {
     }
 
     return { output: this.output, errors, objects: [...this.objects] };
+  }
+
+  private getVar(name: string): number | string | number[] | undefined {
+    // Check local scope first
+    if (this.localScopes.length > 0) {
+      const top = this.localScopes[this.localScopes.length - 1];
+      if (name.startsWith(".") && top.has(name)) {
+        return top.get(name);
+      }
+      // Also check procName.varName pattern
+      if (this.currentProcName && top.has(name)) {
+        return top.get(name);
+      }
+    }
+    return this.variables.get(name);
+  }
+
+  private setVar(name: string, value: number | string | number[]) {
+    if (name.startsWith(".") && this.localScopes.length > 0) {
+      this.localScopes[this.localScopes.length - 1].set(name, value);
+    } else {
+      this.variables.set(name, value);
+    }
   }
 
   private executeBlock(nodes: ASTNode[]) {
@@ -100,7 +157,7 @@ export class Interpreter {
     switch (node.type) {
       case "Assignment": {
         const val = this.evalExpr(node.value);
-        this.variables.set(node.name, val);
+        this.setVar(node.name, val as number | string | number[]);
         break;
       }
       case "For": {
@@ -109,7 +166,7 @@ export class Interpreter {
         let iterations = 0;
         for (let i = from; i <= to; i++) {
           if (++iterations > this.maxIterations) throw new RuntimeError("Too many iterations", node.line);
-          this.variables.set(node.variable, i);
+          this.setVar(node.variable, i);
           this.executeBlock(node.body);
         }
         break;
@@ -120,6 +177,14 @@ export class Interpreter {
           if (++iterations > this.maxIterations) throw new RuntimeError("Too many iterations", node.line);
           this.executeBlock(node.body);
         }
+        break;
+      }
+      case "Repeat": {
+        let iterations = 0;
+        do {
+          if (++iterations > this.maxIterations) throw new RuntimeError("Too many iterations", node.line);
+          this.executeBlock(node.body);
+        } while (!this.isTruthy(this.evalExpr(node.condition)));
         break;
       }
       case "If": {
@@ -148,6 +213,10 @@ export class Interpreter {
         // Already collected in first pass
         break;
       }
+      case "Include": {
+        // No-op in web context
+        break;
+      }
       case "ExpressionStatement": {
         this.evalExpr(node.expression);
         break;
@@ -155,9 +224,24 @@ export class Interpreter {
     }
   }
 
+  private interpolateString(s: string): string {
+    // Replace 'varName$' and 'varName' interpolation patterns
+    return s.replace(/'([^']+)'/g, (_, varName: string) => {
+      const val = this.getVar(varName);
+      if (val !== undefined) return String(val);
+      // Try without $ suffix for numeric
+      return String(this.getVar(varName) ?? "");
+    });
+  }
+
   private executeCall(node: CallNode) {
-    const name = node.name;
+    let name = node.name;
     const args = node.args.map((a) => this.evalExpr(a));
+
+    // Interpolate command name if it contains quotes
+    if (name.includes("'")) {
+      name = this.interpolateString(name);
+    }
 
     // Built-in commands
     const nameLower = name.toLowerCase();
@@ -172,13 +256,12 @@ export class Interpreter {
       return;
     }
 
-    if (nameLower === "exitscript") {
-      throw new ExitScriptError();
+    if (nameLower === "exitscript" || nameLower === "exit") {
+      throw new ExitScriptError(args.length > 0 ? String(args[0]) : undefined);
     }
 
-    if (nameLower === "pausescript") {
-      // No-op in web environment
-      return;
+    if (nameLower === "pausescript" || nameLower === "pause") {
+      return; // No-op
     }
 
     if (nameLower === "print" || nameLower === "printline") {
@@ -186,8 +269,37 @@ export class Interpreter {
       return;
     }
 
-    if (nameLower === "select") {
-      // select Type name
+    if (nameLower === "assert") {
+      if (args.length > 0 && !this.isTruthy(args[0])) {
+        throw new RuntimeError(`Assertion failed`, node.line);
+      }
+      return;
+    }
+
+    // selectObject
+    if (nameLower === "selectobject" || name === "selectObject") {
+      this.selectObjectByArg(args[0]);
+      return;
+    }
+
+    if (nameLower === "plusobject" || name === "plusObject") {
+      // In our simple model, just select (we don't do multi-selection)
+      this.selectObjectByArg(args[0]);
+      return;
+    }
+
+    if (nameLower === "removeobject" || name === "removeObject") {
+      if (args.length > 0) {
+        const id = typeof args[0] === "number" ? args[0] : null;
+        if (id !== null) {
+          this.objects = this.objects.filter(o => o.id !== id);
+          if (this.selectedObject?.id === id) this.selectedObject = null;
+        }
+      }
+      return;
+    }
+
+    if (nameLower === "select" || name === "select") {
       const fullName = args.map(String).join(" ");
       const obj = this.objects.find((o) => `${o.type} ${o.name}` === fullName || o.name === fullName);
       if (obj) this.selectedObject = obj;
@@ -199,6 +311,22 @@ export class Interpreter {
         this.objects = this.objects.filter((o) => o.id !== this.selectedObject!.id);
         this.selectedObject = null;
       }
+      return;
+    }
+
+    // No-op drawing/UI commands
+    const noopCommands = [
+      "erase all", "select outer viewport", "font size", "line width",
+      "draw inner box", "save as", "createdirectory", "create directory",
+      "colour", "color", "paint", "draw", "garnish", "marks", "text",
+      "one mark", "axes"
+    ];
+    if (noopCommands.some(c => nameLower.startsWith(c))) {
+      return;
+    }
+
+    // editor/endeditor block — handled as no-op calls
+    if (nameLower === "editor" || nameLower === "endeditor") {
       return;
     }
 
@@ -215,7 +343,7 @@ export class Interpreter {
       return;
     }
 
-    if (name === "To Pitch") {
+    if (name === "To Pitch" || name.startsWith("To Pitch")) {
       if (!this.selectedObject) throw new RuntimeError("No object selected", node.line);
       const obj: PraatObject = {
         id: this.nextId++,
@@ -242,6 +370,8 @@ export class Interpreter {
           timestep: args[0] ?? 0,
           maxFormant: args[1] ?? 5500,
           numFormants: args[2] ?? 5,
+          // Generate some dummy formant data
+          numFrames: 100,
         },
       };
       this.objects.push(obj);
@@ -249,8 +379,239 @@ export class Interpreter {
       return;
     }
 
+    if (name === "Down to Table") {
+      if (!this.selectedObject) throw new RuntimeError("No object selected", node.line);
+      // Create a Table from Formant
+      const numRows = (this.selectedObject.data.numFrames as number) || 10;
+      const columns = ["time(s)", "nformants", "F1(Hz)", "B1(Hz)", "F2(Hz)", "B2(Hz)"];
+      const rows: (number | string)[][] = [];
+      for (let r = 0; r < numRows; r++) {
+        rows.push([r * 0.01, 5, 500 + r, 50, 1500 + r, 100]);
+      }
+      const obj: PraatObject = {
+        id: this.nextId++,
+        type: "Table",
+        name: this.selectedObject.name,
+        data: { columns, rows, numRows },
+      };
+      this.objects.push(obj);
+      this.selectedObject = obj;
+      return;
+    }
+
+    // Table operations
+    if (this.selectedObject?.type === "Table") {
+      const table = this.selectedObject;
+      const columns = table.data.columns as string[];
+      const rows = table.data.rows as (number | string)[][];
+
+      if (name === "Get number of rows") {
+        this.variables.set("_lastResult", rows.length);
+        return;
+      }
+
+      if (name === "Get mean") {
+        const colName = String(args[0] ?? "");
+        const colIdx = columns.indexOf(colName);
+        if (colIdx >= 0) {
+          const sum = rows.reduce((s, r) => s + Number(r[colIdx] ?? 0), 0);
+          this.variables.set("_lastResult", rows.length > 0 ? sum / rows.length : 0);
+        } else {
+          this.variables.set("_lastResult", 0);
+        }
+        return;
+      }
+
+      if (name === "Get quantile") {
+        const colName = String(args[0] ?? "");
+        const quantile = Number(args[1] ?? 0.5);
+        const colIdx = columns.indexOf(colName);
+        if (colIdx >= 0) {
+          const vals = rows.map(r => Number(r[colIdx] ?? 0)).sort((a, b) => a - b);
+          const idx = Math.floor(quantile * (vals.length - 1));
+          this.variables.set("_lastResult", vals[idx] ?? 0);
+        } else {
+          this.variables.set("_lastResult", 0);
+        }
+        return;
+      }
+
+      if (name === "Get value") {
+        // Get value: rowNumber, columnName
+        const rowNum = Number(args[0] ?? 1);
+        const colName = String(args[1] ?? "");
+        const colIdx = columns.indexOf(colName);
+        if (colIdx >= 0 && rowNum >= 1 && rowNum <= rows.length) {
+          this.variables.set("_lastResult", Number(rows[rowNum - 1][colIdx] ?? 0));
+        } else {
+          this.variables.set("_lastResult", 0);
+        }
+        return;
+      }
+
+      if (name === "Append column") {
+        columns.push(String(args[0] ?? "new"));
+        for (const row of rows) row.push(0);
+        return;
+      }
+
+      if (name === "Insert column") {
+        const position = Number(args[0] ?? columns.length + 1);
+        const colName = String(args[1] ?? "new");
+        columns.splice(position - 1, 0, colName);
+        for (const row of rows) row.splice(position - 1, 0, 0);
+        return;
+      }
+
+      if (name === "Remove column") {
+        const colName = String(args[0] ?? "");
+        const colIdx = columns.indexOf(colName);
+        if (colIdx >= 0) {
+          columns.splice(colIdx, 1);
+          for (const row of rows) row.splice(colIdx, 1);
+        }
+        return;
+      }
+
+      if (name === "Set column label (label)") {
+        const oldName = String(args[0] ?? "");
+        const newName = String(args[1] ?? "");
+        const idx = columns.indexOf(oldName);
+        if (idx >= 0) columns[idx] = newName;
+        return;
+      }
+
+      if (name === "Formula") {
+        const colName = String(args[0] ?? "");
+        const formula = String(args[1] ?? "");
+        const colIdx = columns.indexOf(colName);
+        if (colIdx >= 0) {
+          for (let r = 0; r < rows.length; r++) {
+            // Simple formula evaluation with self, row
+            const rowVal = rows[r];
+            let result: number | string = 0;
+            try {
+              result = this.evalTableFormula(formula, rowVal, columns, r + 1);
+            } catch { /* ignore formula errors */ }
+            rows[r][colIdx] = result;
+          }
+        }
+        return;
+      }
+
+      if (name === "Extract rows where column (number)") {
+        const colName = String(args[0] ?? "");
+        const op = String(args[1] ?? "");
+        const value = Number(args[2] ?? 0);
+        const colIdx = columns.indexOf(colName);
+        const filtered: (number | string)[][] = [];
+        if (colIdx >= 0) {
+          for (const row of rows) {
+            const v = Number(row[colIdx] ?? 0);
+            let match = false;
+            if (op === "greater than" || op === ">") match = v > value;
+            else if (op === "less than" || op === "<") match = v < value;
+            else if (op === "equal to" || op === "==" || op === "=") match = v === value;
+            else if (op === "greater than or equal to" || op === ">=") match = v >= value;
+            else if (op === "less than or equal to" || op === "<=") match = v <= value;
+            else if (op === "not equal to" || op === "!=") match = v !== value;
+            if (match) filtered.push([...row]);
+          }
+        }
+        const newTable: PraatObject = {
+          id: this.nextId++,
+          type: "Table",
+          name: table.name + "_extracted",
+          data: { columns: [...columns], rows: filtered, numRows: filtered.length },
+        };
+        this.objects.push(newTable);
+        this.selectedObject = newTable;
+        return;
+      }
+
+      if (name === "Copy") {
+        const newName = String(args[0] ?? table.name);
+        const copy: PraatObject = {
+          id: this.nextId++,
+          type: "Table",
+          name: newName,
+          data: { columns: [...columns], rows: rows.map(r => [...r]), numRows: rows.length },
+        };
+        this.objects.push(copy);
+        this.selectedObject = copy;
+        return;
+      }
+
+      if (name === "Rename") {
+        table.name = String(args[0] ?? table.name);
+        return;
+      }
+
+      if (name === "Append difference column") {
+        const col1 = String(args[0] ?? "");
+        const col2 = String(args[1] ?? "");
+        const resultCol = String(args[2] ?? "diff");
+        const idx1 = columns.indexOf(col1);
+        const idx2 = columns.indexOf(col2);
+        columns.push(resultCol);
+        for (const row of rows) {
+          const diff = idx1 >= 0 && idx2 >= 0 ? Number(row[idx1]) - Number(row[idx2]) : 0;
+          row.push(diff);
+        }
+        return;
+      }
+
+      if (name === "To linear regression") {
+        // Simple OLS: last column = dependent, others = independent
+        // For simplicity: y = first col dependent, rest independent? 
+        // Actually Praat uses all columns. We'll do simple: y=last col, x=other cols
+        const nCols = columns.length;
+        const nRows = rows.length;
+        if (nCols < 2 || nRows < 2) {
+          const lr: PraatObject = {
+            id: this.nextId++,
+            type: "LinearRegression",
+            name: table.name,
+            data: { coefficients: [], intercept: 0, info: "Linear regression (insufficient data)" },
+          };
+          this.objects.push(lr);
+          this.selectedObject = lr;
+          return;
+        }
+        // y = last column, X = all other columns
+        const yIdx = nCols - 1;
+        const xIndices = Array.from({ length: nCols - 1 }, (_, i) => i);
+        const y = rows.map(r => Number(r[yIdx]));
+        const X = rows.map(r => [...xIndices.map(i => Number(r[i])), 1]); // add intercept
+        // OLS: beta = (X'X)^-1 X'y
+        const beta = this.olsRegression(X, y);
+        const intercept = beta[beta.length - 1];
+        const coefficients = beta.slice(0, -1);
+        let info = "Linear regression:\n";
+        for (let i = 0; i < coefficients.length; i++) {
+          info += `  ${columns[xIndices[i]]}: ${coefficients[i].toFixed(6)}\n`;
+        }
+        info += `  Intercept: ${intercept.toFixed(6)}\n`;
+        const lr: PraatObject = {
+          id: this.nextId++,
+          type: "LinearRegression",
+          name: table.name,
+          data: { coefficients, intercept, info },
+        };
+        this.objects.push(lr);
+        this.selectedObject = lr;
+        return;
+      }
+    }
+
+    // Info command for LinearRegression
+    if (name === "Info" && this.selectedObject?.type === "LinearRegression") {
+      this.output += String(this.selectedObject.data.info ?? "");
+      return;
+    }
+
     if (name === "Get mean") {
-      // Returns a numeric value
+      // Generic - returns dummy if not on table
       this.variables.set("_lastResult", 150.0);
       return;
     }
@@ -260,46 +621,184 @@ export class Interpreter {
       return;
     }
 
+    if (name === "Get number of rows" && this.selectedObject) {
+      const rows = this.selectedObject.data.rows as unknown[];
+      this.variables.set("_lastResult", rows ? rows.length : 0);
+      return;
+    }
+
+    if (name === "Copy" && this.selectedObject) {
+      const newName = String(args[0] ?? this.selectedObject.name);
+      const copy: PraatObject = {
+        id: this.nextId++,
+        type: this.selectedObject.type,
+        name: newName,
+        data: JSON.parse(JSON.stringify(this.selectedObject.data)),
+      };
+      this.objects.push(copy);
+      this.selectedObject = copy;
+      return;
+    }
+
+    if (name === "Rename" && this.selectedObject) {
+      this.selectedObject.name = String(args[0] ?? this.selectedObject.name);
+      return;
+    }
+
     // Check user-defined procedures
     const proc = this.procedures.get(name);
     if (proc) {
-      const savedVars = new Map(this.variables);
-      for (let i = 0; i < proc.params.length; i++) {
-        this.variables.set(proc.params[i], args[i] ?? 0);
-      }
-      this.executeBlock(proc.body);
-      // Restore only the params (simple scope)
-      for (const p of proc.params) {
-        if (savedVars.has(p)) {
-          this.variables.set(p, savedVars.get(p)!);
-        } else {
-          this.variables.delete(p);
-        }
-      }
+      this.callProcedure(name, proc, args);
       return;
     }
+
+    // nocheck — if set, silently ignore errors
+    if (node.nocheck) return;
 
     // Unknown command - just ignore for compatibility
   }
 
-  private evalExpr(node: ExprNode): number | string {
+  private callProcedure(name: string, proc: { params: string[]; body: ASTNode[] }, args: (number | string | number[])[]) {
+    const localScope = new Map<string, number | string | number[]>();
+    const prevProcName = this.currentProcName;
+    this.currentProcName = name;
+
+    // Set params as local .param variables
+    for (let i = 0; i < proc.params.length; i++) {
+      const paramName = proc.params[i];
+      const val = args[i] ?? (paramName.endsWith("$") ? "" : 0);
+      // Store both as .param and as the param name directly
+      if (paramName.startsWith(".")) {
+        localScope.set(paramName, val as number | string | number[]);
+      } else {
+        localScope.set("." + paramName, val as number | string | number[]);
+        localScope.set(paramName, val as number | string | number[]);
+      }
+    }
+
+    this.localScopes.push(localScope);
+    try {
+      this.executeBlock(proc.body);
+    } finally {
+      this.localScopes.pop();
+      // Expose procedure outputs as procName.varName
+      for (const [key, val] of localScope) {
+        if (key.startsWith(".")) {
+          this.variables.set(name + key, val);
+        }
+      }
+      this.currentProcName = prevProcName;
+    }
+  }
+
+  private selectObjectByArg(arg: number | string | number[] | undefined) {
+    if (arg === undefined) return;
+    if (typeof arg === "number") {
+      // Select by ID
+      const obj = this.objects.find(o => o.id === arg);
+      if (obj) this.selectedObject = obj;
+    } else if (typeof arg === "string") {
+      // "Type name" format
+      const obj = this.objects.find(o => `${o.type} ${o.name}` === arg || o.name === arg);
+      if (obj) this.selectedObject = obj;
+    }
+  }
+
+  private evalTableFormula(formula: string, row: (number | string)[], columns: string[], rowNumber: number): number {
+    // Very simple formula evaluator for table context
+    // Supports: self, self[colName], row, basic arithmetic
+    let expr = formula;
+    // Replace self["colName"] or self$["colName"] patterns
+    expr = expr.replace(/self\s*\[\s*"([^"]+)"\s*\]/g, (_, col) => {
+      const idx = columns.indexOf(col);
+      return idx >= 0 ? String(Number(row[idx] ?? 0)) : "0";
+    });
+    expr = expr.replace(/\brow\b/g, String(rowNumber));
+    expr = expr.replace(/\bself\b/g, "0");
+    try {
+      // Safe-ish eval for simple math
+      const result = Function(`"use strict"; return (${expr})`)();
+      return Number(result) || 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private olsRegression(X: number[][], y: number[]): number[] {
+    // (X'X)^-1 X'y via simple approach
+    const n = X.length;
+    const p = X[0].length;
+    // X'X
+    const XtX: number[][] = Array.from({ length: p }, () => Array(p).fill(0));
+    for (let i = 0; i < p; i++) {
+      for (let j = 0; j < p; j++) {
+        for (let k = 0; k < n; k++) {
+          XtX[i][j] += X[k][i] * X[k][j];
+        }
+      }
+    }
+    // X'y
+    const Xty: number[] = Array(p).fill(0);
+    for (let i = 0; i < p; i++) {
+      for (let k = 0; k < n; k++) {
+        Xty[i] += X[k][i] * y[k];
+      }
+    }
+    // Solve via Gaussian elimination
+    const aug: number[][] = XtX.map((row, i) => [...row, Xty[i]]);
+    for (let i = 0; i < p; i++) {
+      // Partial pivot
+      let maxRow = i;
+      for (let k = i + 1; k < p; k++) {
+        if (Math.abs(aug[k][i]) > Math.abs(aug[maxRow][i])) maxRow = k;
+      }
+      [aug[i], aug[maxRow]] = [aug[maxRow], aug[i]];
+      if (Math.abs(aug[i][i]) < 1e-12) continue;
+      const pivot = aug[i][i];
+      for (let j = i; j <= p; j++) aug[i][j] /= pivot;
+      for (let k = 0; k < p; k++) {
+        if (k === i) continue;
+        const factor = aug[k][i];
+        for (let j = i; j <= p; j++) aug[k][j] -= factor * aug[i][j];
+      }
+    }
+    return aug.map(row => row[p]);
+  }
+
+  private evalExpr(node: ExprNode): number | string | number[] {
     switch (node.type) {
       case "NumberLiteral":
         return node.value;
       case "StringLiteral":
-        return node.value;
+        return this.interpolateString(node.value);
       case "VariableRef": {
         const name = node.name;
+        // Interpolation tokens: 'varName$' wrapped in quotes from lexer
+        if (name.startsWith("'") && name.endsWith("'")) {
+          const inner = name.slice(1, -1);
+          const val = this.getVar(inner);
+          if (val !== undefined) return val;
+          return "";
+        }
         // Special string constants
         if (name === "tab$") return "\t";
         if (name === "newline$") return "\n";
-        const val = this.variables.get(name);
-        if (val === undefined) {
-          // String variables default to empty
-          if (name.endsWith("$")) return "";
-          throw new RuntimeError(`Undefined variable: ${name}`, 0);
+        if (name === "praatVersion") return 6;
+        if (name === "praatVersion$") return "6.0.0";
+        if (name === "macintosh" || name === "windows" || name === "unix") return 0;
+        if (name === "undefined") return NaN;
+        const val = this.getVar(name);
+        if (val !== undefined) return val;
+        // Try as procName.varName (already stored)
+        if (name.includes(".")) {
+          const stored = this.variables.get(name);
+          if (stored !== undefined) return stored;
         }
-        return val;
+        // String variables default to empty
+        if (name.endsWith("$")) return "";
+        // Dot-prefixed or proc.var defaults to 0
+        if (name.startsWith(".") || name.includes(".")) return 0;
+        throw new RuntimeError(`Undefined variable: ${name}`, 0);
       }
       case "BinaryExpr":
         return this.evalBinary(node);
@@ -311,7 +810,18 @@ export class Interpreter {
       }
       case "FunctionCall":
         return this.evalFunctionCall(node);
+      case "IndexExpr":
+        return this.evalIndex(node);
     }
+  }
+
+  private evalIndex(node: IndexExpr): number | string {
+    const obj = this.evalExpr(node.object);
+    const idx = this.evalExpr(node.index) as number;
+    if (Array.isArray(obj)) {
+      return obj[Math.round(idx) - 1] ?? 0; // 1-based
+    }
+    return 0;
   }
 
   private evalBinary(node: { op: string; left: ExprNode; right: ExprNode }): number | string {
@@ -331,6 +841,7 @@ export class Interpreter {
       case "-": return l - r;
       case "*": return l * r;
       case "/": return r === 0 ? 0 : l / r;
+      case "^": return Math.pow(l, r);
       case "mod": return r === 0 ? 0 : l % r;
       case "<": return l < r ? 1 : 0;
       case ">": return l > r ? 1 : 0;
@@ -338,26 +849,124 @@ export class Interpreter {
       case ">=": return l >= r ? 1 : 0;
       case "==": return left === right ? 1 : 0;
       case "!=": return left !== right ? 1 : 0;
+      case "<>": return left !== right ? 1 : 0;
       case "and": return (this.isTruthy(left) && this.isTruthy(right)) ? 1 : 0;
       case "or": return (this.isTruthy(left) || this.isTruthy(right)) ? 1 : 0;
       default: return 0;
     }
   }
 
-  private evalFunctionCall(node: { name: string; args: ExprNode[] }): number | string {
+  private evalFunctionCall(node: { name: string; args: ExprNode[] }): number | string | number[] {
+    const name = node.name;
     const args = node.args.map((a) => this.evalExpr(a));
 
+    // Vector/Array functions
+    if (name === "zero#") {
+      const n = Number(args[0]) || 0;
+      return new Array(Math.max(0, Math.round(n))).fill(0);
+    }
+    if (name === "sum") {
+      const arr = args[0];
+      if (Array.isArray(arr)) return arr.reduce((s, v) => s + v, 0);
+      return Number(arr) || 0;
+    }
+    if (name === "size") {
+      const arr = args[0];
+      if (Array.isArray(arr)) return arr.length;
+      return 0;
+    }
+
     // String functions
-    if (node.name === "length") return String(args[0]).length;
-    if (node.name === "left$") return String(args[0]).slice(0, args[1] as number);
-    if (node.name === "right$") return String(args[0]).slice(-(args[1] as number));
-    if (node.name === "mid$") return String(args[0]).slice((args[1] as number) - 1, (args[1] as number) - 1 + (args[2] as number));
-    if (node.name === "number") return Number(args[0]) || 0;
-    if (node.name === "string$") return String(args[0]);
-    if (node.name === "fixed$") return (args[0] as number).toFixed(args[1] as number);
-    if (node.name === "index") return String(args[0]).indexOf(String(args[1])) + 1;
-    if (node.name === "rindex") return String(args[0]).lastIndexOf(String(args[1])) + 1;
-    if (node.name === "replace$") return String(args[0]).replace(new RegExp(String(args[1]), "g"), String(args[2]));
+    if (name === "length" || name === "length$") return String(args[0]).length;
+    if (name === "left$") return String(args[0]).slice(0, Number(args[1]));
+    if (name === "right$") return String(args[0]).slice(-Number(args[1]));
+    if (name === "mid$") return String(args[0]).slice(Number(args[1]) - 1, Number(args[1]) - 1 + Number(args[2]));
+    if (name === "number") return Number(args[0]) || 0;
+    if (name === "string$") return String(args[0]);
+    if (name === "fixed$") return (Number(args[0])).toFixed(Number(args[1]));
+    if (name === "percent$") return (Number(args[0]) * 100).toFixed(Number(args[1])) + "%";
+    if (name === "index") return String(args[0]).indexOf(String(args[1])) + 1;
+    if (name === "rindex") return String(args[0]).lastIndexOf(String(args[1])) + 1;
+    if (name === "startsWith") return String(args[0]).startsWith(String(args[1])) ? 1 : 0;
+    if (name === "endsWith") return String(args[0]).endsWith(String(args[1])) ? 1 : 0;
+    if (name === "replace$") {
+      const s = String(args[0]);
+      const find = String(args[1]);
+      const repl = String(args[2]);
+      const count = Number(args[3] ?? 0);
+      if (count === 0) return s.replace(new RegExp(find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "g"), repl);
+      let result = s;
+      for (let i = 0; i < count; i++) result = result.replace(find, repl);
+      return result;
+    }
+    if (name === "replace_regex$") {
+      try {
+        return String(args[0]).replace(new RegExp(String(args[1]), "g"), String(args[2]));
+      } catch { return String(args[0]); }
+    }
+
+    if (name === "extractNumber") {
+      const s = String(args[0]);
+      const pattern = String(args[1]);
+      const idx = s.indexOf(pattern);
+      if (idx < 0) return NaN;
+      const after = s.slice(idx + pattern.length).trim();
+      const match = after.match(/^-?[\d.]+([eE][+-]?\d+)?/);
+      return match ? parseFloat(match[0]) : NaN;
+    }
+
+    if (name === "extractWord$") {
+      const s = String(args[0]);
+      const pattern = String(args[1]);
+      const idx = s.indexOf(pattern);
+      if (idx < 0) return "";
+      const after = s.slice(idx + pattern.length).trim();
+      const match = after.match(/^\S+/);
+      return match ? match[0] : "";
+    }
+
+    if (name === "extractLine$") {
+      const s = String(args[0]);
+      const pattern = String(args[1]);
+      const idx = s.indexOf(pattern);
+      if (idx < 0) return "";
+      const after = s.slice(idx + pattern.length);
+      const nl = after.indexOf("\n");
+      return nl >= 0 ? after.slice(0, nl) : after;
+    }
+
+    // selected / selected$
+    if (name === "selected") {
+      // selected("Type") → returns ID of selected object of that type
+      const type = String(args[0] ?? "");
+      if (this.selectedObject && (type === "" || this.selectedObject.type === type)) {
+        return this.selectedObject.id;
+      }
+      // Search
+      const obj = this.objects.find(o => o.type === type);
+      return obj ? obj.id : 0;
+    }
+    if (name === "selected$") {
+      const type = String(args[0] ?? "");
+      if (this.selectedObject && (type === "" || this.selectedObject.type === type)) {
+        return this.selectedObject.name;
+      }
+      return "";
+    }
+
+    if (name === "numberOfSelected") {
+      // In our simple model, always 1 or 0
+      const type = String(args[0] ?? "");
+      if (type === "" && this.selectedObject) return 1;
+      if (this.selectedObject?.type === type) return 1;
+      return 0;
+    }
+
+    if (name === "do" || name === "do$") {
+      // do("command", args...) — execute a command and return result
+      // For now just return 0 / ""
+      return name === "do$" ? "" : 0;
+    }
 
     // Math functions
     const mathFn = this.mathFunctions[node.name];
@@ -370,17 +979,19 @@ export class Interpreter {
   private evalNumeric(node: ExprNode, line: number): number {
     const val = this.evalExpr(node);
     if (typeof val === "string") throw new RuntimeError(`Expected number, got string`, line);
+    if (Array.isArray(val)) throw new RuntimeError(`Expected number, got array`, line);
     return val;
   }
 
-  private isTruthy(val: number | string): boolean {
+  private isTruthy(val: number | string | number[]): boolean {
+    if (Array.isArray(val)) return val.length > 0;
     if (typeof val === "string") return val.length > 0;
-    return val !== 0;
+    return val !== 0 && !isNaN(val);
   }
 }
 
 // Convenience function
-export function runPraatScript(source: string): InterpreterResult {
+export function runPraatScript(source: string, audio?: { samples: Float32Array; sampleRate: number }): InterpreterResult {
   const interpreter = new Interpreter();
-  return interpreter.execute(source);
+  return interpreter.execute(source, audio);
 }

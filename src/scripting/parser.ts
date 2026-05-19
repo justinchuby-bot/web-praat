@@ -6,9 +6,11 @@ export type ASTNode =
   | AssignmentNode
   | ForNode
   | WhileNode
+  | RepeatNode
   | IfNode
   | CallNode
   | ProcedureNode
+  | IncludeNode
   | ExpressionStatement;
 
 export interface AssignmentNode {
@@ -34,6 +36,13 @@ export interface WhileNode {
   line: number;
 }
 
+export interface RepeatNode {
+  type: "Repeat";
+  body: ASTNode[];
+  condition: ExprNode;
+  line: number;
+}
+
 export interface IfNode {
   type: "If";
   condition: ExprNode;
@@ -48,6 +57,8 @@ export interface CallNode {
   name: string;
   args: ExprNode[];
   line: number;
+  nocheck?: boolean;
+  noprogress?: boolean;
 }
 
 export interface ProcedureNode {
@@ -55,6 +66,12 @@ export interface ProcedureNode {
   name: string;
   params: string[];
   body: ASTNode[];
+  line: number;
+}
+
+export interface IncludeNode {
+  type: "Include";
+  path: string;
   line: number;
 }
 
@@ -70,7 +87,8 @@ export type ExprNode =
   | VariableRef
   | BinaryExpr
   | UnaryExpr
-  | FunctionCall;
+  | FunctionCall
+  | IndexExpr;
 
 export interface NumberLiteral {
   type: "NumberLiteral";
@@ -104,6 +122,12 @@ export interface FunctionCall {
   type: "FunctionCall";
   name: string;
   args: ExprNode[];
+}
+
+export interface IndexExpr {
+  type: "IndexExpr";
+  object: ExprNode;
+  index: ExprNode;
 }
 
 export class ParseError extends Error {
@@ -152,18 +176,66 @@ export function parse(tokens: Token[]): ASTNode[] {
 
     if (t.type === TokenType.For) return parseFor();
     if (t.type === TokenType.While) return parseWhile();
+    if (t.type === TokenType.Repeat) return parseRepeat();
     if (t.type === TokenType.If) return parseIf();
     if (t.type === TokenType.Procedure) return parseProcedure();
-    if (t.type === TokenType.Call) return parseCall();
+    if (t.type === TokenType.Call) return parseCallStatement();
 
-    // Check for assignment: identifier = expr
+    // Include statement
+    if (t.type === TokenType.Include) {
+      const line = t.line;
+      advance();
+      let path = "";
+      while (current().type !== TokenType.Newline && current().type !== TokenType.EOF) {
+        path += current().value;
+        advance();
+      }
+      expectNewlineOrEOF();
+      return { type: "Include" as const, path: path.trim(), line };
+    }
+
+    // @ procedure call: @procName or @procName: arg1, arg2
+    if (t.type === TokenType.At) {
+      return parseAtCall();
+    }
+
+    // Check for assignment: identifier = expr (or .dotVar = expr)
     if (t.type === TokenType.Identifier && pos + 1 < tokens.length && tokens[pos + 1].type === TokenType.Equals) {
       return parseAssignment();
     }
 
+    // nocheck / noprogress prefixes
+    if (t.type === TokenType.Identifier && (t.value === "nocheck" || t.value === "noprogress")) {
+      const prefix = t.value;
+      advance();
+      const inner = parseStatement();
+      if (inner && inner.type === "Call") {
+        if (prefix === "nocheck") inner.nocheck = true;
+        else inner.noprogress = true;
+        return inner;
+      }
+      return inner;
+    }
+
+    // "exit" command
+    if (t.type === TokenType.Identifier && t.value === "exit") {
+      const line = t.line;
+      advance();
+      let msg = "";
+      while (current().type !== TokenType.Newline && current().type !== TokenType.EOF) {
+        if (current().type === TokenType.String) {
+          msg += current().value;
+          advance();
+        } else {
+          msg += current().value;
+          advance();
+        }
+      }
+      expectNewlineOrEOF();
+      return { type: "Call", name: "exit", args: [{ type: "StringLiteral", value: msg.trim() }], line };
+    }
+
     // Command-style call: word followed by colon or args
-    // e.g. "appendInfoLine: ..." or "select Sound hello"
-    // Also handle keywords that start commands (To, From, etc.)
     if (t.type === TokenType.Identifier || t.type === TokenType.To || t.type === TokenType.From) {
       return parseCommandCall();
     }
@@ -180,6 +252,28 @@ export function parse(tokens: Token[]): ASTNode[] {
     const value = parseExpression();
     expectNewlineOrEOF();
     return { type: "Assignment", name: nameToken.value, value, line: nameToken.line };
+  }
+
+  function parseAtCall(): CallNode {
+    const startToken = advance(); // @
+    const nameToken = advance(); // procedure name
+    const args: ExprNode[] = [];
+    if (current().type === TokenType.Colon) {
+      advance();
+      args.push(...parseArgList());
+    } else if (current().type === TokenType.LeftParen) {
+      advance();
+      if (current().type !== TokenType.RightParen) {
+        args.push(parseExpression());
+        while (current().type === TokenType.Comma) {
+          advance();
+          args.push(parseExpression());
+        }
+      }
+      if (current().type === TokenType.RightParen) advance();
+    }
+    expectNewlineOrEOF();
+    return { type: "Call", name: nameToken.value, args, line: startToken.line };
   }
 
   function parseFor(): ForNode {
@@ -218,6 +312,25 @@ export function parse(tokens: Token[]): ASTNode[] {
     if (current().type === TokenType.EndWhile) advance();
     expectNewlineOrEOF();
     return { type: "While", condition, body, line: startToken.line };
+  }
+
+  function parseRepeat(): RepeatNode {
+    const startToken = advance(); // repeat
+    expectNewlineOrEOF();
+    const body: ASTNode[] = [];
+    skipNewlines();
+    while (current().type !== TokenType.Until && current().type !== TokenType.EOF) {
+      const stmt = parseStatement();
+      if (stmt) body.push(stmt);
+      skipNewlines();
+    }
+    let condition: ExprNode = { type: "NumberLiteral", value: 1 };
+    if (current().type === TokenType.Until) {
+      advance();
+      condition = parseExpression();
+    }
+    expectNewlineOrEOF();
+    return { type: "Repeat", body, condition, line: startToken.line };
   }
 
   function parseIf(): IfNode {
@@ -282,7 +395,7 @@ export function parse(tokens: Token[]): ASTNode[] {
     const startToken = advance(); // procedure
     const nameToken = advance();
     const params: string[] = [];
-    // optional params in parens or colon-separated
+    // optional params: colon-separated or paren-separated or space-separated with .prefix
     if (current().type === TokenType.LeftParen) {
       advance();
       while (current().type !== TokenType.RightParen && current().type !== TokenType.EOF) {
@@ -292,7 +405,7 @@ export function parse(tokens: Token[]): ASTNode[] {
       if (current().type === TokenType.RightParen) advance();
     } else if (current().type === TokenType.Colon) {
       advance();
-      while (current().type === TokenType.Identifier) {
+      while (current().type === TokenType.Identifier || (current().type === TokenType.Identifier && current().value.startsWith("."))) {
         params.push(advance().value);
         if (current().type === TokenType.Comma) advance();
       }
@@ -311,7 +424,7 @@ export function parse(tokens: Token[]): ASTNode[] {
     return { type: "Procedure", name: nameToken.value, params, body, line: startToken.line };
   }
 
-  function parseCall(): CallNode {
+  function parseCallStatement(): CallNode {
     const startToken = advance(); // call
     const nameToken = advance();
     const args: ExprNode[] = [];
@@ -335,12 +448,25 @@ export function parse(tokens: Token[]): ASTNode[] {
     let name = advance().value;
 
     // Read until colon or newline to build multi-word command name
+    // But stop if we see '=' (assignment) or if this is a known pattern
     while (
       current().type !== TokenType.Colon &&
       current().type !== TokenType.Newline &&
       current().type !== TokenType.EOF &&
       current().type !== TokenType.Equals
     ) {
+      // Stop at ... (old-style command separator)
+      if (current().type === TokenType.Identifier && current().value === "...") {
+        advance(); // consume ...
+        // Rest of line is args (space-separated)
+        const args: ExprNode[] = [];
+        while (current().type !== TokenType.Newline && current().type !== TokenType.EOF) {
+          args.push(parseExpression());
+          if (current().type === TokenType.Comma) advance();
+        }
+        expectNewlineOrEOF();
+        return { type: "Call", name: name.trim(), args, line: startToken.line };
+      }
       name += " " + advance().value;
     }
 
@@ -397,7 +523,8 @@ export function parse(tokens: Token[]): ASTNode[] {
   function parseEquality(): ExprNode {
     let left = parseComparison();
     while (current().type === TokenType.EqualEqual || current().type === TokenType.NotEqual) {
-      const op = advance().value;
+      const opVal = advance().value;
+      const op = opVal === "<>" ? "!=" : opVal;
       left = { type: "BinaryExpr", op, left, right: parseComparison() };
     }
     return left;
@@ -477,7 +604,22 @@ export function parse(tokens: Token[]): ASTNode[] {
           }
         }
         if (current().type === TokenType.RightParen) advance();
-        return { type: "FunctionCall", name: t.value, args };
+        // Check for indexing after: func(args)[index]
+        let result: ExprNode = { type: "FunctionCall", name: t.value, args };
+        if (current().type === TokenType.LeftBracket) {
+          advance();
+          const idx = parseExpression();
+          if (current().type === TokenType.RightBracket) advance();
+          result = { type: "IndexExpr", object: result, index: idx };
+        }
+        return result;
+      }
+      // Indexing: var#[i]
+      if (current().type === TokenType.LeftBracket) {
+        advance();
+        const idx = parseExpression();
+        if (current().type === TokenType.RightBracket) advance();
+        return { type: "IndexExpr", object: { type: "VariableRef", name: t.value }, index: idx };
       }
       return { type: "VariableRef", name: t.value };
     }
