@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { getColormap } from '../utils/colormap';
 import type { AnalysisResult, TimeSelection, ViewRange } from '../types';
 import { useZoomPan } from '../hooks/useZoomPan';
@@ -21,7 +21,7 @@ interface SpectrogramProps {
 
 type DragMode = 'select' | 'pan' | 'zoom' | null;
 
-export function Spectrogram({
+export const Spectrogram = React.memo(function Spectrogram({
   analysis,
   selection,
   currentTime,
@@ -247,4 +247,4 @@ export function Spectrogram({
       }}
     />
   );
-}
+});

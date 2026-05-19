@@ -48,7 +48,6 @@ export function TextGridEditor({
   onDeletePoint,
 }: TextGridEditorProps) {
   const tierHeight = 54;
-  const visibleTierData = textGrid.tiers;
 
   const handleTrackClick = (tier: TextGridTier, event: React.MouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -97,7 +96,7 @@ export function TextGridEditor({
 
   return (
     <section className="textgrid-editor">
-      {visibleTierData.map((tier) => (
+      {textGrid.tiers.map((tier) => (
         <div
           key={tier.id}
           className={`textgrid-tier ${activeTierId === tier.id ? 'is-active' : ''}`}
