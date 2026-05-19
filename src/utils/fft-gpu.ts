@@ -326,9 +326,9 @@ export async function batchFftMagnitudeGpu(
     ],
   });
 
-  // Dispatch log2(n) passes — each pass processes all frames
+  // Dispatch log2(n) passes — each pass needs separate submit
+  // because writeBuffer must complete before compute reads the uniform
   const log2n = Math.log2(n);
-  const encoder = device.createCommandEncoder();
   const totalButterflies = (n / 2) * numFrames;
 
   for (let s = 0; s < log2n; s++) {
@@ -336,13 +336,17 @@ export async function batchFftMagnitudeGpu(
     const params = new Uint32Array([n, halfSize]);
     device.queue.writeBuffer(paramsBuffer, 0, params);
 
-    const pass = encoder.beginComputePass();
+    const passEncoder = device.createCommandEncoder();
+    const pass = passEncoder.beginComputePass();
     pass.setPipeline(pipe);
     pass.setBindGroup(0, bindGroup);
     const workgroups = Math.ceil(totalButterflies / 256);
     pass.dispatchWorkgroups(workgroups);
     pass.end();
+    device.queue.submit([passEncoder.finish()]);
   }
+  // Wait for all passes to complete
+  await device.queue.onSubmittedWorkDone();
 
   // Read back
   const readReBuffer = device.createBuffer({
@@ -353,10 +357,11 @@ export async function batchFftMagnitudeGpu(
     size: totalSize * 4,
     usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
   });
-  encoder.copyBufferToBuffer(reBuffer, 0, readReBuffer, 0, totalSize * 4);
-  encoder.copyBufferToBuffer(imBuffer, 0, readImBuffer, 0, totalSize * 4);
+  const readEncoder = device.createCommandEncoder();
+  readEncoder.copyBufferToBuffer(reBuffer, 0, readReBuffer, 0, totalSize * 4);
+  readEncoder.copyBufferToBuffer(imBuffer, 0, readImBuffer, 0, totalSize * 4);
 
-  device.queue.submit([encoder.finish()]);
+  device.queue.submit([readEncoder.finish()]);
 
   await readReBuffer.mapAsync(GPUMapMode.READ);
   await readImBuffer.mapAsync(GPUMapMode.READ);
