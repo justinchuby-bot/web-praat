@@ -237,7 +237,10 @@ export default function App() {
 
     source.onended = () => {
       setIsPlaying(false);
-      setCurrentTime(0);
+      // Stay at end position instead of jumping back to 0
+      if (selection) {
+        setCurrentTime(selection.end);
+      }
     };
 
     const updateTime = () => {
@@ -362,6 +365,7 @@ export default function App() {
 
   const handleSpectrumSliceSelect = useCallback((time: number) => {
     if (!currentSamplesRef.current || !analysis) return;
+    setCurrentTime(time);
     const slice = computeSpectrumSlice(currentSamplesRef.current, sampleRate, time, settings);
     setAnalysis({ ...analysis, spectrumSlice: slice });
   }, [analysis, sampleRate, settings]);
