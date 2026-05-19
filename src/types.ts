@@ -1,4 +1,4 @@
-export type FilterType = 'none' | 'lowpass' | 'highpass' | 'bandpass';
+export type FilterType = 'none' | 'lowpass' | 'highpass' | 'bandpass' | 'notch';
 export type TextGridTierKind = 'interval' | 'point';
 export type ColormapName = 'jet' | 'grayscale' | 'viridis' | 'magma';
 export type WindowFunction = 'hanning' | 'hamming' | 'gaussian' | 'bartlett' | 'rectangular';
