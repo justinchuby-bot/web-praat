@@ -9,9 +9,9 @@ import { computeRhythmMetrics } from './audio/rhythm';
 import { loadAudioFile } from './audio/recorder';
 import { computeSpectrumSlice } from './audio/spectrum';
 import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog';
-import { FilterPanel } from './components/FilterPanel';
 import { MenuBar } from './components/MenuBar';
 import { RhythmPanel } from './components/RhythmPanel';
+import { RightSidebar } from './components/RightSidebar';
 import { SettingsPanel } from './components/SettingsPanel';
 import { Sidebar } from './components/Sidebar';
 import { Spectrogram } from './components/Spectrogram';
@@ -34,6 +34,7 @@ import { ExperimentMFC } from './components/ExperimentMFC';
 import { ScriptEditor } from './components/ScriptEditor';
 import { VoiceQualityPanel } from './components/VoiceQualityPanel';
 import { Waveform } from './components/Waveform';
+import { FilterPanel } from './components/FilterPanel';
 import {
   downloadBinaryFile,
   downloadTextFile,
@@ -523,10 +524,7 @@ export default function App() {
           onToggleFormants={() => setShowFormants((value) => !value)}
           onToggleIntensity={() => setShowIntensity((value) => !value)}
           onToggleCochleagram={() => setShowCochleagram((value) => !value)}
-        >
-          <SettingsPanel settings={settings} onChange={setSettings} />
-          <FilterPanel settings={filterSettings} onChange={setFilterSettings} onApply={handleApplyFilter} onReset={handleResetFilter} />
-        </Sidebar>
+        />
 
         <main className="main-area" role="main" aria-label="Audio editor">
           <div className="visualizations">
@@ -636,15 +634,24 @@ export default function App() {
           )}
         </div>
 
-          {analysis && (
-            <section className="bottom-panels" aria-label="Analysis panels">
-              <SpectrumSlice slice={analysis.spectrumSlice} />
-              <VoiceQualityPanel metrics={analysis.voiceQuality} />
-              <HarmonicityPanel data={analysis.harmonicity} viewStart={viewStart} viewEnd={viewEnd} />
-              <RhythmPanel metrics={rhythmMetrics} />
-            </section>
-          )}
         </main>
+
+        {analysis && (
+          <RightSidebar>
+            {{
+              spectrum: <SpectrumSlice slice={analysis.spectrumSlice} />,
+              voice: <VoiceQualityPanel metrics={analysis.voiceQuality} />,
+              hnr: <HarmonicityPanel data={analysis.harmonicity} viewStart={viewStart} viewEnd={viewEnd} />,
+              rhythm: <RhythmPanel metrics={rhythmMetrics} />,
+              settings: (
+                <>
+                  <SettingsPanel settings={settings} onChange={setSettings} />
+                  <FilterPanel settings={filterSettings} onChange={setFilterSettings} onApply={handleApplyFilter} onReset={handleResetFilter} />
+                </>
+              ),
+            }}
+          </RightSidebar>
+        )}
       </div>
 
       <StatusBar
