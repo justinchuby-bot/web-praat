@@ -62,8 +62,6 @@ describe('Praat accuracy — sine 440Hz', () => {
   const { samples, sampleRate } = loadWav('fixtures/sine_440hz.wav');
   const result = analyzeAudio(samples, sampleRate);
   const pitchRef = loadRef('fixtures/sine_440hz_pitch.json');
-  const intensityRef = loadRef('fixtures/sine_440hz_intensity.json');
-  const hnrRef = loadRef('fixtures/sine_440hz_hnr.json');
 
   it('pitch within ±2 Hz of Praat', () => {
     // Compare at matching time points (our analysis may have different frame count)
@@ -106,9 +104,6 @@ describe('Praat accuracy — vowel /a/', () => {
   const { samples, sampleRate } = loadWav('fixtures/vowel_a.wav');
   const result = analyzeAudio(samples, sampleRate);
   const pitchRef = loadRef('fixtures/vowel_a_pitch.json');
-  const formantRef = loadRef('fixtures/vowel_a_formants.json');
-  const intensityRef = loadRef('fixtures/vowel_a_intensity.json');
-  const hnrRef = loadRef('fixtures/vowel_a_hnr.json');
 
   it('pitch within ±2 Hz of Praat', () => {
     let compared = 0;
