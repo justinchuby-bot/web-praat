@@ -44,11 +44,13 @@ export function RightSidebar({ children }: RightSidebarProps) {
           </button>
         ))}
       </div>
-      {isOpen && (
-        <div className="right-sidebar-content">
-          {children[activeTab!]}
-        </div>
-      )}
+      <div className="right-sidebar-panel">
+        {isOpen && (
+          <div className="right-sidebar-content">
+            {children[activeTab!]}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
