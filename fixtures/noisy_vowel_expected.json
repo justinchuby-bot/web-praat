@@ -1,0 +1,7 @@
+{
+  "f0": 120.0,
+  "snr_db": 10,
+  "expected_hnr_db": 10,
+  "hnr_tolerance_db": 3,
+  "duration": 1.0
+}

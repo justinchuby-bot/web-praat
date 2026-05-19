@@ -1,0 +1,44 @@
+{
+  "f0": 120.0,
+  "duration": 1.0,
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 0.5,
+      "type": "narrow",
+      "formants": [
+        {
+          "freq": 700,
+          "bw": 50
+        },
+        {
+          "freq": 1200,
+          "bw": 40
+        },
+        {
+          "freq": 2600,
+          "bw": 80
+        }
+      ]
+    },
+    {
+      "start": 0.5,
+      "end": 1.0,
+      "type": "wide",
+      "formants": [
+        {
+          "freq": 700,
+          "bw": 250
+        },
+        {
+          "freq": 1200,
+          "bw": 200
+        },
+        {
+          "freq": 2600,
+          "bw": 300
+        }
+      ]
+    }
+  ]
+}

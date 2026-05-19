@@ -1,0 +1,10 @@
+{
+  "f0": 440.0,
+  "nominal_jitter_percent": 2.0,
+  "nominal_shimmer_percent": 5.0,
+  "actual_jitter_percent": 1.3642,
+  "actual_shimmer_percent": 3.3911,
+  "jitter_tolerance_percent": 0.5,
+  "shimmer_tolerance_percent": 1.0,
+  "duration": 0.9950793650793651
+}

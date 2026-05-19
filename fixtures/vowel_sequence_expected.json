@@ -1,0 +1,41 @@
+{
+  "segments": [
+    {
+      "vowel": "a",
+      "start": 0.0,
+      "end": 0.3,
+      "expected_f1": 700,
+      "expected_f2": 1200
+    },
+    {
+      "vowel": "i",
+      "start": 0.3,
+      "end": 0.6,
+      "expected_f1": 270,
+      "expected_f2": 2300
+    },
+    {
+      "vowel": "u",
+      "start": 0.6,
+      "end": 0.8999999999999999,
+      "expected_f1": 300,
+      "expected_f2": 870
+    },
+    {
+      "vowel": "e",
+      "start": 0.8999999999999999,
+      "end": 1.2,
+      "expected_f1": 400,
+      "expected_f2": 2100
+    },
+    {
+      "vowel": "o",
+      "start": 1.2,
+      "end": 1.5,
+      "expected_f1": 450,
+      "expected_f2": 800
+    }
+  ],
+  "f0": 120.0,
+  "duration": 1.5
+}
