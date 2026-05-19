@@ -7,81 +7,76 @@
 **Repo:** justinchuby-bot/web-praat (public)
 **参考源码:** ~/clawspace/praat.github.io/
 
+## 当前状态
 
-## 🚨 紧急修复
-
-- [ ] 录音卡顿修复（main thread 被 DSP 阻塞，用 Web Worker 或 AudioWorklet 处理）
-- [ ] UI 重新设计：
-  - 按钮改用 icon（Lucide icons）
-  - 加顶部菜单栏（File / Edit / View / Analysis / Help）
-  - 更现代的布局：toolbar + main canvas + sidebar panels
-  - 参考 Audacity 或 Logic Pro 的 UI 风格
+- **198 tests**, 70+ 源文件, 9000+ 行 TypeScript
+- **React 19 + TypeScript 6 + Vite 8 + vitest 4.1**
+- Coverage: 84% statements, 93% audio module
+- Build: 446KB / 139KB gzip
 
 ## 当前优先任务
 
-- [ ] Long-Term Average Spectrum (LTAS)
+- [ ] JS API 补全（intensity, spectrogram, textGrid, mfcc, resample, getMin/getMax, fft/ifft）
+- [ ] Shiki 语法高亮（Praat Script TextMate grammar）
+- [ ] MCP Server 层（暴露语音分析给 AI agent）
 
-## Backlog（按優先級）
-- [ ] 移动端适配
-
-
-## 缺失的 Praat 功能（需要新增）
+## Backlog（按优先级）
 
 ### 高优先
-- [ ] Long-Term Average Spectrum (LTAS)
-- [ ] Harmonicity (HNR) 显示
-- [ ] PointProcess（声门脉冲标记）
-- [ ] Sound enhance（降噪、预加重、去静音）
-
-### 中优先
-- [ ] Cochleagram（听觉频谱图）
+- [ ] JS API: `praat.intensity()`, `praat.spectrogram()`, `praat.textGrid.*`
+- [ ] JS API: `praat.mfcc()`, `praat.resample()`, `praat.getMin/getMax()`
+- [ ] JS API: `praat.fft()` / `praat.ifft()` — 直接频域访问
+- [ ] MCP Server — 把 audio analysis 暴露为 MCP tools
+- [ ] 参考 wavesurfer.js 改进波形交互（region selection、minimap）
 - [ ] Excitation pattern
-- [ ] VocalTract 模型（声道面积函数→频谱）
-- [ ] Spectrum 编辑（频域滤波、手动修改）
-- [ ] FormantGrid 编辑（手动画 formant 轨迹）
-- [ ] PitchTier 编辑（手动调 pitch 曲线）
-- [ ] DurationTier（时长修改）
-- [ ] AmplitudeTier（振幅包络）
-- [ ] Sound → PointProcess（自动检测声门脉冲）
-- [ ] Pitch → PitchTier → Sound（pitch 合成）
+- [ ] SpeechSynthesizer（TTS）
 
 ### 低优先
-- [ ] SpeechSynthesizer（TTS）
-- [ ] ExperimentMFC（感知实验）
 - [ ] SpellingChecker
 - [ ] Distributions & Transition（统计）
 - [ ] Polygon / Photo / Movie 支持
-- [ ] Praat Script 脚本引擎
 
 ## 已完成 ✅
 
-- [x] 基础框架 (React + TypeScript + Vite)
+- [x] 基础框架 (React 19 + TypeScript 6 + Vite 8)
 - [x] 波形图 (Waveform)
 - [x] 语谱图 (Spectrogram, STFT)
-- [x] Pitch/F0 overlay (autocorrelation)
-- [x] Formant overlay (Burg LPC)
+- [x] Pitch/F0 overlay (autocorrelation + Viterbi)
+- [x] Formant overlay (Burg LPC) + Formant tracking (Viterbi + smoothing)
 - [x] Intensity curve (RMS)
 - [x] 录音 + 文件加载
 - [x] 播放/暂停 + 实时光标
-- [x] 深色主题 UI
-- [x] 7 个单元测试通过
-- [x] WebGPU FFT 加速 (src/utils/fft-gpu.ts) — compute shader + CPU fallback + 4 tests
-- [x] 引入 shadcn/ui + Tailwind (按钮/slider/dropdown/dialog/tooltip)
-- [x] 键盘快捷键（空格=播放/暂停, Cmd/Ctrl+Z=undo, 方向键=移动选择, zoom, select all）
-- [x] 完善 TextGrid 标注（导入/导出 .TextGrid + tier管理 + 删除boundary/point）
-- [x] Spectrogram 设置面板（FFT size、hop、window function、colormap、dynamic range、max view freq、pre-emphasis）— shadcn Dialog UI
-- [x] Pitch 設置 — 完整 Viterbi path-finding（min/max Hz、voicing threshold、silence threshold、octave cost、octave-jump cost、voiced/unvoiced cost、max candidates）
-- [x] Zoom & Pan 優化（滾輪zoom、trackpad橫滑pan、pinch-to-zoom、雙擊zoom in、拖動pan）
-- [x] 导出 CSV/WAV（Pitch/Formant/Intensity/HNR CSV + Selection WAV + Full WAV export）
-- [x] Formant tracking — Viterbi + Gaussian smoothing + median filter + configurable settings UI
-- [x] 录音编辑（剪切/复制/粘贴/Undo）— AudioEditorHistory + ReplaceRangeCommand + keyboard shortcuts + toolbar buttons
-- [x] Jitter/Shimmer 嗓音质量面板 — VoiceQualityPanel + pulse detection + all metrics
-- [x] 滤波器（低通/高通/带通）— biquad filter + FilterPanel UI + apply/reset
-- [x] 实时录音模式（streaming spectrogram）— StreamingRecorder + useStreamingRecording hook + live analysis every 250ms
-- [x] React 性能优化：useMemo/useCallback 依赖修复（settings ref、移除无意义 useMemo）
-- [x] 性能优化：Web Worker for heavy DSP — analysis.worker.ts + useAnalysisWorker hook + loading indicator
-- [x] 界面打磨：动画、快捷键、accessibility
-- [x] Manipulation（TD-PSOLA pitch/duration 编辑 + 重合成）— ManipulationPanel + psola.ts + 4 tests
+- [x] 深色主题 UI (Audacity/Logic Pro style)
+- [x] WebGPU FFT 加速 + CPU fallback
+- [x] shadcn/ui + Tailwind
+- [x] 键盘快捷键
+- [x] TextGrid 标注（导入/导出 .TextGrid + tier管理）
+- [x] Spectrogram/Pitch/Formant 设置面板
+- [x] Zoom & Pan（滚轮/trackpad/pinch/拖动）
+- [x] 导出 CSV/WAV
+- [x] 录音编辑（剪切/复制/粘贴/Undo/Redo）
+- [x] Jitter/Shimmer 嗓音质量面板
+- [x] 滤波器（低通/高通/带通/notch + Butterworth 高阶）
+- [x] 实时录音模式（streaming spectrogram）
+- [x] **录音卡顿修复** — Web Worker 移 DSP 出 main thread
+- [x] **UI 重新设计** — Lucide icons + MenuBar + Toolbar + StatusBar + 深色专业风格
+- [x] **Manipulation** — TD-PSOLA pitch/duration 编辑 + 重合成
+- [x] **LTAS** — Long-Term Average Spectrum
+- [x] **Harmonicity (HNR)** — autocorrelation method
+- [x] **PointProcess** — 声门脉冲检测
+- [x] **Sound enhance** — 降噪 (spectral subtraction) + 预加重 + 去静音
+- [x] **Cochleagram** — 听觉频谱图 (Bark/ERB scale, gammatone filter bank)
+- [x] **VocalTract** — Kelly-Lochbaum 声道面积模型 + 交互式编辑器 + 元音预设
+- [x] **Spectrum Editor** — 频域编辑 + 手绘 gain 曲线 + 预设滤波 + IFFT
+- [x] **Tier Editors** — PitchTier + FormantGrid + DurationTier + AmplitudeTier (共享 TierEditorBase)
+- [x] **ExperimentMFC** — 感知实验设计器 + 运行器 + CSV 导出
+- [x] **Praat Script 引擎** — lexer + parser + interpreter (for/while/if/procedure)
+- [x] **JavaScript Scripting** — `praat.*` API + 沙箱 + 语言切换 tab
+- [x] **移动端适配** — 响应式布局 + 触摸手势 + BottomSheet
+- [x] **React 性能优化** — React.memo on heavy components + ref patterns
+- [x] **全功能集成到 UI** — Tools 菜单入口（所有 9 个新组件）
+- [x] **Deps 全线升级** — React 19, TS 6, Vite 8, vitest 4.1
+- [x] **Code cleanup** — 删除 6 unused 文件 (-602 行) + dead code
 
 ## 规则
 
@@ -89,4 +84,6 @@
 - 做完标 ✅ 移到已完成
 - 更新"当前优先任务"为下一个
 - npm test 必须通过
+- npx tsc --noEmit 必须 0 errors
+- npm run build 必须通过
 - Push 到 justinchuby-bot/web-praat
