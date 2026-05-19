@@ -16,6 +16,7 @@
 
 ## 当前优先任务
 
+- [ ] **布局修复**：波形/语谱图区域默认应占主视图 60-70% 高度；下方面板（Spectrum Slice/Voice Quality/HNR/Rhythm）默认折叠或 tab 切换，不同时全部展开挤占空间
 - [ ] Wire BottomSheet + useIsMobile to App.tsx（移动端显示 BottomSheet 替代 Sidebar）
 - [ ] JS API 补全（intensity, spectrogram, textGrid, mfcc, resample, getMin/getMax, fft/ifft）
 - [ ] Shiki 语法高亮（Praat Script TextMate grammar）
