@@ -4,13 +4,11 @@
 
 import { PluginManifest, PluginResult, PluginParameter } from './types';
 import { runPraatScript } from '../scripting';
-import { fastTrackPlugin } from './fasttrack';
 import { vowelSpacePlugin } from './vowelSpace';
 import { jitterShimmerPlugin } from './jitterShimmer';
 
 // Built-in plugins
 const builtinPlugins: PluginManifest[] = [
-  fastTrackPlugin,
   vowelSpacePlugin,
   jitterShimmerPlugin,
 ];

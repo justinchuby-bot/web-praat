@@ -14,9 +14,9 @@ export function SpectrumSlice({ slice }: SpectrumSliceProps) {
     );
   }
 
-  // Convert to dB scale for display (both FFT and LPC on same scale)
+  // Convert FFT to dB scale; LPC envelope is already in dB from evaluateLpcEnvelope
   const fftDb = Array.from(slice.fftMagnitudes).map(m => m > 0 ? 20 * Math.log10(m) : -120);
-  const envDb = Array.from(slice.lpcEnvelope).map(v => v > 0 ? 20 * Math.log10(v) : -120);
+  const envDb = Array.from(slice.lpcEnvelope); // already in dB
   const allDb = [...fftDb, ...envDb];
   const maxDb = Math.max(...allDb);
   const minDb = maxDb - 80; // 80 dB dynamic range
