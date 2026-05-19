@@ -312,3 +312,13 @@ export function deletePoint(grid: TextGrid, tierId: string, pointId: string): Te
     }),
   };
 }
+
+export function moveTier(grid: TextGrid, tierId: string, direction: 'up' | 'down'): TextGrid {
+  const tiers = [...grid.tiers];
+  const index = tiers.findIndex((t) => t.id === tierId);
+  if (index < 0) return grid;
+  const target = direction === 'up' ? index - 1 : index + 1;
+  if (target < 0 || target >= tiers.length) return grid;
+  [tiers[index], tiers[target]] = [tiers[target], tiers[index]];
+  return { ...grid, tiers };
+}
