@@ -101,6 +101,25 @@ export const Spectrogram = React.memo(function Spectrogram({
       }
     }
 
+    // Y-axis frequency labels
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    const freqSteps = [0, 1000, 2000, 3000, 4000, 5000].filter(f => f <= maxDisplayFreq);
+    for (const freq of freqSteps) {
+      if (freq === 0) continue;
+      const y = height - (freq / maxDisplayFreq) * height;
+      ctx.fillText(`${freq / 1000}k`, 3, y);
+      // Subtle grid line
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+    }
+
     if (showPitch) {
       ctx.strokeStyle = style.getPropertyValue('--accent').trim() || '#89b4fa';
       ctx.lineWidth = 1.5;
