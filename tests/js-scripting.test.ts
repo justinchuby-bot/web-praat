@@ -237,4 +237,91 @@ describe('JS Scripting', () => {
       expect(result.output).toBe('undefined\nundefined');
     });
   });
+
+  describe('new API methods', () => {
+    it('duration returns correct value', () => {
+      const ctx = makeContext(44100);
+      const result = runJavaScript(`
+        praat.log(praat.duration);
+      `, ctx);
+      expect(result.errors).toHaveLength(0);
+      expect(result.output).toBe('1');
+    });
+
+    it('getMin/getMax on pitch data', () => {
+      const ctx = makeContext(44100);
+      const result = runJavaScript(`
+        const pitch = praat.toPitch();
+        const min = praat.getMin(pitch);
+        const max = praat.getMax(pitch);
+        praat.log(typeof min === 'number');
+        praat.log(typeof max === 'number');
+        praat.log(min <= max || (min === 0 && max === 0));
+      `, ctx);
+      expect(result.errors).toHaveLength(0);
+      expect(result.output).toContain('true');
+    });
+
+    it('intensity returns data', () => {
+      const ctx = makeContext(4410);
+      const result = runJavaScript(`
+        const int = praat.intensity();
+        praat.log(Array.isArray(int.times));
+        praat.log(Array.isArray(int.values));
+      `, ctx);
+      expect(result.errors).toHaveLength(0);
+      expect(result.output).toBe('true\ntrue');
+    });
+
+    it('jitter returns a number', () => {
+      const ctx = makeContext(44100);
+      const result = runJavaScript(`
+        const j = praat.jitter();
+        praat.log(typeof j === 'number');
+      `, ctx);
+      expect(result.errors).toHaveLength(0);
+      expect(result.output).toBe('true');
+    });
+
+    it('shimmer returns a number', () => {
+      const ctx = makeContext(44100);
+      const result = runJavaScript(`
+        const s = praat.shimmer();
+        praat.log(typeof s === 'number');
+      `, ctx);
+      expect(result.errors).toHaveLength(0);
+      expect(result.output).toBe('true');
+    });
+
+    it('pointProcess returns data', () => {
+      const ctx = makeContext(44100);
+      const result = runJavaScript(`
+        const pp = praat.pointProcess();
+        praat.log(Array.isArray(pp.times));
+      `, ctx);
+      expect(result.errors).toHaveLength(0);
+      expect(result.output).toBe('true');
+    });
+
+    it('resample changes length', () => {
+      const ctx = makeContext(4410);
+      const result = runJavaScript(`
+        const resampled = praat.resample(praat.audio, 22050);
+        praat.log(resampled.length);
+      `, ctx);
+      expect(result.errors).toHaveLength(0);
+      expect(result.output).toBe('2205');
+    });
+
+    it('reverse flips audio', () => {
+      const ctx = makeContext(100);
+      const result = runJavaScript(`
+        const rev = praat.reverse(praat.audio);
+        praat.log(rev.length === praat.audio.length);
+        praat.log(Math.abs(rev[0] - praat.audio[99]) < 1e-6);
+      `, ctx);
+      expect(result.errors).toHaveLength(0);
+      expect(result.output).toBe('true\ntrue');
+    });
+  });
 });

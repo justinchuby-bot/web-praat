@@ -378,12 +378,20 @@ export function parse(tokens: Token[]): ASTNode[] {
   }
 
   function parseAnd(): ExprNode {
-    let left = parseEquality();
+    let left = parseNot();
     while (current().type === TokenType.And) {
       advance();
-      left = { type: "BinaryExpr", op: "and", left, right: parseEquality() };
+      left = { type: "BinaryExpr", op: "and", left, right: parseNot() };
     }
     return left;
+  }
+
+  function parseNot(): ExprNode {
+    if (current().type === TokenType.Not) {
+      advance();
+      return { type: "UnaryExpr", op: "not", operand: parseNot() };
+    }
+    return parseEquality();
   }
 
   function parseEquality(): ExprNode {
@@ -420,9 +428,9 @@ export function parse(tokens: Token[]): ASTNode[] {
 
   function parseMulDiv(): ExprNode {
     let left = parseUnary();
-    while (current().type === TokenType.Star || current().type === TokenType.Slash) {
+    while (current().type === TokenType.Star || current().type === TokenType.Slash || current().type === TokenType.Mod) {
       const op = advance().value;
-      left = { type: "BinaryExpr", op, left, right: parseUnary() };
+      left = { type: "BinaryExpr", op: op === "mod" ? "mod" : op, left, right: parseUnary() };
     }
     return left;
   }
@@ -431,10 +439,6 @@ export function parse(tokens: Token[]): ASTNode[] {
     if (current().type === TokenType.Minus) {
       advance();
       return { type: "UnaryExpr", op: "-", operand: parseUnary() };
-    }
-    if (current().type === TokenType.Not) {
-      advance();
-      return { type: "UnaryExpr", op: "not", operand: parseUnary() };
     }
     return parsePrimary();
   }

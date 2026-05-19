@@ -24,6 +24,10 @@ export interface InterpreterResult {
   objects: PraatObject[];
 }
 
+export class ExitScriptError extends Error {
+  constructor() { super('exitScript'); }
+}
+
 export class Interpreter {
   private variables: Map<string, number | string> = new Map();
   private procedures: Map<string, { params: string[]; body: ASTNode[] }> = new Map();
@@ -74,7 +78,9 @@ export class Interpreter {
       // Second pass: execute
       this.executeBlock(ast);
     } catch (e) {
-      if (e instanceof ParseError || e instanceof RuntimeError) {
+      if (e instanceof ExitScriptError) {
+        // Normal script exit
+      } else if (e instanceof ParseError || e instanceof RuntimeError) {
         errors.push({ line: e.line, message: e.message });
       } else {
         errors.push({ line: 0, message: String(e) });
@@ -163,6 +169,15 @@ export class Interpreter {
 
     if (nameLower === "writeinfoline" || nameLower === "writeinfo") {
       this.output = args.map(String).join("") + (nameLower === "writeinfoline" ? "\n" : "");
+      return;
+    }
+
+    if (nameLower === "exitscript") {
+      throw new ExitScriptError();
+    }
+
+    if (nameLower === "pausescript") {
+      // No-op in web environment
       return;
     }
 
@@ -274,11 +289,15 @@ export class Interpreter {
       case "StringLiteral":
         return node.value;
       case "VariableRef": {
-        const val = this.variables.get(node.name);
+        const name = node.name;
+        // Special string constants
+        if (name === "tab$") return "\t";
+        if (name === "newline$") return "\n";
+        const val = this.variables.get(name);
         if (val === undefined) {
-          // String variables default to empty, numeric to 0
-          if (node.name.endsWith("$")) return "";
-          return 0;
+          // String variables default to empty
+          if (name.endsWith("$")) return "";
+          throw new RuntimeError(`Undefined variable: ${name}`, 0);
         }
         return val;
       }
@@ -312,6 +331,7 @@ export class Interpreter {
       case "-": return l - r;
       case "*": return l * r;
       case "/": return r === 0 ? 0 : l / r;
+      case "mod": return r === 0 ? 0 : l % r;
       case "<": return l < r ? 1 : 0;
       case ">": return l > r ? 1 : 0;
       case "<=": return l <= r ? 1 : 0;

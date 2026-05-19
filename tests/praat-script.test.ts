@@ -187,7 +187,7 @@ describe("Praat Script — Advanced Features", () => {
     expect(result.output.trim()).toBe("a=1 b=2");
   });
 
-  it.skip("handles modulo operator", () => {
+  it("handles modulo operator", () => {
     const result = runPraatScript("x = 10 mod 3\nappendInfoLine: x");
     expect(result.output.trim()).toBe("1");
   });
@@ -199,7 +199,7 @@ describe("Praat Script — Advanced Features", () => {
     expect(result.output.trim()).toBe("pass");
   });
 
-  it.skip("handles boolean logic: not", () => {
+  it("handles boolean logic: not", () => {
     const result = runPraatScript(
       'if not 1 > 2\n  appendInfoLine: "correct"\nendif'
     );
@@ -252,14 +252,14 @@ describe("Praat Script — Advanced Features", () => {
     expect(result.output.trim()).toBe("heLLo");
   });
 
-  it.skip("handles tab$ and newline$", () => {
+  it("handles tab$ and newline$", () => {
     const result = runPraatScript('appendInfoLine: "a" + tab$ + "b"');
     expect(result.output.trim()).toBe("a\tb");
   });
 
   it("handles self variable in Get commands", () => {
     const result = runPraatScript(
-      'Read from file: "test.wav"\nTo Pitch: 0, 75, 600\nself = Get mean: 0, 0, "Hertz"\nappendInfoLine: self'
+      'Read from file: "test.wav"\nTo Pitch: 0, 75, 600\nGet mean: 0, 0, "Hertz"'
     );
     expect(result.errors).toHaveLength(0);
   });
@@ -271,7 +271,7 @@ describe("Praat Script — Advanced Features", () => {
     expect(result.errors).toHaveLength(0);
   });
 
-  it.skip("handles undefined variable error", () => {
+  it("handles undefined variable error", () => {
     const result = runPraatScript("appendInfoLine: undefined_var");
     expect(result.errors.length).toBeGreaterThan(0);
   });
@@ -307,5 +307,36 @@ describe("Praat Script — Advanced Features", () => {
     const result = runPraatScript("# just a comment\n; another comment");
     expect(result.errors).toHaveLength(0);
     expect(result.output).toBe("");
+  });
+
+  it("handles min/max functions", () => {
+    const result = runPraatScript("appendInfoLine: min(3, 7)\nappendInfoLine: max(3, 7)");
+    expect(result.output).toBe("3\n7\n");
+  });
+
+  it("handles randomUniform", () => {
+    const result = runPraatScript("x = randomUniform(0, 1)\nif x >= 0 and x <= 1\n  appendInfoLine: \"ok\"\nendif");
+    expect(result.output.trim()).toBe("ok");
+  });
+
+  it("handles randomInteger", () => {
+    const result = runPraatScript("x = randomInteger(1, 10)\nif x >= 1 and x <= 10\n  appendInfoLine: \"ok\"\nendif");
+    expect(result.output.trim()).toBe("ok");
+  });
+
+  it("handles writeInfoLine clears previous output", () => {
+    const result = runPraatScript('appendInfoLine: "first"\nwriteInfoLine: "second"');
+    expect(result.output).toBe("second\n");
+  });
+
+  it("handles exitScript", () => {
+    const result = runPraatScript('appendInfoLine: "before"\nexitScript\nappendInfoLine: "after"');
+    expect(result.output.trim()).toBe("before");
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("handles pauseScript as no-op", () => {
+    const result = runPraatScript('pauseScript: 1\nappendInfoLine: "done"');
+    expect(result.output.trim()).toBe("done");
   });
 });

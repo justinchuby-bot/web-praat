@@ -28,6 +28,7 @@ export enum TokenType {
   Minus = "-",
   Star = "*",
   Slash = "/",
+  Mod = "mod",
   Less = "<",
   Greater = ">",
   EqualEqual = "==",
@@ -76,6 +77,7 @@ const KEYWORDS: Record<string, TokenType> = {
   and: TokenType.And,
   or: TokenType.Or,
   not: TokenType.Not,
+  mod: TokenType.Mod,
 };
 
 export function tokenize(source: string): Token[] {

@@ -3,12 +3,14 @@
  * The `praat` object gives access to audio analysis functions.
  */
 
-import { computePitch, computeFormants } from '../audio/analyzer';
+import { computePitch, computeFormants, computeIntensity } from '../audio/analyzer';
 import { computeHarmonicity } from '../audio/harmonicity';
 import { computeLtas } from '../audio/ltas';
 import { reduceNoise, preEmphasis, removeSilence } from '../audio/soundEnhance';
 import { applyButterworthFilter } from '../audio/filters';
-import type { PitchData, FormantData } from '../types';
+import { computeVoiceQuality } from '../audio/voiceQuality';
+import { computePointProcess } from '../audio/pointprocess';
+import type { PitchData, FormantData, IntensityData } from '../types';
 
 export interface JsApiContext {
   samples: Float32Array;
@@ -162,6 +164,82 @@ export function createPraatApi(context: JsApiContext, result: JsApiResult) {
     // Logging
     log(...args: unknown[]) {
       result.logs.push(args.map(a => String(a)).join(' '));
+    },
+
+    // Duration
+    get duration() {
+      return context.samples.length / context.sampleRate;
+    },
+
+    // Get min/max from pitch data
+    getMin(data: PitchData | number[]): number {
+      const values = Array.isArray(data) ? data : (data as PitchData).frequencies;
+      let min = Infinity;
+      for (const v of values) {
+        if (v != null && isFinite(v) && v < min) min = v;
+      }
+      return min === Infinity ? 0 : min;
+    },
+
+    getMax(data: PitchData | number[]): number {
+      const values = Array.isArray(data) ? data : (data as PitchData).frequencies;
+      let max = -Infinity;
+      for (const v of values) {
+        if (v != null && isFinite(v) && v > max) max = v;
+      }
+      return max === -Infinity ? 0 : max;
+    },
+
+    // Intensity
+    intensity(audio?: Float32Array): IntensityData {
+      const samples = audio ?? context.samples;
+      return computeIntensity(samples, context.sampleRate);
+    },
+
+    // Voice quality: jitter
+    jitter(audio?: Float32Array): number {
+      const samples = audio ?? context.samples;
+      const vq = computeVoiceQuality(samples, context.sampleRate);
+      return vq.jitterLocalPercent;
+    },
+
+    // Voice quality: shimmer
+    shimmer(audio?: Float32Array): number {
+      const samples = audio ?? context.samples;
+      const vq = computeVoiceQuality(samples, context.sampleRate);
+      return vq.shimmerLocalPercent;
+    },
+
+    // Point process (glottal pulses)
+    pointProcess(audio?: Float32Array) {
+      const samples = audio ?? context.samples;
+      return computePointProcess(samples, context.sampleRate);
+    },
+
+    // Resample (linear interpolation)
+    resample(audio: Float32Array | undefined, newRate: number): Float32Array {
+      const samples = audio ?? context.samples;
+      const ratio = newRate / context.sampleRate;
+      const newLength = Math.round(samples.length * ratio);
+      const out = new Float32Array(newLength);
+      for (let i = 0; i < newLength; i++) {
+        const srcIdx = i / ratio;
+        const lo = Math.floor(srcIdx);
+        const hi = Math.min(lo + 1, samples.length - 1);
+        const frac = srcIdx - lo;
+        out[i] = samples[lo] * (1 - frac) + samples[hi] * frac;
+      }
+      return out;
+    },
+
+    // Reverse audio
+    reverse(audio?: Float32Array): Float32Array {
+      const samples = audio ?? context.samples;
+      const out = new Float32Array(samples.length);
+      for (let i = 0; i < samples.length; i++) {
+        out[i] = samples[samples.length - 1 - i];
+      }
+      return out;
     },
   };
 
