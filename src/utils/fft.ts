@@ -163,3 +163,33 @@ export function preEmphasis(signal: Float64Array, factorDb: number): Float64Arra
   }
   return out;
 }
+
+// ─── GPU-accelerated unified interface ─────────────────────────────────────────
+
+import { isGpuAvailable, fftMagnitudeGpu, batchFftMagnitudeGpu, initGpuFft } from './fft-gpu';
+
+export { initGpuFft, isGpuAvailable };
+
+/**
+ * Unified FFT entry point — automatically uses GPU when available, CPU fallback.
+ */
+export async function fftMagnitudeAuto(
+  signal: Float64Array,
+  fftSize: number
+): Promise<Float64Array> {
+  if (isGpuAvailable()) {
+    return fftMagnitudeGpu(signal, fftSize);
+  }
+  return fftMagnitude(signal, fftSize);
+}
+
+/**
+ * Batch FFT — process multiple frames at once. GPU-optimal path.
+ * Falls back to sequential CPU if GPU unavailable.
+ */
+export async function batchFftMagnitude(
+  frames: Float64Array[],
+  fftSize: number
+): Promise<Float64Array[]> {
+  return batchFftMagnitudeGpu(frames, fftSize);
+}

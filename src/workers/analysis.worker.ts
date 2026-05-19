@@ -1,10 +1,10 @@
 /**
  * Web Worker for heavy DSP analysis.
  * Runs analyzeAudio off the main thread to keep UI responsive.
- * Uses GPU FFT when WebGPU is available in the worker context.
+ * Uses GPU-accelerated FFT when WebGPU is available.
  */
-import { analyzeAudioWithProgress, analyzeAudioAsync } from '../audio/analyzer';
-import { initFft, isGpuFftActive } from '../utils/fft-adapter';
+import { analyzeAudioAsync } from '../audio/analyzer';
+import { initGpuFft } from '../utils/fft-gpu';
 import type { AnalysisSettings } from '../types';
 
 export interface AnalysisWorkerRequest {
@@ -14,13 +14,8 @@ export interface AnalysisWorkerRequest {
   settings: Partial<AnalysisSettings>;
 }
 
-// Initialize GPU FFT on worker startup
+// Initialize GPU in worker context
 let gpuReady: Promise<boolean> | null = null;
-try {
-  gpuReady = initFft();
-} catch {
-  gpuReady = Promise.resolve(false);
-}
 
 self.onmessage = async (e: MessageEvent<AnalysisWorkerRequest>) => {
   const { id, samples, sampleRate, settings } = e.data;
@@ -28,15 +23,14 @@ self.onmessage = async (e: MessageEvent<AnalysisWorkerRequest>) => {
     self.postMessage({ type: 'progress', id, value });
   };
 
-  // Wait for GPU probe to finish
+  // Lazily init GPU once
+  if (!gpuReady) {
+    gpuReady = initGpuFft();
+  }
   await gpuReady;
 
-  let result;
-  if (isGpuFftActive()) {
-    result = await analyzeAudioAsync(samples, sampleRate, settings, onProgress);
-  } else {
-    result = analyzeAudioWithProgress(samples, sampleRate, settings, onProgress);
-  }
+  // Use async (GPU-accelerated) path
+  const result = await analyzeAudioAsync(samples, sampleRate, settings, onProgress);
 
   // Transfer large typed arrays for zero-copy
   const transferables: Transferable[] = [result.waveform.buffer];
