@@ -24,7 +24,7 @@ export interface PointProcessSettings {
   voicingThreshold: number;
 }
 
-export const defaultPointProcessSettings: PointProcessSettings = {
+const defaultPointProcessSettings: PointProcessSettings = {
   pitchFloor: 75,
   pitchCeiling: 500,
   silenceThreshold: 0.03,

@@ -28,7 +28,7 @@ export interface LtasSettings {
   maxFrequency: number;
 }
 
-export const defaultLtasSettings: LtasSettings = {
+const defaultLtasSettings: LtasSettings = {
   fftSize: 4096,
   hopFraction: 0.5,
   maxFrequency: 0,

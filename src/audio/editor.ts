@@ -23,19 +23,19 @@ function sliceConcat(parts: Array<Float32Array<ArrayBufferLike>>): Float32Array 
   return output;
 }
 
-export function copySamples(samples: Float32Array<ArrayBufferLike>, start: number, end: number): Float32Array {
+function copySamples(samples: Float32Array<ArrayBufferLike>, start: number, end: number): Float32Array {
   const safeStart = clampIndex(Math.min(start, end), samples.length);
   const safeEnd = clampIndex(Math.max(start, end), samples.length);
   return samples.slice(safeStart, safeEnd);
 }
 
-export function deleteSamples(samples: Float32Array<ArrayBufferLike>, start: number, end: number): Float32Array {
+function deleteSamples(samples: Float32Array<ArrayBufferLike>, start: number, end: number): Float32Array {
   const safeStart = clampIndex(Math.min(start, end), samples.length);
   const safeEnd = clampIndex(Math.max(start, end), samples.length);
   return sliceConcat([samples.slice(0, safeStart), samples.slice(safeEnd)]);
 }
 
-export function insertSamples(
+function insertSamples(
   samples: Float32Array<ArrayBufferLike>,
   insertAt: number,
   pasted: Float32Array<ArrayBufferLike>

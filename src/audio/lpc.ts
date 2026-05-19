@@ -140,7 +140,7 @@ function prepareFrame(frame: Float64Array, sampleRate: number): { windowed: Floa
   };
 }
 
-export interface FormantCandidate {
+interface FormantCandidate {
   freq: number;
   bandwidth: number;
 }
@@ -152,7 +152,7 @@ export interface FormantResult {
   candidates: FormantCandidate[];
 }
 
-export function extractFormantCandidates(
+function extractFormantCandidates(
   frame: Float64Array,
   sampleRate: number,
   lpcOrder = 12,

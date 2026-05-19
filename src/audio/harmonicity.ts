@@ -26,7 +26,7 @@ export interface HarmonicitySettings {
   periodsPerWindow: number; // default 4.5
 }
 
-export const defaultHarmonicitySettings: HarmonicitySettings = {
+const defaultHarmonicitySettings: HarmonicitySettings = {
   timeStep: 0.01,
   pitchFloor: 75,
   pitchCeiling: 500,
