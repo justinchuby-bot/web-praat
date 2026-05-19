@@ -23,6 +23,7 @@ import { Sidebar } from './components/Sidebar';
 import { Spectrogram } from './components/Spectrogram';
 import { Cochleagram } from './components/Cochleagram';
 import { SpectrumSlice } from './components/SpectrumSlice';
+import { ExcitationPattern } from './components/ExcitationPattern';
 import { StatusBar } from './components/StatusBar';
 import { TextGridEditor } from './components/TextGridEditor';
 import { TimeRuler } from './components/TimeRuler';
@@ -78,6 +79,8 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const currentTimeRef = useRef(0);
+  currentTimeRef.current = currentTime;
   const [showPitch, setShowPitch] = useState(true);
   const [showFormants, setShowFormants] = useState(true);
   const [showIntensity, setShowIntensity] = useState(true);
@@ -230,7 +233,7 @@ export default function App() {
     source.buffer = buffer;
     source.connect(ctx.destination);
 
-    const startOffset = selection?.start ?? currentTime;
+    const startOffset = selection?.start ?? currentTimeRef.current;
     const duration = selection ? selection.end - selection.start : undefined;
     source.start(0, startOffset, duration);
     sourceRef.current = source;
@@ -808,6 +811,7 @@ export default function App() {
           <RightSidebar>
             {{
               spectrum: <SpectrumSlice slice={analysis.spectrumSlice} />,
+              excitation: <ExcitationPattern samples={currentSamplesRef.current} sampleRate={sampleRate} />,
               voice: <VoiceQualityPanel metrics={analysis.voiceQuality} />,
               hnr: <HarmonicityPanel data={analysis.harmonicity} viewStart={viewStart} viewEnd={viewEnd} />,
               rhythm: <RhythmPanel metrics={rhythmMetrics} />,

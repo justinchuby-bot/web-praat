@@ -59,13 +59,50 @@ button, input, select {
 
 .sidebar {
   width: var(--sidebar-width);
-  background: linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-overlay) 100%);
+  background: var(--bg-surface);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 16px;
   overflow: auto;
+  position: relative;
+  transition: width 0.2s ease, padding 0.2s ease;
+}
+
+.sidebar-collapsed {
+  width: 32px;
+  padding: 8px 4px;
+  overflow: hidden;
+}
+
+.sidebar-collapse-btn {
+  position: absolute;
+  top: 8px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  z-index: 2;
+  transition: background 0.15s;
+}
+
+.sidebar-collapse-btn:hover {
+  background: var(--border);
+}
+
+.sidebar-collapsed .sidebar-collapse-btn {
+  position: static;
+  margin: 0 auto;
 }
 
 .sidebar-header {

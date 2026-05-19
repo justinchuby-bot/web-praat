@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 
-type Tab = 'spectrum' | 'voice' | 'hnr' | 'rhythm' | 'settings';
+type Tab = 'spectrum' | 'voice' | 'hnr' | 'rhythm' | 'excitation' | 'settings';
 
 interface RightSidebarProps {
   children: {
@@ -9,6 +9,7 @@ interface RightSidebarProps {
     voice: ReactNode;
     hnr: ReactNode;
     rhythm: ReactNode;
+    excitation: ReactNode;
     settings: ReactNode;
   };
 }
@@ -18,6 +19,7 @@ const tabLabels: { id: Tab; label: string }[] = [
   { id: 'voice', label: 'Voice Quality' },
   { id: 'hnr', label: 'HNR' },
   { id: 'rhythm', label: 'Rhythm' },
+  { id: 'excitation', label: 'Excitation' },
   { id: 'settings', label: 'Settings' },
 ];
 

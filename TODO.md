@@ -9,7 +9,7 @@
 
 ## 当前状态
 
-- **296 tests**, 70+ 源文件, 9500+ 行 TypeScript
+- **338 tests**, 70+ 源文件, 9800+ 行 TypeScript
 - **React 19 + TypeScript 6 + Vite 8 + vitest 4.1**
 - Coverage: 84% statements, 93% audio module
 - Build: 467KB / 145KB gzip
@@ -24,7 +24,8 @@
 - [x] Shiki 语法高亮（Praat Script TextMate grammar）
 - [x] MCP Server 层（暴露语音分析给 AI agent）
 - [x] **WebGPU FFT 接入** — fft-adapter.ts 统一接口 + worker 自动探测 GPU + CPU fallback
-- [ ] **Excitation pattern** — 听觉激励模式可视化
+- [x] **Excitation pattern** — 听觉激励模式可视化
+- [ ] **SpeechSynthesizer（TTS）** — Web Speech API 集成
 
 ## Backlog（按优先级）
 
@@ -102,6 +103,7 @@
 - [x] **MCP Server** — 9 tools (pitch, formants, intensity, harmonicity, voice quality, spectrum, vowels, praat script, JS script) via @modelcontextprotocol/sdk + stdio transport
 - [x] **WebGPU FFT 接入** — fft-adapter.ts 统一接口; analysis worker 自动探测 WebGPU 并切换 GPU FFT; CPU fallback 透明; 5 新测试
 - [x] **波形交互改进** — region selection (draggable edges + move)、minimap (viewport nav)、drag选区
+- [x] **Excitation pattern** — Spectrum → Bark-band power → auditory masking convolution → phon; RightSidebar tab + loudness (sones)
 
 ## 规则
 
