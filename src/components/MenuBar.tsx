@@ -54,6 +54,7 @@ interface MenuBarProps {
   onOpenVocalTract?: () => void;
   onOpenSpectrumEditor?: () => void;
   onOpenExperiment?: () => void;
+  onOpenSpeechSynthesizer?: () => void;
   onOpenScriptEditor?: () => void;
   onOpenPlugins?: () => void;
   onOpenCommandPalette?: () => void;
@@ -81,7 +82,7 @@ export function MenuBar(props: MenuBarProps) {
     showPitch, showFormants, showIntensity, showIpa, showCochleagram,
     onOpenManipulation, onOpenPitchTier, onOpenFormantGrid,
     onOpenDurationTier, onOpenAmplitudeTier, onOpenVocalTract,
-    onOpenSpectrumEditor, onOpenExperiment, onOpenScriptEditor, onOpenPlugins,
+    onOpenSpectrumEditor, onOpenExperiment, onOpenSpeechSynthesizer, onOpenScriptEditor, onOpenPlugins,
     onOpenCommandPalette,
     themeSetting, onThemeChange,
   } = props;
@@ -185,6 +186,7 @@ export function MenuBar(props: MenuBarProps) {
           <MenubarItem disabled={!hasAudio} onClick={onOpenSpectrumEditor}>Spectrum Editor</MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onOpenExperiment}>Experiment (MFC)</MenubarItem>
+          <MenubarItem onClick={onOpenSpeechSynthesizer}>SpeechSynthesizer (TTS)</MenubarItem>
                     <MenubarItem onClick={onOpenScriptEditor}>Script Editor</MenubarItem>
           <MenubarItem onClick={onOpenPlugins}>🧩 Plugins</MenubarItem>
         </MenubarContent>

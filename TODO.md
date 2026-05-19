@@ -25,7 +25,8 @@
 - [x] MCP Server 层（暴露语音分析给 AI agent）
 - [x] **WebGPU FFT 接入** — fft-adapter.ts 统一接口 + worker 自动探测 GPU + CPU fallback
 - [x] **Excitation pattern** — 听觉激励模式可视化
-- [ ] **SpeechSynthesizer（TTS）** — Web Speech API 集成
+- [x] **SpeechSynthesizer（TTS）** — Web Speech API 集成
+- [ ] **Pitch sonification** — 听 pitch track，验证准确性
 
 ## Backlog（按优先级）
 
@@ -104,6 +105,7 @@
 - [x] **WebGPU FFT 接入** — fft-adapter.ts 统一接口; analysis worker 自动探测 WebGPU 并切换 GPU FFT; CPU fallback 透明; 5 新测试
 - [x] **波形交互改进** — region selection (draggable edges + move)、minimap (viewport nav)、drag选区
 - [x] **Excitation pattern** — Spectrum → Bark-band power → auditory masking convolution → phon; RightSidebar tab + loudness (sones)
+- [x] **SpeechSynthesizer（TTS）** — Web Speech API + voice selection + rate/pitch/volume + word boundaries + 10 tests
 
 ## 规则
 

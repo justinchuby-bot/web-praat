@@ -40,6 +40,7 @@ import { ExperimentDesigner } from './components/ExperimentDesigner';
 import { ExperimentMFC } from './components/ExperimentMFC';
 import { ScriptEditor } from './components/ScriptEditor';
 import { PluginManager } from './components/PluginManager';
+import SpeechSynthesizerPanel from './components/SpeechSynthesizerPanel';
 import { VoiceQualityPanel } from './components/VoiceQualityPanel';
 import { Waveform } from './components/Waveform';
 import { DropOverlay, DropFileType } from './components/DropOverlay';
@@ -94,6 +95,7 @@ export default function App() {
   const [showVocalTract, setShowVocalTract] = useState(false);
   const [showSpectrumEditor, setShowSpectrumEditor] = useState(false);
   const [showExperiment, setShowExperiment] = useState(false);
+  const [showSpeechSynthesizer, setShowSpeechSynthesizer] = useState(false);
   const [showScriptEditor, setShowScriptEditor] = useState(false);
   const [showPlugins, setShowPlugins] = useState(false);
   const [experimentConfig, setExperimentConfig] = useState<{ config: any; audioMap: Record<string, string> } | null>(null);
@@ -565,6 +567,7 @@ export default function App() {
     { id: 'tools.vocal-tract', label: 'Vocal Tract', category: 'Tools', action: () => setShowVocalTract(true) },
     { id: 'tools.spectrum-editor', label: 'Spectrum Editor', category: 'Tools', action: () => setShowSpectrumEditor(true) },
     { id: 'tools.experiment', label: 'Experiment', category: 'Tools', action: () => setShowExperiment(true) },
+    { id: 'tools.speechSynthesizer', label: 'SpeechSynthesizer (TTS)', category: 'Tools', action: () => setShowSpeechSynthesizer(true) },
     { id: 'tools.script-editor', label: 'Script Editor', category: 'Tools', action: () => setShowScriptEditor(true) },
     { id: 'tools.plugins', label: 'Plugins', category: 'Tools', action: () => setShowPlugins(true) },
     { id: 'analysis.compute-hnr', label: 'Compute HNR', category: 'Analysis', action: () => {} },
@@ -628,6 +631,7 @@ export default function App() {
         onOpenVocalTract={() => setShowVocalTract(true)}
         onOpenSpectrumEditor={() => setShowSpectrumEditor(true)}
         onOpenExperiment={() => setShowExperiment(true)}
+        onOpenSpeechSynthesizer={() => setShowSpeechSynthesizer(true)}
         onOpenScriptEditor={() => setShowScriptEditor(true)}
         onOpenPlugins={() => setShowPlugins(true)}
         themeSetting={themeSetting}
@@ -962,6 +966,15 @@ export default function App() {
       )}
 
       {showPlugins && <PluginManager onClose={() => setShowPlugins(false)} samples={currentSamplesRef.current ?? undefined} sampleRate={sampleRate} />}
+
+      {showSpeechSynthesizer && (
+        <div className="modal-overlay" onClick={() => setShowSpeechSynthesizer(false)}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowSpeechSynthesizer(false)}>✕</button>
+            <SpeechSynthesizerPanel onClose={() => setShowSpeechSynthesizer(false)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
