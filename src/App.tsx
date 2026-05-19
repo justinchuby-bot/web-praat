@@ -9,6 +9,7 @@ import { computeRhythmMetrics } from './audio/rhythm';
 import { loadAudioFile } from './audio/recorder';
 import { computeSpectrumSlice } from './audio/spectrum';
 import { Controls } from './components/Controls';
+import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog';
 import { FilterPanel } from './components/FilterPanel';
 import { RhythmPanel } from './components/RhythmPanel';
 import { SettingsPanel } from './components/SettingsPanel';
@@ -415,7 +416,7 @@ export default function App() {
         <FilterPanel settings={filterSettings} onChange={setFilterSettings} onApply={handleApplyFilter} onReset={handleResetFilter} />
       </Sidebar>
 
-      <main className="main-area">
+      <main className="main-area" role="main" aria-label="Audio editor">
         <Controls
           hasAudio={!!analysis}
           isPlaying={isPlaying}
@@ -550,7 +551,7 @@ export default function App() {
         </div>
 
         {analysis && (
-          <section className="bottom-panels">
+          <section className="bottom-panels" aria-label="Analysis panels">
             <SpectrumSlice slice={analysis.spectrumSlice} />
             <VoiceQualityPanel metrics={analysis.voiceQuality} />
             <HarmonicityPanel data={analysis.harmonicity} viewStart={viewStart} viewEnd={viewEnd} />
@@ -558,6 +559,7 @@ export default function App() {
           </section>
         )}
       </main>
+      <KeyboardShortcutsDialog />
     </div>
   );
 }

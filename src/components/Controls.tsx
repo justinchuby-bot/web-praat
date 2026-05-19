@@ -64,12 +64,12 @@ export function Controls({
   const formatTime = (time: number) => `${time.toFixed(3)}s`;
 
   return (
-    <div className="controls">
+    <div className="controls" role="toolbar" aria-label="Audio controls">
       <div className="controls-group controls-wrap">
-        <button className={`btn ${isRecording ? 'btn-danger' : 'btn-primary'}`} onClick={isRecording ? onStopRecord : onRecord}>
+        <button className={`btn ${isRecording ? 'btn-danger' : 'btn-primary'}`} onClick={isRecording ? onStopRecord : onRecord} aria-label={isRecording ? 'Stop recording' : 'Start recording'}>
           {isRecording ? 'Stop' : 'Record'}
         </button>
-        <button className="btn btn-primary" disabled={!hasAudio} onClick={isPlaying ? onPause : onPlay}>
+        <button className="btn btn-primary" disabled={!hasAudio} onClick={isPlaying ? onPause : onPlay} aria-label={isPlaying ? 'Pause playback' : 'Play audio'}>
           {isPlaying ? 'Pause' : 'Play'}
         </button>
         <label className="btn btn-secondary file-label">
