@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { runPraatScript, InterpreterResult, runJavaScript, JsRunnerResult } from "../scripting";
+import { HighlightedCode } from "./HighlightedCode";
 
 type ScriptLanguage = "praat" | "javascript";
 
@@ -155,21 +156,28 @@ praat.log("Done! Tip: F1 correlates with vowel height, F2 with frontness.");
       </div>
 
       <div className="flex-1 flex flex-col min-h-0">
-        {/* Editor */}
+        {/* Editor with syntax highlighting */}
         <div className="flex-1 flex min-h-0 border-b">
           <div className="py-2 px-2 text-right text-xs text-gray-400 select-none font-mono leading-5 bg-gray-50 dark:bg-gray-850 overflow-hidden">
             {lineNumbers.map((n) => (
               <div key={n}>{n}</div>
             ))}
           </div>
-          <textarea
-            ref={textareaRef}
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            className="flex-1 p-2 font-mono text-sm leading-5 resize-none outline-none bg-transparent dark:text-gray-100"
-            spellCheck={false}
-            placeholder={language === "praat" ? "Enter Praat Script code..." : "Enter JavaScript code..."}
-          />
+          <div className="flex-1 relative min-h-0 overflow-auto">
+            {/* Highlighted layer (behind) */}
+            <div className="absolute inset-0 p-2 pointer-events-none" aria-hidden>
+              <HighlightedCode code={code} language={language} />
+            </div>
+            {/* Editable textarea (transparent text, visible caret) */}
+            <textarea
+              ref={textareaRef}
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="relative w-full h-full p-2 font-mono text-sm leading-5 resize-none outline-none bg-transparent text-transparent caret-gray-100 selection:bg-blue-500/30"
+              spellCheck={false}
+              placeholder={language === "praat" ? "Enter Praat Script code..." : "Enter JavaScript code..."}
+            />
+          </div>
         </div>
 
         {/* Output */}

@@ -21,7 +21,7 @@
 - [x] **布局修复**：波形/語谱图区域默认占主视图 ~65% 高度（flex:7）；TextGrid 区域 ~35%（flex:3，可滚动）；RightSidebar 已默认折叠 + tab 切换
 - [x] Wire BottomSheet + useIsMobile to App.tsx（移动端显示 BottomSheet 替代 Sidebar）
 - [x] JS API 补全（intensity, spectrogram, textGrid, mfcc, resample, getMin/getMax, fft/ifft）
-- [ ] Shiki 语法高亮（Praat Script TextMate grammar）
+- [x] Shiki 语法高亮（Praat Script TextMate grammar）
 - [ ] MCP Server 层（暴露语音分析给 AI agent）
 
 ## Backlog（按优先级）
@@ -96,6 +96,7 @@
 - [x] **MenuBar hover 切换** — Radix Menubar 原生支持 hover 切换 + pointer grace area (triangle trick)
 - [x] **布局修复** — 波形/語谱图区域 flex:7 (~65% 高度) + TextGrid flex:3 (可滚动) + RightSidebar 默认折叠 tab 切换
 - [x] **JS API 补全** — spectrogram, mfcc, fft/ifft, textGrid.* (+ existing intensity, resample, getMin/getMax)
+- [x] **Shiki 语法高亮** — TextMate grammar for Praat Script + Shiki overlay in ScriptEditor (JS uses built-in)
 
 ## 规则
 
