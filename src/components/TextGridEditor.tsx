@@ -199,15 +199,20 @@ export function TextGridEditor({
 
   const handleDrop = (tier: TextGridTier, event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
+    const data = event.dataTransfer.getData('text/plain');
+    if (!data) return;
+    let payload: { type: string; tierId?: string; boundaryIndex?: number; pointId?: string };
+    try {
+      payload = JSON.parse(data);
+    } catch {
+      return; // Not a valid JSON drop (e.g. file drop)
+    }
     const rect = event.currentTarget.getBoundingClientRect();
     const time = xToTime(event.clientX - rect.left, rect.width, viewRange);
-    const payload = JSON.parse(event.dataTransfer.getData('text/plain')) as
-      | ({ type: 'boundary' } & BoundaryDragState)
-      | ({ type: 'point' } & PointDragState);
     if (payload.type === 'boundary') {
-      onMoveBoundary(payload.tierId, payload.boundaryIndex, time);
+      onMoveBoundary((payload as any).tierId, (payload as any).boundaryIndex, time);
     } else {
-      onMovePoint(payload.tierId, payload.pointId, time);
+      onMovePoint((payload as any).tierId, (payload as any).pointId, time);
     }
     onActiveTierChange(tier.id);
   };
