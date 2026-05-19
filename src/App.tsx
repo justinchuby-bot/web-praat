@@ -188,8 +188,12 @@ export default function App() {
   }, [textGrid]);
 
   const handleLoadFile = useCallback(async (file: File) => {
-    const buffer = await loadAudioFile(file);
-    processAudioBuffer(buffer, true);
+    try {
+      const buffer = await loadAudioFile(file);
+      processAudioBuffer(buffer, true);
+    } catch (err) {
+      alert(`Failed to load audio: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
   }, [processAudioBuffer]);
 
   const handleImportTextGrid = useCallback(async (file: File) => {
