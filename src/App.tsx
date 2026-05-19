@@ -113,6 +113,8 @@ export default function App() {
   const editorRef = useRef(new AudioEditorHistory(new Float32Array(0)));
   const originalSamplesRef = useRef<Float32Array | null>(null);
   const currentSamplesRef = useRef<Float32Array | null>(null);
+  const audioFileInputRef = useRef<HTMLInputElement>(null);
+  const textGridFileInputRef = useRef<HTMLInputElement>(null);
   const textGridRef = useRef<TextGrid>(createEmptyTextGrid(1));
 
   const viewRange = useMemo(() => ({ start: viewStart, end: viewEnd }), [viewStart, viewEnd]);
@@ -469,21 +471,25 @@ export default function App() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
+  const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
+  const mod = isMac ? '\u2318' : 'Ctrl+';
+  const shift = isMac ? '\u21e7' : 'Shift+';
+
   const paletteCommands: Command[] = useMemo(() => [
-    { id: 'file.open-audio', label: 'Open Audio', category: 'File', action: () => document.querySelector<HTMLInputElement>('.menu-file-label input[accept="audio/*"]')?.click() },
-    { id: 'file.import-textgrid', label: 'Import TextGrid', category: 'File', action: () => document.querySelector<HTMLInputElement>('.menu-file-label input[accept*=".TextGrid"]')?.click() },
+    { id: 'file.open-audio', label: 'Open Audio', category: 'File', action: () => audioFileInputRef.current?.click() },
+    { id: 'file.import-textgrid', label: 'Import TextGrid', category: 'File', action: () => textGridFileInputRef.current?.click() },
     { id: 'file.export-wav', label: 'Export WAV', category: 'File', action: () => { if (currentSamplesRef.current) downloadBinaryFile('audio.wav', exportSelectedRegionWav(currentSamplesRef.current, sampleRate)); } },
     { id: 'file.export-pitch-csv', label: 'Export Pitch CSV', category: 'File', action: () => { if (analysis) downloadTextFile('pitch.csv', exportPitchCsv(analysis.pitch), 'text/csv'); } },
     { id: 'file.export-formant-csv', label: 'Export Formant CSV', category: 'File', action: () => { if (analysis) downloadTextFile('formants.csv', exportFormantCsv(analysis.formants), 'text/csv'); } },
-    { id: 'edit.undo', label: 'Undo', category: 'Edit', shortcut: '\u2318Z', action: handleUndo },
-    { id: 'edit.redo', label: 'Redo', category: 'Edit', shortcut: '\u2318\u21e7Z', action: handleRedo },
-    { id: 'edit.cut', label: 'Cut', category: 'Edit', shortcut: '\u2318X', action: handleCut },
-    { id: 'edit.copy', label: 'Copy', category: 'Edit', shortcut: '\u2318C', action: handleCopy },
-    { id: 'edit.paste', label: 'Paste', category: 'Edit', shortcut: '\u2318V', action: handlePaste },
+    { id: 'edit.undo', label: 'Undo', category: 'Edit', shortcut: `${mod}Z`, action: handleUndo },
+    { id: 'edit.redo', label: 'Redo', category: 'Edit', shortcut: `${mod}${shift}Z`, action: handleRedo },
+    { id: 'edit.cut', label: 'Cut', category: 'Edit', shortcut: `${mod}X`, action: handleCut },
+    { id: 'edit.copy', label: 'Copy', category: 'Edit', shortcut: `${mod}C`, action: handleCopy },
+    { id: 'edit.paste', label: 'Paste', category: 'Edit', shortcut: `${mod}V`, action: handlePaste },
     { id: 'edit.delete', label: 'Delete', category: 'Edit', shortcut: 'Del', action: handleDelete },
-    { id: 'view.zoom-in', label: 'Zoom In', category: 'View', shortcut: '\u2318+', action: handleZoomIn },
-    { id: 'view.zoom-out', label: 'Zoom Out', category: 'View', shortcut: '\u2318\u2212', action: handleZoomOut },
-    { id: 'view.fit-to-window', label: 'Fit to Window', category: 'View', shortcut: '\u23180', action: handleFitToWindow },
+    { id: 'view.zoom-in', label: 'Zoom In', category: 'View', shortcut: `${mod}+`, action: handleZoomIn },
+    { id: 'view.zoom-out', label: 'Zoom Out', category: 'View', shortcut: `${mod}\u2212`, action: handleZoomOut },
+    { id: 'view.fit-to-window', label: 'Fit to Window', category: 'View', shortcut: `${mod}0`, action: handleFitToWindow },
     { id: 'view.toggle-pitch', label: 'Toggle Pitch', category: 'View', action: () => setShowPitch((v) => !v) },
     { id: 'view.toggle-formants', label: 'Toggle Formants', category: 'View', action: () => setShowFormants((v) => !v) },
     { id: 'view.toggle-intensity', label: 'Toggle Intensity', category: 'View', action: () => setShowIntensity((v) => !v) },
@@ -506,10 +512,12 @@ export default function App() {
     { id: 'analysis.compute-rhythm', label: 'Compute Rhythm', category: 'Analysis', action: () => {} },
     { id: 'analysis.voice-quality', label: 'Voice Quality', category: 'Analysis', action: () => {} },
     { id: 'recording.start-stop', label: 'Start/Stop Recording', category: 'Recording', shortcut: 'R', action: () => { isRecording ? handleStopRecord() : handleRecord(); } },
-  ], [analysis, handleUndo, handleRedo, handleCut, handleCopy, handlePaste, handleDelete, handleZoomIn, handleZoomOut, handleFitToWindow, isRecording, handleRecord, handleStopRecord, sampleRate]);
+  ], [analysis, handleUndo, handleRedo, handleCut, handleCopy, handlePaste, handleDelete, handleZoomIn, handleZoomOut, handleFitToWindow, isRecording, handleRecord, handleStopRecord, sampleRate, mod, shift]);
 
   return (
     <div className="app-layout">
+      <input ref={audioFileInputRef} type="file" accept="audio/*" hidden onChange={(e) => e.target.files?.[0] && handleLoadFile(e.target.files[0])} />
+      <input ref={textGridFileInputRef} type="file" accept=".TextGrid,.textgrid,text/plain" hidden onChange={(e) => e.target.files?.[0] && handleImportTextGrid(e.target.files[0])} />
       <MenuBar
         hasAudio={!!analysis}
         selection={selection}
