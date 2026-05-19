@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { AnalysisResult, TimeSelection, ViewRange } from '../types';
 import { useZoomPan } from '../hooks/useZoomPan';
 import { timeToX, xToTime } from '../utils/view';
@@ -15,7 +15,9 @@ interface WaveformProps {
   onZoomSelection: (selection: TimeSelection) => void;
 }
 
-type DragMode = 'select' | 'pan' | 'zoom' | null;
+type DragMode = 'select' | 'pan' | 'zoom' | 'move-selection' | 'resize-left' | 'resize-right' | null;
+
+const EDGE_TOLERANCE = 5; // px
 
 export const Waveform = React.memo(function Waveform({
   analysis,
@@ -32,6 +34,7 @@ export const Waveform = React.memo(function Waveform({
   const dragModeRef = useRef<DragMode>(null);
   const dragStartTimeRef = useRef(0);
   const lastPanTimeRef = useRef(0);
+  const selectionAtDragStartRef = useRef<TimeSelection | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -70,13 +73,37 @@ export const Waveform = React.memo(function Waveform({
     }
     ctx.stroke();
 
+    // Selection region
     if (selection) {
       const x1 = timeToX(selection.start, width, viewRange);
       const x2 = timeToX(selection.end, width, viewRange);
       ctx.fillStyle = style.getPropertyValue('--selection-bg').trim() || 'rgba(137, 180, 250, 0.15)';
       ctx.fillRect(x1, 0, x2 - x1, height);
+
+      // Draw edge handles
+      ctx.fillStyle = 'rgba(137, 180, 250, 0.7)';
+      ctx.fillRect(x1 - 1, 0, 2, height);
+      ctx.fillRect(x2 - 1, 0, 2, height);
+
+      // Small triangular grab indicators at edges (top and bottom)
+      ctx.fillStyle = '#89b4fa';
+      for (const ex of [x1, x2]) {
+        ctx.beginPath();
+        ctx.moveTo(ex, 0);
+        ctx.lineTo(ex - 4, 6);
+        ctx.lineTo(ex + 4, 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(ex, height);
+        ctx.lineTo(ex - 4, height - 6);
+        ctx.lineTo(ex + 4, height - 6);
+        ctx.closePath();
+        ctx.fill();
+      }
     }
 
+    // Playhead cursor
     if (currentTime >= viewRange.start && currentTime <= viewRange.end) {
       const x = timeToX(currentTime, width, viewRange);
       ctx.strokeStyle = style.getPropertyValue('--cursor-color').trim() || '#f38ba8';
@@ -86,6 +113,7 @@ export const Waveform = React.memo(function Waveform({
       ctx.stroke();
     }
 
+    // Center line
     ctx.strokeStyle = style.getPropertyValue('--waveform-center').trim() || '#45475a';
     ctx.beginPath();
     ctx.moveTo(0, height / 2 + 0.5);
@@ -98,11 +126,24 @@ export const Waveform = React.memo(function Waveform({
     return xToTime(event.clientX - rect.left, rect.width, viewRange);
   };
 
+  const getHitZone = useCallback((event: React.MouseEvent<HTMLCanvasElement>): 'left-edge' | 'right-edge' | 'inside' | 'outside' => {
+    if (!selection || !canvasRef.current) return 'outside';
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const x1 = timeToX(selection.start, rect.width, viewRange);
+    const x2 = timeToX(selection.end, rect.width, viewRange);
+    if (Math.abs(x - x1) < EDGE_TOLERANCE) return 'left-edge';
+    if (Math.abs(x - x2) < EDGE_TOLERANCE) return 'right-edge';
+    if (x > x1 + EDGE_TOLERANCE && x < x2 - EDGE_TOLERANCE) return 'inside';
+    return 'outside';
+  }, [selection, viewRange]);
+
   const handleMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!analysis) return;
     const time = getTime(event);
     dragStartTimeRef.current = time;
     lastPanTimeRef.current = time;
+
     if (event.button === 1 || event.shiftKey) {
       dragModeRef.current = 'pan';
       return;
@@ -112,19 +153,85 @@ export const Waveform = React.memo(function Waveform({
       onSelectionChange(null);
       return;
     }
+
+    // Check if clicking on selection edges or inside selection
+    const zone = getHitZone(event);
+    if (zone === 'left-edge') {
+      dragModeRef.current = 'resize-left';
+      selectionAtDragStartRef.current = selection;
+      return;
+    }
+    if (zone === 'right-edge') {
+      dragModeRef.current = 'resize-right';
+      selectionAtDragStartRef.current = selection;
+      return;
+    }
+    if (zone === 'inside') {
+      dragModeRef.current = 'move-selection';
+      selectionAtDragStartRef.current = selection;
+      return;
+    }
+
     dragModeRef.current = 'select';
     onSelectionChange(null);
   };
 
   const handleMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!analysis || !dragModeRef.current) return;
+    if (!analysis) return;
+
+    // Update cursor style when not dragging
+    if (!dragModeRef.current) {
+      const zone = getHitZone(event);
+      const canvas = canvasRef.current;
+      if (canvas) {
+        if (zone === 'left-edge' || zone === 'right-edge') {
+          canvas.style.cursor = 'ew-resize';
+        } else if (zone === 'inside') {
+          canvas.style.cursor = 'grab';
+        } else {
+          canvas.style.cursor = 'crosshair';
+        }
+      }
+      return;
+    }
+
     const time = getTime(event);
+
     if (dragModeRef.current === 'pan') {
       const delta = lastPanTimeRef.current - time;
       lastPanTimeRef.current = time;
       onPan(delta);
       return;
     }
+
+    if (dragModeRef.current === 'resize-left') {
+      const orig = selectionAtDragStartRef.current!;
+      const newStart = Math.max(0, Math.min(time, orig.end - 0.001));
+      onSelectionChange({ start: newStart, end: orig.end });
+      return;
+    }
+
+    if (dragModeRef.current === 'resize-right') {
+      const orig = selectionAtDragStartRef.current!;
+      const newEnd = Math.min(analysis.duration, Math.max(time, orig.start + 0.001));
+      onSelectionChange({ start: orig.start, end: newEnd });
+      return;
+    }
+
+    if (dragModeRef.current === 'move-selection') {
+      const orig = selectionAtDragStartRef.current!;
+      const delta = time - dragStartTimeRef.current;
+      const dur = orig.end - orig.start;
+      let newStart = orig.start + delta;
+      // Clamp
+      if (newStart < 0) newStart = 0;
+      if (newStart + dur > analysis.duration) newStart = analysis.duration - dur;
+      onSelectionChange({ start: newStart, end: newStart + dur });
+      if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
+      return;
+    }
+
+    // select or zoom mode
     const start = Math.min(dragStartTimeRef.current, time);
     const end = Math.max(dragStartTimeRef.current, time);
     if (end - start > 0.001) {
@@ -141,6 +248,8 @@ export const Waveform = React.memo(function Waveform({
       onCursorChange(time);
     }
     dragModeRef.current = null;
+    selectionAtDragStartRef.current = null;
+    if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
   };
 
   const zoomPanCallbacks = useMemo(() => ({ onWheelZoom, onPan }), [onWheelZoom, onPan]);

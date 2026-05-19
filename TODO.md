@@ -24,7 +24,7 @@
 - [x] Shiki 语法高亮（Praat Script TextMate grammar）
 - [x] MCP Server 层（暴露语音分析给 AI agent）
 - [x] **WebGPU FFT 接入** — fft-adapter.ts 统一接口 + worker 自动探测 GPU + CPU fallback
-- [ ] **波形交互改进** — 参考 wavesurfer.js 加 region selection、minimap、拖动选区
+- [ ] **Excitation pattern** — 听觉激励模式可视化
 
 ## Backlog（按优先级）
 
@@ -33,7 +33,7 @@
 - [ ] JS API: `praat.mfcc()`, `praat.resample()`, `praat.getMin/getMax()`
 - [ ] JS API: `praat.fft()` / `praat.ifft()` — 直接频域访问
 - [ ] MCP Server — 把 audio analysis 暴露为 MCP tools
-- [ ] 参考 wavesurfer.js 改进波形交互（region selection、minimap）
+- [x] **波形交互改进** — region selection (draggable edges + move)、minimap (viewport nav)、drag选区
 - [ ] Excitation pattern
 - [ ] SpeechSynthesizer（TTS）
 
@@ -101,6 +101,7 @@
 - [x] **Shiki 语法高亮** — TextMate grammar for Praat Script + Shiki overlay in ScriptEditor (JS uses built-in)
 - [x] **MCP Server** — 9 tools (pitch, formants, intensity, harmonicity, voice quality, spectrum, vowels, praat script, JS script) via @modelcontextprotocol/sdk + stdio transport
 - [x] **WebGPU FFT 接入** — fft-adapter.ts 统一接口; analysis worker 自动探测 WebGPU 并切换 GPU FFT; CPU fallback 透明; 5 新测试
+- [x] **波形交互改进** — region selection (draggable edges + move)、minimap (viewport nav)、drag选区
 
 ## 规则
 

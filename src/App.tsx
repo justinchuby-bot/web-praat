@@ -40,6 +40,7 @@ import { ExperimentMFC } from './components/ExperimentMFC';
 import { ScriptEditor } from './components/ScriptEditor';
 import { VoiceQualityPanel } from './components/VoiceQualityPanel';
 import { Waveform } from './components/Waveform';
+import { Minimap } from './components/Minimap';
 import { FilterPanel } from './components/FilterPanel';
 import {
   downloadBinaryFile,
@@ -341,6 +342,11 @@ export default function App() {
     setViewStart(next.start);
     setViewEnd(next.end);
   }, [analysis, selection]);
+
+  const handleViewRangeChange = useCallback((start: number, end: number) => {
+    setViewStart(start);
+    setViewEnd(end);
+  }, []);
 
   const handleFitToWindow = useCallback(() => {
     if (!analysis) return;
@@ -688,6 +694,12 @@ export default function App() {
                 onWheelZoom={handleWheelZoom}
                 onPan={handlePan}
                 onZoomSelection={handleZoomSelection}
+              />
+              <Minimap
+                analysis={analysis}
+                viewRange={viewRange}
+                selection={selection}
+                onViewRangeChange={handleViewRangeChange}
               />
               {showCochleagram ? (
                 <Cochleagram

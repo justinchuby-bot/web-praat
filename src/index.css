@@ -248,6 +248,14 @@ button, input, select {
   cursor: crosshair;
 }
 
+.minimap-canvas {
+  width: 100%;
+  height: 32px;
+  min-height: 28px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
 .spectrogram-canvas {
   width: 100%;
   flex: 1;
