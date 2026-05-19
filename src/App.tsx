@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useIsMobile } from './hooks/useIsMobile';
-import { BottomSheet } from './components/BottomSheet';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useStreamingRecording } from './hooks/useStreamingRecording';
 import { useAnalysisWorker } from './hooks/useAnalysisWorker';
@@ -12,12 +10,12 @@ import { loadAudioFile } from './audio/recorder';
 import { computeSpectrumSlice } from './audio/spectrum';
 import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog';
 import { FilterPanel } from './components/FilterPanel';
-import { ManipulationPanel } from './components/ManipulationPanel';
 import { MenuBar } from './components/MenuBar';
 import { RhythmPanel } from './components/RhythmPanel';
 import { SettingsPanel } from './components/SettingsPanel';
 import { Sidebar } from './components/Sidebar';
 import { Spectrogram } from './components/Spectrogram';
+import { Cochleagram } from './components/Cochleagram';
 import { SpectrumSlice } from './components/SpectrumSlice';
 import { StatusBar } from './components/StatusBar';
 import { TextGridEditor } from './components/TextGridEditor';
@@ -61,6 +59,7 @@ export default function App() {
   const [showPitch, setShowPitch] = useState(true);
   const [showFormants, setShowFormants] = useState(true);
   const [showIntensity, setShowIntensity] = useState(true);
+  const [showCochleagram, setShowCochleagram] = useState(false);
   const [settings, setSettings] = useState<AnalysisSettings>(defaultAnalysisSettings);
   const [filterSettings, setFilterSettings] = useState<FilterSettings>(defaultFilterSettings);
   const [textGrid, setTextGrid] = useState<TextGrid>(createEmptyTextGrid(1));
@@ -74,7 +73,6 @@ export default function App() {
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
 
-  const isMobile = useIsMobile();
 
   const streaming = useStreamingRecording(settings);
   const { analyze: analyzeInWorker } = useAnalysisWorker();
@@ -420,7 +418,6 @@ export default function App() {
 
   useKeyboardShortcuts(shortcutHandlers, true);
 
-<<<<<<< HEAD
   return (
     <div className="app-layout">
       <MenuBar
@@ -461,43 +458,9 @@ export default function App() {
         showPitch={showPitch}
         showFormants={showFormants}
         showIntensity={showIntensity}
+        showCochleagram={showCochleagram}
+        onToggleCochleagram={() => setShowCochleagram((v) => !v)}
       />
-=======
-  const sidebarContent = (
-    <>
-      <Sidebar
-        showPitch={showPitch}
-        showFormants={showFormants}
-        showIntensity={showIntensity}
-        onTogglePitch={() => setShowPitch((value) => !value)}
-        onToggleFormants={() => setShowFormants((value) => !value)}
-        onToggleIntensity={() => setShowIntensity((value) => !value)}
-      >
-        <SettingsPanel settings={settings} onChange={setSettings} />
-        <FilterPanel settings={filterSettings} onChange={setFilterSettings} onApply={handleApplyFilter} onReset={handleResetFilter} />
-        {analysis && currentSamplesRef.current && (
-          <ManipulationPanel
-            samples={currentSamplesRef.current}
-            sampleRate={sampleRate}
-            pitchData={analysis.pitch}
-            duration={analysis.duration}
-            onApply={commitSamples}
-          />
-        )}
-      </Sidebar>
-    </>
-  );
-
-  return (
-    <div className="app">
-      {!isMobile && sidebarContent}
-      {isMobile && (
-        <BottomSheet>
-          <SettingsPanel settings={settings} onChange={setSettings} />
-          <FilterPanel settings={filterSettings} onChange={setFilterSettings} onApply={handleApplyFilter} onReset={handleResetFilter} />
-        </BottomSheet>
-      )}
->>>>>>> feat/mobile
 
       <Toolbar
         hasAudio={!!analysis}
@@ -526,9 +489,11 @@ export default function App() {
           showPitch={showPitch}
           showFormants={showFormants}
           showIntensity={showIntensity}
+          showCochleagram={showCochleagram}
           onTogglePitch={() => setShowPitch((value) => !value)}
           onToggleFormants={() => setShowFormants((value) => !value)}
           onToggleIntensity={() => setShowIntensity((value) => !value)}
+          onToggleCochleagram={() => setShowCochleagram((value) => !value)}
         >
           <SettingsPanel settings={settings} onChange={setSettings} />
           <FilterPanel settings={filterSettings} onChange={setFilterSettings} onApply={handleApplyFilter} onReset={handleResetFilter} />
@@ -596,20 +561,27 @@ export default function App() {
                 onPan={handlePan}
                 onZoomSelection={handleZoomSelection}
               />
-              <Spectrogram
-                analysis={analysis}
-                selection={selection}
-                currentTime={currentTime}
-                viewRange={viewRange}
-                showPitch={showPitch}
-                showFormants={showFormants}
-                showIntensity={showIntensity}
-                onWheelZoom={handleWheelZoom}
-                onPan={handlePan}
-                onZoomSelection={handleZoomSelection}
-                onSelectionChange={setSelection}
-                onSpectrumSliceSelect={handleSpectrumSliceSelect}
-              />
+              {showCochleagram ? (
+                <Cochleagram
+                  analysis={analysis}
+                  viewRange={viewRange}
+                />
+              ) : (
+                <Spectrogram
+                  analysis={analysis}
+                  selection={selection}
+                  currentTime={currentTime}
+                  viewRange={viewRange}
+                  showPitch={showPitch}
+                  showFormants={showFormants}
+                  showIntensity={showIntensity}
+                  onWheelZoom={handleWheelZoom}
+                  onPan={handlePan}
+                  onZoomSelection={handleZoomSelection}
+                  onSelectionChange={setSelection}
+                  onSpectrumSliceSelect={handleSpectrumSliceSelect}
+                />
+              )}
               <TextGridEditor
                 textGrid={textGrid}
                 viewRange={viewRange}
