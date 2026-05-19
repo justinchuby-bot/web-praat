@@ -172,3 +172,19 @@ export interface ExportSeriesRow {
   time: number;
   value: number | null;
 }
+
+export interface PitchTierPoint {
+  time: number;
+  frequency: number;
+}
+
+export interface DurationTierPoint {
+  time: number;
+  factor: number;
+}
+
+export interface ManipulationData {
+  pitchTier: PitchTierPoint[];
+  durationTier: DurationTierPoint[];
+  originalPulses: number[];
+}

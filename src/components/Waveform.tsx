@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import type { AnalysisResult, TimeSelection, ViewRange } from '../types';
 import { useZoomPan } from '../hooks/useZoomPan';
 import { timeToX, xToTime } from '../utils/view';
@@ -16,7 +16,7 @@ interface WaveformProps {
 
 type DragMode = 'select' | 'pan' | 'zoom' | null;
 
-export function Waveform({
+export const Waveform = React.memo(function Waveform({
   analysis,
   selection,
   currentTime,
@@ -149,4 +149,4 @@ export function Waveform({
       onMouseLeave={handleMouseUp}
     />
   );
-}
+});

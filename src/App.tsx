@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useIsMobile } from './hooks/useIsMobile';
+import { BottomSheet } from './components/BottomSheet';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useStreamingRecording } from './hooks/useStreamingRecording';
 import { useAnalysisWorker } from './hooks/useAnalysisWorker';
@@ -70,6 +72,8 @@ export default function App() {
 
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
+
+  const isMobile = useIsMobile();
 
   const streaming = useStreamingRecording(settings);
   const { analyze: analyzeInWorker } = useAnalysisWorker();
@@ -415,6 +419,7 @@ export default function App() {
 
   useKeyboardShortcuts(shortcutHandlers, true);
 
+<<<<<<< HEAD
   return (
     <div className="app-layout">
       <MenuBar
@@ -456,6 +461,33 @@ export default function App() {
         showFormants={showFormants}
         showIntensity={showIntensity}
       />
+=======
+  const sidebarContent = (
+    <>
+      <Sidebar
+        showPitch={showPitch}
+        showFormants={showFormants}
+        showIntensity={showIntensity}
+        onTogglePitch={() => setShowPitch((value) => !value)}
+        onToggleFormants={() => setShowFormants((value) => !value)}
+        onToggleIntensity={() => setShowIntensity((value) => !value)}
+      >
+        <SettingsPanel settings={settings} onChange={setSettings} />
+        <FilterPanel settings={filterSettings} onChange={setFilterSettings} onApply={handleApplyFilter} onReset={handleResetFilter} />
+      </Sidebar>
+    </>
+  );
+
+  return (
+    <div className="app">
+      {!isMobile && sidebarContent}
+      {isMobile && (
+        <BottomSheet>
+          <SettingsPanel settings={settings} onChange={setSettings} />
+          <FilterPanel settings={filterSettings} onChange={setFilterSettings} onApply={handleApplyFilter} onReset={handleResetFilter} />
+        </BottomSheet>
+      )}
+>>>>>>> feat/mobile
 
       <Toolbar
         hasAudio={!!analysis}
