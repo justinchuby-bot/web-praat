@@ -88,7 +88,7 @@ export function MenuBar(props: MenuBarProps) {
   const themeOptions: ThemeSetting[] = ['dark', 'light', 'hc-dark', 'hc-light', 'auto'];
 
   return (
-    <>
+    <div className="menubar-row">
     <Menubar>
       {/* File */}
       <MenubarMenu>
@@ -202,8 +202,8 @@ export function MenuBar(props: MenuBarProps) {
       </MenubarMenu>
     </Menubar>
     <button className="command-palette-trigger" onClick={onOpenCommandPalette} title="Command Palette (⌘⇧P)">
-      🔍 Commands
+      ⌘⇧P
     </button>
-    </>
+    </div>
   );
 }

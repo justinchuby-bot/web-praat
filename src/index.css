@@ -1237,6 +1237,13 @@ select:focus-visible {
   color: var(--text-secondary, #888);
 }
 
+.menubar-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0 4px;
+}
+
 .command-palette-trigger {
   margin-left: auto;
   padding: 4px 10px;
