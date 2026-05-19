@@ -12,7 +12,7 @@ interface VocalTractEditorProps {
   /** Tract length in cm */
   tractLength?: number;
   /** Callback when areas change */
-  onAreasChange?: (areas: Float64Array) => void;
+  onAreasChange?: (areas: number[]) => void;
 }
 
 export function VocalTractEditor({
@@ -20,7 +20,7 @@ export function VocalTractEditor({
   tractLength = 17.5,
   onAreasChange,
 }: VocalTractEditorProps) {
-  const [areas, setAreas] = useState<Float64Array>(() => getVowelTract('ə', numSections));
+  const [areas, setAreas] = useState<number[]>(() => getVowelTract('ə', numSections));
   const [selectedVowel, setSelectedVowel] = useState('ə');
   const tractCanvasRef = useRef<HTMLCanvasElement>(null);
   const spectrumCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -167,7 +167,7 @@ export function VocalTractEditor({
       const normalizedDist = dist / (rect.height / 2);
       const newArea = Math.max(0.3, Math.min(20, (1 - normalizedDist) * 20));
 
-      const newAreas = new Float64Array(areas);
+      const newAreas = [...areas];
       newAreas[sectionIdx] = newArea;
       setAreas(newAreas);
       onAreasChange?.(newAreas);

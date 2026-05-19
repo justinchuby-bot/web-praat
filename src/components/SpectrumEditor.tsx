@@ -1,10 +1,9 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import type { SpectrumSliceData, FilterType } from '../types';
 import {
   presetToGainCurve,
   applyGainCurveFilter,
 } from '../audio/filters';
-import { fftInPlace } from '../utils/fft';
 
 export interface SpectrumEditorProps {
   /** Current spectrum slice (from selected time point) */

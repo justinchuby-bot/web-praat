@@ -284,7 +284,7 @@ export function applyGainCurveFilter(
 export function biquadFrequencyResponse(
   coeffs: BiquadCoefficients,
   numBins: number,
-  sampleRate: number
+  _sampleRate: number
 ): Float64Array {
   const response = new Float64Array(numBins);
   for (let i = 0; i < numBins; i++) {
