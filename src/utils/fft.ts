@@ -166,7 +166,7 @@ export function preEmphasis(signal: Float64Array, factorDb: number): Float64Arra
 
 // ─── GPU-accelerated unified interface ─────────────────────────────────────────
 
-import { isGpuAvailable, fftMagnitudeGpu, batchFftMagnitudeGpu, initGpuFft } from './fft-gpu';
+import { isGpuAvailable, fftMagnitudeGpu, initGpuFft } from './fft-gpu';
 
 export { initGpuFft, isGpuAvailable };
 
@@ -191,5 +191,7 @@ export async function batchFftMagnitude(
   frames: Float64Array[],
   fftSize: number
 ): Promise<Float64Array[]> {
-  return batchFftMagnitudeGpu(frames, fftSize);
+  // GPU batch FFT disabled — has data layout bug causing horizontal banding
+  // GPU per-frame still works for individual fftMagnitudeAuto calls
+  return frames.map(frame => fftMagnitude(frame, fftSize));
 }
