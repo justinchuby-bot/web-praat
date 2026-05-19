@@ -72,6 +72,45 @@ const MenubarItem = React.forwardRef<
 ));
 MenubarItem.displayName = 'MenubarItem';
 
+const MenubarSub = MenubarPrimitive.Sub;
+
+const MenubarSubTrigger = React.forwardRef<
+  React.ComponentRef<typeof MenubarPrimitive.SubTrigger>,
+  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.SubTrigger> & { inset?: boolean }
+>(({ className, inset, children, ...props }, ref) => (
+  <MenubarPrimitive.SubTrigger
+    ref={ref}
+    className={cn(
+      'flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none',
+      'focus:bg-zinc-700 focus:text-zinc-100',
+      'data-[state=open]:bg-zinc-700',
+      inset && 'pl-8',
+      className
+    )}
+    {...props}
+  >
+    {children}
+    <span className="ml-auto text-xs">▶</span>
+  </MenubarPrimitive.SubTrigger>
+));
+MenubarSubTrigger.displayName = 'MenubarSubTrigger';
+
+const MenubarSubContent = React.forwardRef<
+  React.ComponentRef<typeof MenubarPrimitive.SubContent>,
+  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.SubContent>
+>(({ className, ...props }, ref) => (
+  <MenubarPrimitive.SubContent
+    ref={ref}
+    className={cn(
+      'z-50 min-w-[180px] overflow-hidden rounded-md border border-zinc-700 bg-zinc-800 p-1 text-zinc-200 shadow-lg',
+      'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+      className
+    )}
+    {...props}
+  />
+));
+MenubarSubContent.displayName = 'MenubarSubContent';
+
 const MenubarSeparator = React.forwardRef<
   React.ComponentRef<typeof MenubarPrimitive.Separator>,
   React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Separator>
@@ -91,4 +130,7 @@ export {
   MenubarContent,
   MenubarItem,
   MenubarSeparator,
+  MenubarSub,
+  MenubarSubTrigger,
+  MenubarSubContent,
 };

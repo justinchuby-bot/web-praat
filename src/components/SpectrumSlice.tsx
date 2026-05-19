@@ -33,8 +33,8 @@ export function SpectrumSlice({ slice }: SpectrumSliceProps) {
       <h3>Spectrum Slice</h3>
       <p className="panel-caption">Time {slice.time.toFixed(3)} s</p>
       <svg viewBox="0 0 100 100" className="spectrum-slice-plot" preserveAspectRatio="none">
-        <polyline fill="none" stroke="#89b4fa" strokeWidth="1.5" points={points.join(' ')} />
-        <polyline fill="none" stroke="#f38ba8" strokeWidth="1.5" points={envelopePoints.join(' ')} />
+        <polyline fill="none" stroke="#89b4fa" strokeWidth="0.5" points={points.join(' ')} />
+        <polyline fill="none" stroke="#f38ba8" strokeWidth="0.5" points={envelopePoints.join(' ')} />
       </svg>
       <div className="panel-legend">
         <span className="legend-item legend-blue">FFT magnitude</span>

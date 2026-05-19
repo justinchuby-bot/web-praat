@@ -4,6 +4,7 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useStreamingRecording } from './hooks/useStreamingRecording';
 import { useAnalysisWorker } from './hooks/useAnalysisWorker';
 import { useIsMobile } from './hooks/useIsMobile';
+import { useTheme } from './hooks/useTheme';
 import { BottomSheet } from './components/BottomSheet';
 import { defaultAnalysisSettings, defaultFilterSettings, createEmptyTextGrid } from './audio/defaults';
 import { AudioEditorHistory, ReplaceRangeCommand } from './audio/editor';
@@ -67,6 +68,7 @@ function createAudioBufferFromSamples(samples: Float32Array, sampleRate: number)
 
 export default function App() {
   const isMobile = useIsMobile();
+  const { setting: themeSetting, setTheme: setThemeSetting } = useTheme();
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [selection, setSelection] = useState<TimeSelection | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -506,6 +508,8 @@ export default function App() {
         onOpenSpectrumEditor={() => setShowSpectrumEditor(true)}
         onOpenExperiment={() => setShowExperiment(true)}
         onOpenScriptEditor={() => setShowScriptEditor(true)}
+        themeSetting={themeSetting}
+        onThemeChange={setThemeSetting}
       />
 
       <Toolbar
