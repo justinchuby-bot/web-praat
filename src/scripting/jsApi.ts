@@ -49,6 +49,7 @@ export function createPraatApi(context: JsApiContext, result: JsApiResult) {
           octaveCost: 0.01,
           octaveJumpCost: 0.35,
           voicedUnvoicedCost: 0.14,
+          maxCandidates: 15,
         },
       });
     },
@@ -61,10 +62,12 @@ export function createPraatApi(context: JsApiContext, result: JsApiResult) {
       const samples = audio ?? context.samples;
       return computeFormants(samples, context.sampleRate, {
         formant: {
-          maxFormant: options?.maxFormant ?? 5500,
-          numFormants: options?.numFormants ?? 5,
-          windowLength: 0.025,
-          preEmphasis: 50,
+          maxFrequency: options?.maxFormant ?? 5500,
+          numberOfFormants: options?.numFormants ?? 5,
+          lpcOrder: 12,
+          smoothingWindowMs: 20,
+          transitionCostWeight: 1.0,
+          medianFilterSize: 3,
         },
       });
     },
