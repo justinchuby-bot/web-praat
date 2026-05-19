@@ -59,7 +59,7 @@ describe('Intensity', () => {
     const intensity = computeIntensity(samples, sampleRate);
     // RMS of sine = amplitude / sqrt(2)
     const expectedRms = amplitude / Math.SQRT2;
-    const expectedDb = 20 * Math.log10(expectedRms);
+    const expectedDb = 10 * Math.log10((expectedRms * expectedRms) / 4e-10);
 
     // Check middle frames (avoid edge effects)
     const mid = Math.floor(intensity.values.length / 2);
