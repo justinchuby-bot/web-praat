@@ -406,8 +406,8 @@ export function computeIntensity(samples: Float32Array, sampleRate: number): Int
     for (let i = 0; i < frameSize; i++) {
       energy += samples[start + i] * samples[start + i];
     }
-    const rms = Math.sqrt(energy / frameSize);
-    values.push(rms > 0 ? 20 * Math.log10(rms) : -100);
+    const meanSquare = energy / frameSize;
+    values.push(meanSquare > 0 ? 10 * Math.log10(meanSquare / 4e-10) : -100);
     times.push((start + frameSize / 2) / sampleRate);
   }
 

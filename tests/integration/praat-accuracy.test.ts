@@ -89,9 +89,22 @@ describe('Praat accuracy — sine 440Hz', () => {
     expect(compared).toBeGreaterThan(0);
   });
 
-  // TODO: Our intensity uses relative dB scale, Praat uses absolute dB SPL (~90dB difference).
-  // Need to align reference levels or convert to same scale.
-  it.todo('intensity within ±1 dB of Praat');
+  it('intensity within ±1 dB of Praat', () => {
+    const intRef = loadRef('fixtures/sine_440hz_intensity.json');
+    let compared = 0;
+    for (let i = 0; i < intRef.values.length; i++) {
+      const refVal = intRef.values[i];
+      const refTime = intRef.times[i];
+      const ourIdx = result.intensity.times.findIndex((t: number) => Math.abs(t - refTime) < 0.005);
+      if (ourIdx === -1) continue;
+      const ourVal = result.intensity.values[ourIdx];
+      expect(Math.abs(ourVal - refVal),
+        `intensity at t=${refTime.toFixed(3)}: ours=${ourVal.toFixed(1)} vs praat=${refVal.toFixed(1)}`
+      ).toBeLessThan(1);
+      compared++;
+    }
+    expect(compared).toBeGreaterThan(0);
+  });
 
   // TODO: Our HNR values are much lower than Praat for pure sine (~21dB vs ~91dB).
   // Likely different autocorrelation normalization or window handling.
@@ -134,8 +147,22 @@ describe('Praat accuracy — vowel /a/', () => {
   // Same root cause as F1 — LPC parameter mismatch.
   it.todo('F2 within ±50 Hz of Praat');
 
-  // TODO: Same intensity scale issue as sine 440Hz (relative vs absolute dB).
-  it.todo('intensity within ±1 dB of Praat');
+  it('intensity within ±1 dB of Praat', () => {
+    const intRef = loadRef('fixtures/vowel_a_intensity.json');
+    let compared = 0;
+    for (let i = 0; i < intRef.values.length; i++) {
+      const refVal = intRef.values[i];
+      const refTime = intRef.times[i];
+      const ourIdx = result.intensity.times.findIndex((t: number) => Math.abs(t - refTime) < 0.005);
+      if (ourIdx === -1) continue;
+      const ourVal = result.intensity.values[ourIdx];
+      expect(Math.abs(ourVal - refVal),
+        `intensity at t=${refTime.toFixed(3)}: ours=${ourVal.toFixed(1)} vs praat=${refVal.toFixed(1)}`
+      ).toBeLessThan(1);
+      compared++;
+    }
+    expect(compared).toBeGreaterThan(0);
+  });
 
   // TODO: Same HNR discrepancy as sine 440Hz.
   it.todo('HNR within ±2 dB of Praat');
