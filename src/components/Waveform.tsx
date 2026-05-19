@@ -9,6 +9,7 @@ interface WaveformProps {
   currentTime: number;
   viewRange: ViewRange;
   onSelectionChange: (selection: TimeSelection | null) => void;
+  onCursorChange: (time: number) => void;
   onWheelZoom: (pivotTime: number, zoomFactor: number) => void;
   onPan: (deltaTime: number) => void;
   onZoomSelection: (selection: TimeSelection) => void;
@@ -22,6 +23,7 @@ export const Waveform = React.memo(function Waveform({
   currentTime,
   viewRange,
   onSelectionChange,
+  onCursorChange,
   onWheelZoom,
   onPan,
   onZoomSelection,
@@ -129,9 +131,13 @@ export const Waveform = React.memo(function Waveform({
     }
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (dragModeRef.current === 'zoom' && selection && selection.end > selection.start) {
       onZoomSelection(selection);
+    } else if (dragModeRef.current === 'select' && !selection) {
+      // Click without drag → move cursor
+      const time = getTime(event);
+      onCursorChange(time);
     }
     dragModeRef.current = null;
   };

@@ -206,7 +206,7 @@ export default function App() {
     source.buffer = buffer;
     source.connect(ctx.destination);
 
-    const startOffset = selection?.start ?? 0;
+    const startOffset = selection?.start ?? currentTime;
     const duration = selection ? selection.end - selection.start : undefined;
     source.start(0, startOffset, duration);
     sourceRef.current = source;
@@ -551,6 +551,7 @@ export default function App() {
                 currentTime={streaming.streamAnalysis.duration}
                 viewRange={{ start: 0, end: streaming.streamAnalysis.duration }}
                 onSelectionChange={() => {}}
+                onCursorChange={() => {}}
                 onWheelZoom={() => {}}
                 onPan={() => {}}
                 onZoomSelection={() => {}}
@@ -596,6 +597,7 @@ export default function App() {
                 currentTime={currentTime}
                 viewRange={viewRange}
                 onSelectionChange={setSelection}
+                onCursorChange={setCurrentTime}
                 onWheelZoom={handleWheelZoom}
                 onPan={handlePan}
                 onZoomSelection={handleZoomSelection}
