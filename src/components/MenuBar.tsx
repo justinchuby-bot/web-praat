@@ -55,6 +55,7 @@ interface MenuBarProps {
   onOpenSpectrumEditor?: () => void;
   onOpenExperiment?: () => void;
   onOpenScriptEditor?: () => void;
+  onOpenCommandPalette?: () => void;
   themeSetting?: ThemeSetting;
   onThemeChange?: (theme: ThemeSetting) => void;
 }
@@ -80,12 +81,14 @@ export function MenuBar(props: MenuBarProps) {
     onOpenManipulation, onOpenPitchTier, onOpenFormantGrid,
     onOpenDurationTier, onOpenAmplitudeTier, onOpenVocalTract,
     onOpenSpectrumEditor, onOpenExperiment, onOpenScriptEditor,
+    onOpenCommandPalette,
     themeSetting, onThemeChange,
   } = props;
 
   const themeOptions: ThemeSetting[] = ['dark', 'light', 'hc-dark', 'hc-light', 'auto'];
 
   return (
+    <>
     <Menubar>
       {/* File */}
       <MenubarMenu>
@@ -198,5 +201,9 @@ export function MenuBar(props: MenuBarProps) {
         </MenubarContent>
       </MenubarMenu>
     </Menubar>
+    <button className="command-palette-trigger" onClick={onOpenCommandPalette} title="Command Palette (⌘⇧P)">
+      🔍 Commands
+    </button>
+    </>
   );
 }

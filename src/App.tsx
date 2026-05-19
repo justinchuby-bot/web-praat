@@ -15,6 +15,7 @@ import { computeSpectrumSlice } from './audio/spectrum';
 import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog';
 import { AboutDialog } from "./components/AboutDialog";
 import { MenuBar } from './components/MenuBar';
+import { CommandPalette, Command } from './components/CommandPalette';
 import { RhythmPanel } from './components/RhythmPanel';
 import { RightSidebar } from './components/RightSidebar';
 import { SettingsPanel } from './components/SettingsPanel';
@@ -455,6 +456,58 @@ export default function App() {
 
   useKeyboardShortcuts(shortcutHandlers, true);
 
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'P') {
+        e.preventDefault();
+        setCommandPaletteOpen((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  const paletteCommands: Command[] = useMemo(() => [
+    { id: 'file.open-audio', label: 'Open Audio', category: 'File', action: () => document.querySelector<HTMLInputElement>('.menu-file-label input[accept="audio/*"]')?.click() },
+    { id: 'file.import-textgrid', label: 'Import TextGrid', category: 'File', action: () => document.querySelector<HTMLInputElement>('.menu-file-label input[accept*=".TextGrid"]')?.click() },
+    { id: 'file.export-wav', label: 'Export WAV', category: 'File', action: () => { if (currentSamplesRef.current) downloadBinaryFile('audio.wav', exportSelectedRegionWav(currentSamplesRef.current, sampleRate)); } },
+    { id: 'file.export-pitch-csv', label: 'Export Pitch CSV', category: 'File', action: () => { if (analysis) downloadTextFile('pitch.csv', exportPitchCsv(analysis.pitch), 'text/csv'); } },
+    { id: 'file.export-formant-csv', label: 'Export Formant CSV', category: 'File', action: () => { if (analysis) downloadTextFile('formants.csv', exportFormantCsv(analysis.formants), 'text/csv'); } },
+    { id: 'edit.undo', label: 'Undo', category: 'Edit', shortcut: '\u2318Z', action: handleUndo },
+    { id: 'edit.redo', label: 'Redo', category: 'Edit', shortcut: '\u2318\u21e7Z', action: handleRedo },
+    { id: 'edit.cut', label: 'Cut', category: 'Edit', shortcut: '\u2318X', action: handleCut },
+    { id: 'edit.copy', label: 'Copy', category: 'Edit', shortcut: '\u2318C', action: handleCopy },
+    { id: 'edit.paste', label: 'Paste', category: 'Edit', shortcut: '\u2318V', action: handlePaste },
+    { id: 'edit.delete', label: 'Delete', category: 'Edit', shortcut: 'Del', action: handleDelete },
+    { id: 'view.zoom-in', label: 'Zoom In', category: 'View', shortcut: '\u2318+', action: handleZoomIn },
+    { id: 'view.zoom-out', label: 'Zoom Out', category: 'View', shortcut: '\u2318\u2212', action: handleZoomOut },
+    { id: 'view.fit-to-window', label: 'Fit to Window', category: 'View', shortcut: '\u23180', action: handleFitToWindow },
+    { id: 'view.toggle-pitch', label: 'Toggle Pitch', category: 'View', action: () => setShowPitch((v) => !v) },
+    { id: 'view.toggle-formants', label: 'Toggle Formants', category: 'View', action: () => setShowFormants((v) => !v) },
+    { id: 'view.toggle-intensity', label: 'Toggle Intensity', category: 'View', action: () => setShowIntensity((v) => !v) },
+    { id: 'view.toggle-cochleagram', label: 'Toggle Cochleagram', category: 'View', action: () => setShowCochleagram((v) => !v) },
+    { id: 'view.toggle-ipa', label: 'Toggle IPA', category: 'View', action: () => setShowIpa((v) => !v) },
+    { id: 'view.theme-dark', label: 'Theme: Dark', category: 'View', action: () => setThemeSetting('dark') },
+    { id: 'view.theme-light', label: 'Theme: Light', category: 'View', action: () => setThemeSetting('light') },
+    { id: 'view.theme-hc-dark', label: 'Theme: HC Dark', category: 'View', action: () => setThemeSetting('hc-dark') },
+    { id: 'view.theme-hc-light', label: 'Theme: HC Light', category: 'View', action: () => setThemeSetting('hc-light') },
+    { id: 'tools.manipulation', label: 'Manipulation', category: 'Tools', action: () => setShowManipulation(true) },
+    { id: 'tools.pitch-tier', label: 'Pitch Tier', category: 'Tools', action: () => setShowPitchTier(true) },
+    { id: 'tools.formant-grid', label: 'Formant Grid', category: 'Tools', action: () => setShowFormantGrid(true) },
+    { id: 'tools.duration-tier', label: 'Duration Tier', category: 'Tools', action: () => setShowDurationTier(true) },
+    { id: 'tools.amplitude-tier', label: 'Amplitude Tier', category: 'Tools', action: () => setShowAmplitudeTier(true) },
+    { id: 'tools.vocal-tract', label: 'Vocal Tract', category: 'Tools', action: () => setShowVocalTract(true) },
+    { id: 'tools.spectrum-editor', label: 'Spectrum Editor', category: 'Tools', action: () => setShowSpectrumEditor(true) },
+    { id: 'tools.experiment', label: 'Experiment', category: 'Tools', action: () => setShowExperiment(true) },
+    { id: 'tools.script-editor', label: 'Script Editor', category: 'Tools', action: () => setShowScriptEditor(true) },
+    { id: 'analysis.compute-hnr', label: 'Compute HNR', category: 'Analysis', action: () => {} },
+    { id: 'analysis.compute-rhythm', label: 'Compute Rhythm', category: 'Analysis', action: () => {} },
+    { id: 'analysis.voice-quality', label: 'Voice Quality', category: 'Analysis', action: () => {} },
+    { id: 'recording.start-stop', label: 'Start/Stop Recording', category: 'Recording', shortcut: 'R', action: () => { isRecording ? handleStopRecord() : handleRecord(); } },
+  ], [analysis, handleUndo, handleRedo, handleCut, handleCopy, handlePaste, handleDelete, handleZoomIn, handleZoomOut, handleFitToWindow, isRecording, handleRecord, handleStopRecord, sampleRate]);
+
   return (
     <div className="app-layout">
       <MenuBar
@@ -510,7 +563,10 @@ export default function App() {
         onOpenScriptEditor={() => setShowScriptEditor(true)}
         themeSetting={themeSetting}
         onThemeChange={setThemeSetting}
+        onOpenCommandPalette={() => setCommandPaletteOpen(true)}
       />
+
+      <CommandPalette commands={paletteCommands} open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
 
       <Toolbar
         hasAudio={!!analysis}
