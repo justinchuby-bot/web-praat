@@ -1,10 +1,11 @@
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from './ui/dropdown-menu';
+  Menubar,
+  MenubarMenu,
+  MenubarTrigger,
+  MenubarContent,
+  MenubarItem,
+  MenubarSeparator,
+} from './ui/menubar';
 
 interface MenuBarProps {
   hasAudio: boolean;
@@ -75,106 +76,106 @@ export function MenuBar(props: MenuBarProps) {
   } = props;
 
   return (
-    <nav className="menubar" role="menubar" aria-label="Application menu">
+    <Menubar>
       {/* File */}
-      <DropdownMenu>
-        <DropdownMenuTrigger className="menubar-item">File</DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem asChild>
+      <MenubarMenu>
+        <MenubarTrigger>File</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem asChild>
             <FileInput accept="audio/*" onFile={onLoadFile}>Open Audio…</FileInput>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
+          </MenubarItem>
+          <MenubarItem asChild>
             <FileInput accept=".TextGrid,.textgrid,text/plain" onFile={onImportTextGrid}>Import TextGrid…</FileInput>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem disabled={!hasAudio} onClick={onExportFullWav}>Export WAV</DropdownMenuItem>
-          <DropdownMenuItem disabled={!selection} onClick={onExportSelectionWav}>Export Selection WAV</DropdownMenuItem>
-          <DropdownMenuItem disabled={!hasAudio} onClick={onExportTextGrid}>Export TextGrid</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem disabled={!hasAudio} onClick={onExportPitchCsv}>Export Pitch CSV</DropdownMenuItem>
-          <DropdownMenuItem disabled={!hasAudio} onClick={onExportFormantCsv}>Export Formant CSV</DropdownMenuItem>
-          <DropdownMenuItem disabled={!hasAudio} onClick={onExportIntensityCsv}>Export Intensity CSV</DropdownMenuItem>
-          <DropdownMenuItem disabled={!hasAudio} onClick={onExportHarmonicityCsv}>Export HNR CSV</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem disabled={!hasAudio} onClick={onExportFullWav}>Export WAV</MenubarItem>
+          <MenubarItem disabled={!selection} onClick={onExportSelectionWav}>Export Selection WAV</MenubarItem>
+          <MenubarItem disabled={!hasAudio} onClick={onExportTextGrid}>Export TextGrid</MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem disabled={!hasAudio} onClick={onExportPitchCsv}>Export Pitch CSV</MenubarItem>
+          <MenubarItem disabled={!hasAudio} onClick={onExportFormantCsv}>Export Formant CSV</MenubarItem>
+          <MenubarItem disabled={!hasAudio} onClick={onExportIntensityCsv}>Export Intensity CSV</MenubarItem>
+          <MenubarItem disabled={!hasAudio} onClick={onExportHarmonicityCsv}>Export HNR CSV</MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
 
       {/* Edit */}
-      <DropdownMenu>
-        <DropdownMenuTrigger className="menubar-item">Edit</DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem disabled={!canUndo} onClick={onUndo}>Undo <span className="menu-shortcut">⌘Z</span></DropdownMenuItem>
-          <DropdownMenuItem disabled={!canRedo} onClick={onRedo}>Redo <span className="menu-shortcut">⇧⌘Z</span></DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem disabled={!selection} onClick={onCut}>Cut <span className="menu-shortcut">⌘X</span></DropdownMenuItem>
-          <DropdownMenuItem disabled={!selection} onClick={onCopy}>Copy <span className="menu-shortcut">⌘C</span></DropdownMenuItem>
-          <DropdownMenuItem disabled={!hasAudio} onClick={onPaste}>Paste <span className="menu-shortcut">⌘V</span></DropdownMenuItem>
-          <DropdownMenuItem disabled={!selection} onClick={onDelete}>Delete <span className="menu-shortcut">⌫</span></DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <MenubarMenu>
+        <MenubarTrigger>Edit</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem disabled={!canUndo} onClick={onUndo}>Undo <span className="menu-shortcut">⌘Z</span></MenubarItem>
+          <MenubarItem disabled={!canRedo} onClick={onRedo}>Redo <span className="menu-shortcut">⇧⌘Z</span></MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem disabled={!selection} onClick={onCut}>Cut <span className="menu-shortcut">⌘X</span></MenubarItem>
+          <MenubarItem disabled={!selection} onClick={onCopy}>Copy <span className="menu-shortcut">⌘C</span></MenubarItem>
+          <MenubarItem disabled={!hasAudio} onClick={onPaste}>Paste <span className="menu-shortcut">⌘V</span></MenubarItem>
+          <MenubarItem disabled={!selection} onClick={onDelete}>Delete <span className="menu-shortcut">⌫</span></MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
 
       {/* View */}
-      <DropdownMenu>
-        <DropdownMenuTrigger className="menubar-item">View</DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem onClick={onZoomIn}>Zoom In <span className="menu-shortcut">⌘+</span></DropdownMenuItem>
-          <DropdownMenuItem onClick={onZoomOut}>Zoom Out <span className="menu-shortcut">⌘-</span></DropdownMenuItem>
-          <DropdownMenuItem disabled={!hasAudio} onClick={onFitToWindow}>Fit to Window <span className="menu-shortcut">⌘0</span></DropdownMenuItem>
-          <DropdownMenuItem disabled={!selection} onClick={onZoomToSelection}>Zoom to Selection</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <MenubarMenu>
+        <MenubarTrigger>View</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem onClick={onZoomIn}>Zoom In <span className="menu-shortcut">⌘+</span></MenubarItem>
+          <MenubarItem onClick={onZoomOut}>Zoom Out <span className="menu-shortcut">⌘-</span></MenubarItem>
+          <MenubarItem disabled={!hasAudio} onClick={onFitToWindow}>Fit to Window <span className="menu-shortcut">⌘0</span></MenubarItem>
+          <MenubarItem disabled={!selection} onClick={onZoomToSelection}>Zoom to Selection</MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
 
       {/* Analysis */}
-      <DropdownMenu>
-        <DropdownMenuTrigger className="menubar-item">Analysis</DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem onClick={onTogglePitch}>
+      <MenubarMenu>
+        <MenubarTrigger>Analysis</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem onClick={onTogglePitch}>
             {showPitch ? '✓ ' : ''}Pitch Overlay
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onToggleFormants}>
+          </MenubarItem>
+          <MenubarItem onClick={onToggleFormants}>
             {showFormants ? '✓ ' : ''}Formant Overlay
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onToggleIntensity}>
+          </MenubarItem>
+          <MenubarItem onClick={onToggleIntensity}>
             {showIntensity ? '✓ ' : ''}Intensity Overlay
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onToggleIpa}>
+          </MenubarItem>
+          <MenubarItem onClick={onToggleIpa}>
             {showIpa ? '✓ ' : ''}IPA Vowel Labels
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onToggleCochleagram}>
+          </MenubarItem>
+          <MenubarItem onClick={onToggleCochleagram}>
             {showCochleagram ? '✓ ' : ''}Cochleagram (Bark)
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
 
       {/* Tools */}
-      <DropdownMenu>
-        <DropdownMenuTrigger className="menubar-item">Tools</DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem disabled={!hasAudio} onClick={onOpenManipulation}>Manipulation Editor</DropdownMenuItem>
-          <DropdownMenuItem disabled={!hasAudio} onClick={onOpenPitchTier}>Pitch Tier Editor</DropdownMenuItem>
-          <DropdownMenuItem disabled={!hasAudio} onClick={onOpenFormantGrid}>Formant Grid Editor</DropdownMenuItem>
-          <DropdownMenuItem disabled={!hasAudio} onClick={onOpenDurationTier}>Duration Tier Editor</DropdownMenuItem>
-          <DropdownMenuItem disabled={!hasAudio} onClick={onOpenAmplitudeTier}>Amplitude Tier Editor</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onOpenVocalTract}>Vocal Tract Editor</DropdownMenuItem>
-          <DropdownMenuItem disabled={!hasAudio} onClick={onOpenSpectrumEditor}>Spectrum Editor</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onOpenExperiment}>Experiment (MFC)</DropdownMenuItem>
-          <DropdownMenuItem onClick={onOpenScriptEditor}>Script Editor</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <MenubarMenu>
+        <MenubarTrigger>Tools</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem disabled={!hasAudio} onClick={onOpenManipulation}>Manipulation Editor</MenubarItem>
+          <MenubarItem disabled={!hasAudio} onClick={onOpenPitchTier}>Pitch Tier Editor</MenubarItem>
+          <MenubarItem disabled={!hasAudio} onClick={onOpenFormantGrid}>Formant Grid Editor</MenubarItem>
+          <MenubarItem disabled={!hasAudio} onClick={onOpenDurationTier}>Duration Tier Editor</MenubarItem>
+          <MenubarItem disabled={!hasAudio} onClick={onOpenAmplitudeTier}>Amplitude Tier Editor</MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem onClick={onOpenVocalTract}>Vocal Tract Editor</MenubarItem>
+          <MenubarItem disabled={!hasAudio} onClick={onOpenSpectrumEditor}>Spectrum Editor</MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem onClick={onOpenExperiment}>Experiment (MFC)</MenubarItem>
+          <MenubarItem onClick={onOpenScriptEditor}>Script Editor</MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
 
       {/* Help */}
-      <DropdownMenu>
-        <DropdownMenuTrigger className="menubar-item">Help</DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem onClick={() => document.dispatchEvent(new CustomEvent('open-shortcuts-dialog'))}>
+      <MenubarMenu>
+        <MenubarTrigger>Help</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem onClick={() => document.dispatchEvent(new CustomEvent('open-shortcuts-dialog'))}>
             Keyboard Shortcuts
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => document.dispatchEvent(new CustomEvent('open-about-dialog'))}>
+          </MenubarItem>
+          <MenubarItem onClick={() => document.dispatchEvent(new CustomEvent('open-about-dialog'))}>
             About Web-Praat
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </nav>
+          </MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
+    </Menubar>
   );
 }

@@ -804,32 +804,7 @@ select:focus-visible {
 }
 
 /* MenuBar */
-.menubar {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  height: 32px;
-  background: var(--bg-overlay);
-  border-bottom: 1px solid var(--border);
-  padding: 0 8px;
-  flex-shrink: 0;
-}
-
-.menubar-item {
-  padding: 4px 12px;
-  font-size: 13px;
-  color: var(--text-dim);
-  background: none;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.1s, color 0.1s;
-}
-.menubar-item:hover,
-.menubar-item[data-state="open"] {
-  background: var(--border);
-  color: var(--text);
-}
+/* Menubar styles now handled by Radix Menubar + Tailwind (see ui/menubar.tsx) */
 
 .menu-shortcut {
   margin-left: 16px;
