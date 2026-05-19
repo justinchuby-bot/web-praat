@@ -10,7 +10,7 @@
 
 ## 当前優先任務
 
-- [ ] 性能优化：Web Worker for heavy DSP
+- [ ] Manipulation（pitch/duration 编辑 + 重合成）
 
 ## Backlog（按優先級）
 - [ ] 移动端适配
@@ -71,7 +71,8 @@
 - [x] 滤波器（低通/高通/带通）— biquad filter + FilterPanel UI + apply/reset
 - [x] 实时录音模式（streaming spectrogram）— StreamingRecorder + useStreamingRecording hook + live analysis every 250ms
 - [x] React 性能优化：useMemo/useCallback 依赖修复（settings ref、移除无意义 useMemo）
-- [x] 界面打磨：动画、快捷键、accessibility — button transitions, focus-visible, ARIA labels, keyboard shortcuts dialog (?)
+- [x] 性能优化：Web Worker for heavy DSP — analysis.worker.ts + useAnalysisWorker hook + loading indicator
+- [x] 界面打磨：动画、快捷键、accessibility
 
 ## 规则
 
