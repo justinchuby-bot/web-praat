@@ -38,6 +38,7 @@ import { SpectrumEditor } from './components/SpectrumEditor';
 import { ExperimentDesigner } from './components/ExperimentDesigner';
 import { ExperimentMFC } from './components/ExperimentMFC';
 import { ScriptEditor } from './components/ScriptEditor';
+import { PluginManager } from './components/PluginManager';
 import { VoiceQualityPanel } from './components/VoiceQualityPanel';
 import { Waveform } from './components/Waveform';
 import { DropOverlay, DropFileType } from './components/DropOverlay';
@@ -91,6 +92,7 @@ export default function App() {
   const [showSpectrumEditor, setShowSpectrumEditor] = useState(false);
   const [showExperiment, setShowExperiment] = useState(false);
   const [showScriptEditor, setShowScriptEditor] = useState(false);
+  const [showPlugins, setShowPlugins] = useState(false);
   const [experimentConfig, setExperimentConfig] = useState<{ config: any; audioMap: Record<string, string> } | null>(null);
   const [settings, setSettings] = useState<AnalysisSettings>(defaultAnalysisSettings);
   const [filterSettings, setFilterSettings] = useState<FilterSettings>(defaultFilterSettings);
@@ -561,6 +563,7 @@ export default function App() {
     { id: 'tools.spectrum-editor', label: 'Spectrum Editor', category: 'Tools', action: () => setShowSpectrumEditor(true) },
     { id: 'tools.experiment', label: 'Experiment', category: 'Tools', action: () => setShowExperiment(true) },
     { id: 'tools.script-editor', label: 'Script Editor', category: 'Tools', action: () => setShowScriptEditor(true) },
+    { id: 'tools.plugins', label: 'Plugins', category: 'Tools', action: () => setShowPlugins(true) },
     { id: 'analysis.compute-hnr', label: 'Compute HNR', category: 'Analysis', action: () => {} },
     { id: 'analysis.compute-rhythm', label: 'Compute Rhythm', category: 'Analysis', action: () => {} },
     { id: 'analysis.voice-quality', label: 'Voice Quality', category: 'Analysis', action: () => {} },
@@ -623,6 +626,7 @@ export default function App() {
         onOpenSpectrumEditor={() => setShowSpectrumEditor(true)}
         onOpenExperiment={() => setShowExperiment(true)}
         onOpenScriptEditor={() => setShowScriptEditor(true)}
+        onOpenPlugins={() => setShowPlugins(true)}
         themeSetting={themeSetting}
         onThemeChange={setThemeSetting}
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
@@ -952,6 +956,8 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {showPlugins && <PluginManager onClose={() => setShowPlugins(false)} />}
     </div>
   );
 }
