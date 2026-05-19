@@ -9,7 +9,7 @@
 
 ## 当前状态
 
-- **338 tests**, 70+ 源文件, 9800+ 行 TypeScript
+- **375 tests**, 70+ 源文件, 10000+ 行 TypeScript
 - **React 19 + TypeScript 6 + Vite 8 + vitest 4.1**
 - Coverage: 84% statements, 93% audio module
 - Build: 467KB / 145KB gzip
@@ -27,7 +27,8 @@
 - [x] **Excitation pattern** — 听觉激励模式可视化
 - [x] **SpeechSynthesizer（TTS）** — Web Speech API 集成
 - [x] **Pitch sonification** — 听 pitch track，验证准确性
-- [ ] **Note transcription** — pitch → 音符/半音转写
+- [x] **Note transcription** — pitch → 音符/半音转写
+- [ ] **Hierarchical tiers** — tier parent-child 关系（借鉴 ELAN）
 
 ## Backlog（按优先级）
 
@@ -41,7 +42,6 @@
 - [ ] SpeechSynthesizer（TTS）
 
 ### 中优先（借鉴 Tony + ELAN）
-- [ ] Note transcription（pitch → 音符/半音）
 - [ ] Hierarchical tiers（tier parent-child 关系）
 - [ ] ELAN (.eaf) 导入导出
 - [ ] Video sync（标注跟视频对齐）
@@ -106,7 +106,7 @@
 - [x] **波形交互改进** — region selection (draggable edges + move)、minimap (viewport nav)、drag选区
 - [x] **Excitation pattern** — Spectrum → Bark-band power → auditory masking convolution → phon; RightSidebar tab + loudness (sones)
 - [x] **Pitch sonification** — sine/hum/pulse 三模式 + WAV 导出 + 7 tests (355 total)
-- [x] **SpeechSynthesizer（TTS）** — Web Speech API + voice selection + rate/pitch/volume + word boundaries + 10 tests
+- [x] **Note transcription** — Hz→MIDI, note names, cents deviation, pitch track → note events + export TXT + UI panel (375 tests)
 
 ## 规则
 
