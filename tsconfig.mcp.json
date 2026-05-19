@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "types": ["node"],
+    "ignoreDeprecations": "6.0"
+  },
+  "include": ["src/mcp/**/*", "src/audio/**/*", "src/scripting/**/*", "src/utils/**/*", "src/types.ts"],
+  "exclude": ["node_modules", "dist", "src/utils/fft-gpu.ts", "src/utils/colormap.ts", "src/utils/view.ts", "src/audio/recorder.ts", "src/audio/streamingRecorder.ts", "src/audio/editor.ts"]
+}

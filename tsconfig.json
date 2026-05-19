@@ -22,5 +22,6 @@
     }
   },
   "include": ["src", "node_modules/@webgpu/types/dist/index.d.ts"],
+  "exclude": ["src/mcp"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
