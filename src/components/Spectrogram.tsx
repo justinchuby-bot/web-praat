@@ -176,7 +176,9 @@ export const Spectrogram = React.memo(function Spectrogram({
       for (let i = 0; i < analysis.intensity.times.length; i++) {
         const time = analysis.intensity.times[i];
         if (time < viewRange.start || time > viewRange.end) continue;
-        const normalized = (analysis.intensity.values[i] + 80) / 80;
+        // Intensity is in dB SPL (absolute). Normalize to visible range.
+        // Typical speech: 40-80 dB SPL. Map 30-90 dB to 0-1.
+        const normalized = (analysis.intensity.values[i] - 30) / 60;
         const x = timeToX(time, width, viewRange);
         const y = height - Math.max(0, Math.min(1, normalized)) * height;
         if (!started) {

@@ -198,20 +198,10 @@ export function extractFormants(
   const candidates = extractFormantCandidates(frame, sampleRate, lpcOrder, maxFrequency);
   if (candidates.length < 2) return null;
 
-  let f1: number | null = null;
-  let f2: number | null = null;
-  let f3: number | null = null;
-
-  for (const candidate of candidates) {
-    if (f1 === null && candidate.freq >= 100 && candidate.freq <= 1200) {
-      f1 = candidate.freq;
-    } else if (f1 !== null && f2 === null && candidate.freq >= 500 && candidate.freq <= 3500) {
-      f2 = candidate.freq;
-    } else if (f2 !== null && f3 === null && candidate.freq >= 1500 && candidate.freq <= 4500) {
-      f3 = candidate.freq;
-      break;
-    }
-  }
+  // Take first 3 candidates sorted by frequency as F1/F2/F3
+  const f1 = candidates[0]?.freq ?? null;
+  const f2 = candidates[1]?.freq ?? null;
+  const f3 = candidates[2]?.freq ?? null;
 
   if (f1 === null || f2 === null) return null;
   return { f1, f2, f3, candidates };
