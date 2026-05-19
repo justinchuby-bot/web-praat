@@ -680,7 +680,7 @@ button, input, select {
 }
 
 .settings-field span {
-  color: var(--text-secondary, #a6adc8);
+  color: var(--text-dim);
   font-size: 11px;
   font-weight: 500;
 }
@@ -689,16 +689,16 @@ button, input, select {
 .settings-field select {
   padding: 6px 8px;
   border-radius: 6px;
-  border: 1px solid var(--border, #313244);
-  background: var(--bg-secondary, #1e1e2e);
-  color: var(--text, #cdd6f4);
+  border: 1px solid var(--border);
+  background: var(--bg-base);
+  color: var(--text);
   font-size: 13px;
 }
 
 .settings-field input:focus,
 .settings-field select:focus {
   outline: none;
-  border-color: var(--accent, #89b4fa);
+  border-color: var(--accent);
 }
 
 .streaming-indicator {
@@ -1086,7 +1086,8 @@ select:focus-visible {
 
 .modal-panel {
   position: relative;
-  background: var(--bg-primary, #fff);
+  background: var(--bg-surface);
+  color: var(--text);
   border-radius: 12px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   max-width: 90vw;
@@ -1094,6 +1095,7 @@ select:focus-visible {
   overflow: auto;
   padding: 24px;
   min-width: 400px;
+  border: 1px solid var(--border);
 }
 
 .modal-panel-lg {
@@ -1109,25 +1111,12 @@ select:focus-visible {
   border: none;
   font-size: 1.25rem;
   cursor: pointer;
-  color: var(--text-secondary, #666);
+  color: var(--text-dim);
   z-index: 1;
 }
 
 .modal-close:hover {
-  color: var(--text-primary, #000);
-}
-
-@media (prefers-color-scheme: dark) {
-  .modal-panel {
-    background: #1a1a2e;
-    color: #e0e0e0;
-  }
-  .modal-close {
-    color: #999;
-  }
-  .modal-close:hover {
-    color: #fff;
-  }
+  color: var(--text);
 }
 
 /* Right Sidebar */
@@ -1203,8 +1192,8 @@ select:focus-visible {
 }
 
 .command-palette {
-  background: var(--bg-primary, #1e1e1e);
-  border: 1px solid var(--border-color, #444);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   width: 600px;
   max-width: 90vw;
@@ -1219,14 +1208,14 @@ select:focus-visible {
   font-size: 16px;
   padding: 12px 16px;
   border: none;
-  border-bottom: 1px solid var(--border-color, #444);
+  border-bottom: 1px solid var(--border);
   background: transparent;
-  color: var(--text-primary, #eee);
+  color: var(--text);
   outline: none;
 }
 
 .command-palette-input::placeholder {
-  color: var(--text-secondary, #888);
+  color: var(--text-dim);
 }
 
 .command-palette-list {
@@ -1241,7 +1230,7 @@ select:focus-visible {
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
-  color: var(--text-primary, #eee);
+  color: var(--text);
 }
 
 .command-palette-item.selected {
@@ -1249,20 +1238,20 @@ select:focus-visible {
 }
 
 .command-palette-item:hover {
-  background: var(--hover-bg, #37373d);
+  background: var(--bg-overlay);
 }
 
 .command-palette-category {
-  color: var(--text-secondary, #888);
+  color: var(--text-dim);
   margin-right: 4px;
 }
 
 .command-palette-shortcut {
-  color: var(--text-secondary, #bbb);
+  color: var(--text-dim);
   font-size: 11px;
   font-family: system-ui, sans-serif;
-  background: var(--bg-secondary, #2d2d2d);
-  border: 1px solid var(--border-color, #555);
+  background: var(--bg-base);
+  border: 1px solid var(--border);
   border-radius: 3px;
   padding: 2px 6px;
   line-height: 1;
@@ -1271,7 +1260,7 @@ select:focus-visible {
 .command-palette-empty {
   padding: 16px;
   text-align: center;
-  color: var(--text-secondary, #888);
+  color: var(--text-dim);
 }
 
 .menubar-row {
@@ -1285,15 +1274,15 @@ select:focus-visible {
   margin-left: auto;
   padding: 4px 10px;
   font-size: 12px;
-  border: 1px solid var(--border-color, #444);
+  border: 1px solid var(--border);
   border-radius: 4px;
   background: transparent;
-  color: var(--text-secondary, #888);
+  color: var(--text-dim);
   cursor: pointer;
   white-space: nowrap;
 }
 
 .command-palette-trigger:hover {
-  color: var(--text-primary, #eee);
-  border-color: var(--text-secondary, #888);
+  color: var(--text);
+  border-color: var(--text-dim);
 }
