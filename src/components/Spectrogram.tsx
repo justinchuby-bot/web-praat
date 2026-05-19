@@ -3,6 +3,7 @@ import { getColormap } from '../utils/colormap';
 import type { AnalysisResult, TimeSelection, ViewRange } from '../types';
 import { useZoomPan } from '../hooks/useZoomPan';
 import { timeToX, xToTime } from '../utils/view';
+import { generateIpaAnnotations } from '../audio/ipaVowels';
 
 interface SpectrogramProps {
   analysis: AnalysisResult | null;
@@ -12,6 +13,7 @@ interface SpectrogramProps {
   showPitch: boolean;
   showFormants: boolean;
   showIntensity: boolean;
+  showIpa: boolean;
   onWheelZoom: (pivotTime: number, zoomFactor: number) => void;
   onPan: (deltaTime: number) => void;
   onZoomSelection: (selection: TimeSelection) => void;
@@ -29,6 +31,7 @@ export const Spectrogram = React.memo(function Spectrogram({
   showPitch,
   showFormants,
   showIntensity,
+  showIpa,
   onWheelZoom,
   onPan,
   onZoomSelection,
@@ -187,6 +190,30 @@ export const Spectrogram = React.memo(function Spectrogram({
       ctx.fillRect(x1, 0, x2 - x1, height);
     }
 
+    // IPA vowel annotations
+    if (showIpa && showFormants) {
+      const ipaAnnotations = generateIpaAnnotations(
+        analysis.formants.times,
+        analysis.formants.tracked[0] ?? [],
+        analysis.formants.tracked[1] ?? [],
+        analysis.intensity.values,
+        { minTimeGap: 0.08, minConfidence: 0.35 }
+      );
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      for (const ann of ipaAnnotations) {
+        if (ann.time < viewRange.start || ann.time > viewRange.end) continue;
+        const x = timeToX(ann.time, width, viewRange);
+        // Position label above F1 position (F1 maps to height axis)
+        const f1Y = height - (ann.f1 / maxDisplayFreq) * height;
+        const labelY = Math.max(14, f1Y - 6);
+        const alpha = 0.5 + ann.confidence * 0.5;
+        ctx.fillStyle = `rgba(205, 214, 244, ${alpha})`;
+        ctx.fillText(ann.symbol, x, labelY);
+      }
+    }
+
     if (currentTime >= viewRange.start && currentTime <= viewRange.end) {
       const x = timeToX(currentTime, width, viewRange);
       ctx.strokeStyle = '#cdd6f4';
@@ -195,7 +222,7 @@ export const Spectrogram = React.memo(function Spectrogram({
       ctx.lineTo(x + 0.5, height);
       ctx.stroke();
     }
-  }, [analysis, currentTime, selection, showFormants, showIntensity, showPitch, viewRange]);
+  }, [analysis, currentTime, selection, showFormants, showIntensity, showIpa, showPitch, viewRange]);
 
   const getTime = (event: React.MouseEvent<HTMLCanvasElement>): number => {
     const rect = canvasRef.current!.getBoundingClientRect();

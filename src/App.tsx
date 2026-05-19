@@ -71,6 +71,7 @@ export default function App() {
   const [showPitch, setShowPitch] = useState(true);
   const [showFormants, setShowFormants] = useState(true);
   const [showIntensity, setShowIntensity] = useState(true);
+  const [showIpa, setShowIpa] = useState(true);
   const [showCochleagram, setShowCochleagram] = useState(false);
   const [showManipulation, setShowManipulation] = useState(false);
   const [showPitchTier, setShowPitchTier] = useState(false);
@@ -480,9 +481,11 @@ export default function App() {
         onTogglePitch={() => setShowPitch((v) => !v)}
         onToggleFormants={() => setShowFormants((v) => !v)}
         onToggleIntensity={() => setShowIntensity((v) => !v)}
+        onToggleIpa={() => setShowIpa((v) => !v)}
         showPitch={showPitch}
         showFormants={showFormants}
         showIntensity={showIntensity}
+        showIpa={showIpa}
         showCochleagram={showCochleagram}
         onToggleCochleagram={() => setShowCochleagram((v) => !v)}
         onOpenManipulation={() => setShowManipulation(true)}
@@ -523,10 +526,12 @@ export default function App() {
           showPitch={showPitch}
           showFormants={showFormants}
           showIntensity={showIntensity}
+          showIpa={showIpa}
           showCochleagram={showCochleagram}
           onTogglePitch={() => setShowPitch((value) => !value)}
           onToggleFormants={() => setShowFormants((value) => !value)}
           onToggleIntensity={() => setShowIntensity((value) => !value)}
+          onToggleIpa={() => setShowIpa((value) => !value)}
           onToggleCochleagram={() => setShowCochleagram((value) => !value)}
         />
 
@@ -565,6 +570,7 @@ export default function App() {
                 showPitch={showPitch}
                 showFormants={showFormants}
                 showIntensity={showIntensity}
+                showIpa={showIpa}
                 onWheelZoom={() => {}}
                 onPan={() => {}}
                 onZoomSelection={() => {}}
@@ -617,6 +623,7 @@ export default function App() {
                   showPitch={showPitch}
                   showFormants={showFormants}
                   showIntensity={showIntensity}
+                  showIpa={showIpa}
                   onWheelZoom={handleWheelZoom}
                   onPan={handlePan}
                   onZoomSelection={handleZoomSelection}

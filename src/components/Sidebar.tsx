@@ -4,10 +4,12 @@ interface SidebarProps {
   showPitch: boolean;
   showFormants: boolean;
   showIntensity: boolean;
+  showIpa: boolean;
   showCochleagram: boolean;
   onTogglePitch: () => void;
   onToggleFormants: () => void;
   onToggleIntensity: () => void;
+  onToggleIpa: () => void;
   onToggleCochleagram: () => void;
   children?: ReactNode;
 }
@@ -16,10 +18,12 @@ export function Sidebar({
   showPitch,
   showFormants,
   showIntensity,
+  showIpa,
   showCochleagram,
   onTogglePitch,
   onToggleFormants,
   onToggleIntensity,
+  onToggleIpa,
   onToggleCochleagram,
   children,
 }: SidebarProps) {
@@ -46,6 +50,11 @@ export function Sidebar({
           <input type="checkbox" checked={showIntensity} onChange={onToggleIntensity} />
           <span className="toggle-indicator intensity" />
           Intensity
+        </label>
+        <label className="toggle-label">
+          <input type="checkbox" checked={showIpa} onChange={onToggleIpa} />
+          <span className="toggle-indicator ipa" />
+          IPA Vowels
         </label>
       </div>
 

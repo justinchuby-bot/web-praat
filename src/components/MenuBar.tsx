@@ -33,10 +33,12 @@ interface MenuBarProps {
   onTogglePitch: () => void;
   onToggleFormants: () => void;
   onToggleIntensity: () => void;
+  onToggleIpa: () => void;
   onToggleCochleagram: () => void;
   showPitch: boolean;
   showFormants: boolean;
   showIntensity: boolean;
+  showIpa: boolean;
   showCochleagram: boolean;
   onOpenManipulation?: () => void;
   onOpenPitchTier?: () => void;
@@ -65,8 +67,8 @@ export function MenuBar(props: MenuBarProps) {
     onExportPitchCsv, onExportFormantCsv, onExportIntensityCsv, onExportHarmonicityCsv,
     onUndo, onRedo, onCut, onCopy, onPaste, onDelete,
     onZoomIn, onZoomOut, onFitToWindow, onZoomToSelection,
-    onTogglePitch, onToggleFormants, onToggleIntensity, onToggleCochleagram,
-    showPitch, showFormants, showIntensity, showCochleagram,
+    onTogglePitch, onToggleFormants, onToggleIntensity, onToggleIpa, onToggleCochleagram,
+    showPitch, showFormants, showIntensity, showIpa, showCochleagram,
     onOpenManipulation, onOpenPitchTier, onOpenFormantGrid,
     onOpenDurationTier, onOpenAmplitudeTier, onOpenVocalTract,
     onOpenSpectrumEditor, onOpenExperiment, onOpenScriptEditor,
@@ -133,6 +135,9 @@ export function MenuBar(props: MenuBarProps) {
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onToggleIntensity}>
             {showIntensity ? '✓ ' : ''}Intensity Overlay
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onToggleIpa}>
+            {showIpa ? '✓ ' : ''}IPA Vowel Labels
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onToggleCochleagram}>
             {showCochleagram ? '✓ ' : ''}Cochleagram (Bark)
