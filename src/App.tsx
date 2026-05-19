@@ -8,16 +8,18 @@ import { applyBiquadFilter } from './audio/filters';
 import { computeRhythmMetrics } from './audio/rhythm';
 import { loadAudioFile } from './audio/recorder';
 import { computeSpectrumSlice } from './audio/spectrum';
-import { Controls } from './components/Controls';
 import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog';
 import { FilterPanel } from './components/FilterPanel';
+import { MenuBar } from './components/MenuBar';
 import { RhythmPanel } from './components/RhythmPanel';
 import { SettingsPanel } from './components/SettingsPanel';
 import { Sidebar } from './components/Sidebar';
 import { Spectrogram } from './components/Spectrogram';
 import { SpectrumSlice } from './components/SpectrumSlice';
+import { StatusBar } from './components/StatusBar';
 import { TextGridEditor } from './components/TextGridEditor';
 import { TimeRuler } from './components/TimeRuler';
+import { Toolbar } from './components/Toolbar';
 import { HarmonicityPanel } from './components/HarmonicityPanel';
 import { VoiceQualityPanel } from './components/VoiceQualityPanel';
 import { Waveform } from './components/Waveform';
@@ -414,60 +416,84 @@ export default function App() {
   useKeyboardShortcuts(shortcutHandlers, true);
 
   return (
-    <div className="app">
-      <Sidebar
+    <div className="app-layout">
+      <MenuBar
+        hasAudio={!!analysis}
+        selection={selection}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onLoadFile={handleLoadFile}
+        onImportTextGrid={handleImportTextGrid}
+        onExportTextGrid={() => downloadTextFile('annotations.TextGrid', exportTextGrid(textGrid))}
+        onExportFullWav={() => {
+          if (!currentSamplesRef.current) return;
+          downloadBinaryFile('audio.wav', exportSelectedRegionWav(currentSamplesRef.current, sampleRate));
+        }}
+        onExportSelectionWav={() => {
+          const range = selectionToSampleRange();
+          if (!range || !currentSamplesRef.current) return;
+          const samples = currentSamplesRef.current.slice(range.start, range.end);
+          downloadBinaryFile('selection.wav', exportSelectedRegionWav(samples, sampleRate));
+        }}
+        onExportPitchCsv={() => analysis && downloadTextFile('pitch.csv', exportPitchCsv(analysis.pitch), 'text/csv')}
+        onExportFormantCsv={() => analysis && downloadTextFile('formants.csv', exportFormantCsv(analysis.formants), 'text/csv')}
+        onExportIntensityCsv={() => analysis && downloadTextFile('intensity.csv', exportIntensityCsv(analysis.intensity), 'text/csv')}
+        onExportHarmonicityCsv={() => analysis && downloadTextFile('harmonicity.csv', exportHarmonicityCsv(analysis.harmonicity), 'text/csv')}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        onCut={handleCut}
+        onCopy={handleCopy}
+        onPaste={handlePaste}
+        onDelete={handleDelete}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onFitToWindow={handleFitToWindow}
+        onZoomToSelection={() => handleZoomSelection()}
+        onTogglePitch={() => setShowPitch((v) => !v)}
+        onToggleFormants={() => setShowFormants((v) => !v)}
+        onToggleIntensity={() => setShowIntensity((v) => !v)}
         showPitch={showPitch}
         showFormants={showFormants}
         showIntensity={showIntensity}
-        onTogglePitch={() => setShowPitch((value) => !value)}
-        onToggleFormants={() => setShowFormants((value) => !value)}
-        onToggleIntensity={() => setShowIntensity((value) => !value)}
-      >
-        <SettingsPanel settings={settings} onChange={setSettings} />
-        <FilterPanel settings={filterSettings} onChange={setFilterSettings} onApply={handleApplyFilter} onReset={handleResetFilter} />
-      </Sidebar>
+      />
 
-      <main className="main-area" role="main" aria-label="Audio editor">
-        <Controls
-          hasAudio={!!analysis}
-          isPlaying={isPlaying}
-          isRecording={isRecording}
-          selection={selection}
-          duration={analysis?.duration ?? 0}
-          canUndo={canUndo}
-          canRedo={canRedo}
-          onRecord={handleRecord}
-          onStopRecord={handleStopRecord}
-          onPlay={handlePlay}
-          onPause={handlePause}
-          onLoadFile={handleLoadFile}
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          onCut={handleCut}
-          onCopy={handleCopy}
-          onPaste={handlePaste}
-          onDelete={handleDelete}
-          onFitToWindow={handleFitToWindow}
-          onZoomToSelection={() => handleZoomSelection()}
-          onImportTextGrid={handleImportTextGrid}
-          onExportTextGrid={() => downloadTextFile('annotations.TextGrid', exportTextGrid(textGrid))}
-          onExportPitchCsv={() => analysis && downloadTextFile('pitch.csv', exportPitchCsv(analysis.pitch), 'text/csv')}
-          onExportFormantCsv={() => analysis && downloadTextFile('formants.csv', exportFormantCsv(analysis.formants), 'text/csv')}
-          onExportIntensityCsv={() => analysis && downloadTextFile('intensity.csv', exportIntensityCsv(analysis.intensity), 'text/csv')}
-          onExportSelectionWav={() => {
-            const range = selectionToSampleRange();
-            if (!range || !currentSamplesRef.current) return;
-            const samples = currentSamplesRef.current.slice(range.start, range.end);
-            downloadBinaryFile('selection.wav', exportSelectedRegionWav(samples, sampleRate));
-          }}
-          onExportFullWav={() => {
-            if (!currentSamplesRef.current) return;
-            downloadBinaryFile('audio.wav', exportSelectedRegionWav(currentSamplesRef.current, sampleRate));
-          }}
-          onExportHarmonicityCsv={() => analysis && downloadTextFile('harmonicity.csv', exportHarmonicityCsv(analysis.harmonicity), 'text/csv')}
-        />
+      <Toolbar
+        hasAudio={!!analysis}
+        isPlaying={isPlaying}
+        isRecording={isRecording}
+        selection={selection}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onRecord={handleRecord}
+        onStopRecord={handleStopRecord}
+        onPlay={handlePlay}
+        onPause={handlePause}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        onCut={handleCut}
+        onCopy={handleCopy}
+        onPaste={handlePaste}
+        onDelete={handleDelete}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onFitToWindow={handleFitToWindow}
+      />
 
-        <div className="visualizations">
+      <div className="app-body">
+        <Sidebar
+          showPitch={showPitch}
+          showFormants={showFormants}
+          showIntensity={showIntensity}
+          onTogglePitch={() => setShowPitch((value) => !value)}
+          onToggleFormants={() => setShowFormants((value) => !value)}
+          onToggleIntensity={() => setShowIntensity((value) => !value)}
+        >
+          <SettingsPanel settings={settings} onChange={setSettings} />
+          <FilterPanel settings={filterSettings} onChange={setFilterSettings} onApply={handleApplyFilter} onReset={handleResetFilter} />
+        </Sidebar>
+
+        <main className="main-area" role="main" aria-label="Audio editor">
+          <div className="visualizations">
           {!analysis && !streaming.streamAnalysis && (
             <div className="empty-state">
               <div className="empty-icon">🎙️</div>
@@ -567,15 +593,25 @@ export default function App() {
           )}
         </div>
 
-        {analysis && (
-          <section className="bottom-panels" aria-label="Analysis panels">
-            <SpectrumSlice slice={analysis.spectrumSlice} />
-            <VoiceQualityPanel metrics={analysis.voiceQuality} />
-            <HarmonicityPanel data={analysis.harmonicity} viewStart={viewStart} viewEnd={viewEnd} />
-            <RhythmPanel metrics={rhythmMetrics} />
-          </section>
-        )}
-      </main>
+          {analysis && (
+            <section className="bottom-panels" aria-label="Analysis panels">
+              <SpectrumSlice slice={analysis.spectrumSlice} />
+              <VoiceQualityPanel metrics={analysis.voiceQuality} />
+              <HarmonicityPanel data={analysis.harmonicity} viewStart={viewStart} viewEnd={viewEnd} />
+              <RhythmPanel metrics={rhythmMetrics} />
+            </section>
+          )}
+        </main>
+      </div>
+
+      <StatusBar
+        hasAudio={!!analysis}
+        duration={analysis?.duration ?? 0}
+        selection={selection}
+        sampleRate={sampleRate}
+        isRecording={isRecording}
+        streamDuration={streaming.streamDuration}
+      />
       <KeyboardShortcutsDialog />
     </div>
   );
