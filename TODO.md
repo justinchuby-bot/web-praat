@@ -9,14 +9,14 @@
 
 ## 当前状态
 
-- **198 tests**, 70+ 源文件, 9000+ 行 TypeScript
+- **248 tests**, 70+ 源文件, 9300+ 行 TypeScript
 - **React 19 + TypeScript 6 + Vite 8 + vitest 4.1**
 - Coverage: 84% statements, 93% audio module
-- Build: 446KB / 139KB gzip
+- Build: 460KB / 143KB gzip
 
 ## 当前优先任务
 
-- [ ] **自动 IPA 标注** — 根据 F1/F2 值自动在语谱图/波形图上标注国际音标元音符号
+- [x] **自动 IPA 标注** — 根据 F1/F2 值自动在语谱图/波形图上标注国际音标元音符号
 - [ ] **MenuBar hover 切换** — 打开菜单后 hover 其他菜单项立即切换；实现 Amazon triangle trick（防止斜向移动误触发切换）
 - [ ] **布局修复**：波形/语谱图区域默认应占主视图 60-70% 高度；下方面板（Spectrum Slice/Voice Quality/HNR/Rhythm）默认折叠或 tab 切换，不同时全部展开挤占空间
 - [ ] Wire BottomSheet + useIsMobile to App.tsx（移动端显示 BottomSheet 替代 Sidebar）
@@ -90,6 +90,7 @@
 - [x] **Deps 全线升级** — React 19, TS 6, Vite 8, vitest 4.1
 - [x] **Code cleanup** — 删除 6 unused 文件 (-602 行) + dead code
 - [x] **AudioWorkletNode migration** — streamingRecorder.ts: ScriptProcessorNode → AudioWorkletNode (no more Chrome deprecation warning)
+- [x] **自动 IPA 标注** — F1/F2 Bark-scale 分类 + 20 参考元音 + View toggle
 - [x] **Formant 显示修复** — 曲线加粗 (2.5px) + 圆点标记 + 确认跟语谱图 maxDisplayFreq 匹配
 
 ## 规则
