@@ -1,9 +1,5 @@
 /**
- * Sound manipulation operations following Praat's Modify/Combine menus.
- *
- * All operations work on mono Float32Array samples + sampleRate.
- * They return new buffers (immutable style) to integrate with the editor's
- * undo/redo history.
+ * Sound manipulation utilities: extract, concatenate, reverse, scale, fade.
  */
 
 export interface SoundBuffer {
@@ -12,232 +8,166 @@ export interface SoundBuffer {
 }
 
 /**
- * Extract a time range from a sound, optionally applying a window function.
- * Mirrors Praat's Sound_extractPart.
+ * Extract a portion of the buffer between start and end (in seconds).
+ * Optionally apply a window function.
  */
 export function extractPart(
   buf: SoundBuffer,
-  tmin: number,
-  tmax: number,
-  windowShape: 'rectangular' | 'hanning' | 'hamming' | 'gaussian' = 'rectangular',
+  startTime: number,
+  endTime: number,
+  window?: 'hanning' | 'hamming' | 'rectangular'
 ): SoundBuffer {
-  if (tmin >= tmax) {
-    throw new Error('extractPart: tmin must be less than tmax');
-  }
-  const { samples, sampleRate } = buf;
-  const duration = samples.length / sampleRate;
+  if (startTime > endTime) throw new Error('start must be <= end');
+  const startIdx = Math.max(0, Math.floor(startTime * buf.sampleRate));
+  const endIdx = Math.min(buf.samples.length, Math.ceil(endTime * buf.sampleRate));
+  const samples = buf.samples.slice(startIdx, endIdx) as Float32Array;
 
-  // Clamp to valid range
-  const startTime = Math.max(0, tmin);
-  const endTime = Math.min(duration, tmax);
-
-  const startSample = Math.round(startTime * sampleRate);
-  const endSample = Math.round(endTime * sampleRate);
-
-  if (endSample <= startSample) {
-    throw new Error('extractPart: extracted region contains no samples');
+  if (window === 'hanning') {
+    for (let i = 0; i < samples.length; i++) {
+      samples[i] *= 0.5 * (1 - Math.cos((2 * Math.PI * i) / (samples.length - 1)));
+    }
+  } else if (window === 'hamming') {
+    for (let i = 0; i < samples.length; i++) {
+      samples[i] *= 0.54 - 0.46 * Math.cos((2 * Math.PI * i) / (samples.length - 1));
+    }
   }
 
-  const extracted = new Float32Array(endSample - startSample);
-  extracted.set(samples.slice(startSample, endSample));
-
-  // Apply window
-  applyWindow(extracted, windowShape);
-
-  return { samples: extracted, sampleRate };
+  return { samples, sampleRate: buf.sampleRate };
 }
 
 /**
- * Concatenate multiple sounds with optional overlap crossfade.
- * Mirrors Praat's Sounds_concatenate.
- * All buffers must share the same sample rate.
+ * Concatenate multiple buffers. Optional overlapSeconds for crossfade.
  */
-export function concatenate(
-  buffers: SoundBuffer[],
-  overlapTime = 0,
-): SoundBuffer {
-  if (buffers.length === 0) {
-    throw new Error('concatenate: no sounds provided');
-  }
-  if (buffers.length === 1) {
-    return { samples: Float32Array.from(buffers[0].samples), sampleRate: buffers[0].sampleRate };
-  }
-
-  const sampleRate = buffers[0].sampleRate;
-  for (const buf of buffers) {
-    if (buf.sampleRate !== sampleRate) {
-      throw new Error(
-        'concatenate: all sounds must have the same sample rate. ' +
-        `Expected ${sampleRate}, got ${buf.sampleRate}.`
-      );
+export function concatenate(parts: SoundBuffer[], overlapSeconds = 0): SoundBuffer {
+  if (parts.length === 0) throw new Error('Cannot concatenate empty array');
+  const sampleRate = parts[0].sampleRate;
+  for (let i = 1; i < parts.length; i++) {
+    if (parts[i].sampleRate !== sampleRate) {
+      throw new Error(`Mismatched sample rate: expected ${sampleRate}, got ${parts[i].sampleRate}`);
     }
   }
 
-  const overlapSamples = Math.round(overlapTime * sampleRate);
-  let totalLength = buffers.reduce((sum, b) => sum + b.samples.length, 0);
-  totalLength -= overlapSamples * (buffers.length - 1);
+  if (parts.length === 1) return { samples: Float32Array.from(parts[0].samples), sampleRate };
 
-  if (totalLength <= 0) {
-    throw new Error('concatenate: overlap exceeds total duration');
-  }
-
-  const output = new Float32Array(totalLength);
-
-  // Build crossfade smoother (raised cosine)
-  let smoother: Float32Array | null = null;
-  if (overlapSamples > 0) {
-    smoother = new Float32Array(overlapSamples);
-    for (let i = 0; i < overlapSamples; i++) {
-      smoother[i] = 0.5 - 0.5 * Math.cos(Math.PI * (i + 0.5) / overlapSamples);
-    }
-  }
+  const overlapSamples = Math.round(overlapSeconds * sampleRate);
+  const totalLength = parts.reduce((sum, p) => sum + p.samples.length, 0) - overlapSamples * (parts.length - 1);
+  const result = new Float32Array(totalLength);
 
   let offset = 0;
-  for (let i = 0; i < buffers.length; i++) {
-    const src = buffers[i].samples;
-    const isFirst = i === 0;
-    const isLast = i === buffers.length - 1;
-    const fadeInLen = isFirst ? 0 : overlapSamples;
-    const fadeOutLen = isLast ? 0 : overlapSamples;
-
-    if (overlapSamples > 0 && overlapSamples * 2 > src.length) {
-      throw new Error('concatenate: a sound is shorter than twice the overlap time');
+  for (let p = 0; p < parts.length; p++) {
+    const samples = parts[p].samples;
+    if (p === 0) {
+      result.set(samples, 0);
+      offset = samples.length - overlapSamples;
+    } else {
+      // Crossfade in overlap region
+      for (let i = 0; i < overlapSamples && i < samples.length; i++) {
+        const fadeOut = 1 - i / overlapSamples;
+        const fadeIn = i / overlapSamples;
+        result[offset + i] = result[offset + i] * fadeOut + samples[i] * fadeIn;
+      }
+      // Copy rest
+      for (let i = overlapSamples; i < samples.length; i++) {
+        result[offset + i] = samples[i];
+      }
+      offset += samples.length - overlapSamples;
     }
-
-    // Fade-in region: add with smoother weight
-    for (let j = 0; j < fadeInLen; j++) {
-      output[offset + j] += src[j] * smoother![j];
-    }
-
-    // Middle (copy directly)
-    const midStart = fadeInLen;
-    const midEnd = src.length - fadeOutLen;
-    output.set(src.slice(midStart, midEnd), offset + midStart);
-
-    // Fade-out region: write with inverse smoother
-    for (let j = 0; j < fadeOutLen; j++) {
-      const srcIdx = src.length - fadeOutLen + j;
-      output[offset + srcIdx] = src[srcIdx] * smoother![overlapSamples - 1 - j];
-    }
-
-    offset += src.length - fadeOutLen;
   }
 
-  return { samples: output, sampleRate };
+  return { samples: result, sampleRate };
 }
 
 /**
- * Reverse the samples in-place (returns new buffer).
+ * Reverse a buffer (or a sub-region by sample indices).
  */
-export function reverse(buf: SoundBuffer, tmin?: number, tmax?: number): SoundBuffer {
-  const { samples, sampleRate } = buf;
-  const result = Float32Array.from(samples);
-
-  const startSample = tmin != null ? Math.max(0, Math.round(tmin * sampleRate)) : 0;
-  const endSample = tmax != null ? Math.min(samples.length, Math.round(tmax * sampleRate)) : samples.length;
-
-  // Reverse the specified region
-  let left = startSample;
-  let right = endSample - 1;
+export function reverse(buf: SoundBuffer, startIdx?: number, endIdx?: number): SoundBuffer {
+  const samples = Float32Array.from(buf.samples);
+  const s = startIdx ?? 0;
+  const e = endIdx ?? samples.length;
+  // Reverse in-place between s and e (exclusive)
+  let left = s;
+  let right = e - 1;
   while (left < right) {
-    const tmp = result[left];
-    result[left] = result[right];
-    result[right] = tmp;
+    const tmp = samples[left];
+    samples[left] = samples[right];
+    samples[right] = tmp;
     left++;
     right--;
   }
-
-  return { samples: result, sampleRate };
+  return { samples, sampleRate: buf.sampleRate };
 }
 
 /**
- * Apply a linear fade-in over the given duration (from start of buffer or tmin).
- */
-export function fadeIn(buf: SoundBuffer, duration: number, startTime = 0): SoundBuffer {
-  const { samples, sampleRate } = buf;
-  const result = Float32Array.from(samples);
-
-  const startSample = Math.max(0, Math.round(startTime * sampleRate));
-  const fadeSamples = Math.round(duration * sampleRate);
-  const endSample = Math.min(samples.length, startSample + fadeSamples);
-
-  for (let i = startSample; i < endSample; i++) {
-    const t = (i - startSample) / fadeSamples;
-    result[i] *= t;
-  }
-
-  return { samples: result, sampleRate };
-}
-
-/**
- * Apply a linear fade-out over the given duration (ending at endTime or end of buffer).
- */
-export function fadeOut(buf: SoundBuffer, duration: number, endTime?: number): SoundBuffer {
-  const { samples, sampleRate } = buf;
-  const result = Float32Array.from(samples);
-
-  const end = endTime != null ? Math.min(samples.length, Math.round(endTime * sampleRate)) : samples.length;
-  const fadeSamples = Math.round(duration * sampleRate);
-  const start = Math.max(0, end - fadeSamples);
-
-  for (let i = start; i < end; i++) {
-    const t = (end - i) / fadeSamples;
-    result[i] *= t;
-  }
-
-  return { samples: result, sampleRate };
-}
-
-/**
- * Scale the amplitude of a sound by a factor, or normalize to peak = 1.0.
+ * Scale amplitude by factor. If no factor given, normalize to peak 1.0.
  */
 export function scaleAmplitude(buf: SoundBuffer, factor?: number): SoundBuffer {
-  const { samples, sampleRate } = buf;
-  const result = Float32Array.from(samples);
-
-  let scale = factor;
-  if (scale == null) {
-    // Normalize: find peak
-    let peak = 0;
-    for (let i = 0; i < result.length; i++) {
-      const abs = Math.abs(result[i]);
-      if (abs > peak) peak = abs;
+  const samples = Float32Array.from(buf.samples);
+  if (factor == null) {
+    // Normalize
+    let max = 0;
+    for (let i = 0; i < samples.length; i++) {
+      max = Math.max(max, Math.abs(samples[i]));
     }
-    scale = peak > 0 ? 1.0 / peak : 1.0;
+    if (max === 0) return { samples, sampleRate: buf.sampleRate };
+    factor = 1.0 / max;
   }
-
-  for (let i = 0; i < result.length; i++) {
-    result[i] *= scale;
+  for (let i = 0; i < samples.length; i++) {
+    samples[i] = Math.max(-1, Math.min(1, samples[i] * factor));
   }
-
-  return { samples: result, sampleRate };
+  return { samples, sampleRate: buf.sampleRate };
 }
 
-// --- Internal helpers ---
-
-function applyWindow(samples: Float32Array, shape: string): void {
-  const N = samples.length;
-  if (shape === 'rectangular' || N <= 1) return;
-
-  for (let i = 0; i < N; i++) {
-    let w: number;
-    switch (shape) {
-      case 'hanning':
-        w = 0.5 * (1 - Math.cos(2 * Math.PI * i / (N - 1)));
-        break;
-      case 'hamming':
-        w = 0.54 - 0.46 * Math.cos(2 * Math.PI * i / (N - 1));
-        break;
-      case 'gaussian':
-        {
-          const sigma = 0.4;
-          const x = (i - (N - 1) / 2) / (sigma * (N - 1) / 2);
-          w = Math.exp(-0.5 * x * x);
-        }
-        break;
-      default:
-        w = 1;
-    }
-    samples[i] *= w;
+/**
+ * Apply linear fade-in over durationSeconds from the start.
+ */
+export function fadeIn(buf: SoundBuffer, durationSeconds: number): SoundBuffer {
+  const samples = Float32Array.from(buf.samples);
+  const len = Math.min(Math.round(durationSeconds * buf.sampleRate), samples.length);
+  for (let i = 0; i < len; i++) {
+    samples[i] *= i / len;
   }
+  return { samples, sampleRate: buf.sampleRate };
+}
+
+/**
+ * Apply linear fade-out over durationSeconds at the end.
+ */
+export function fadeOut(buf: SoundBuffer, durationSeconds: number): SoundBuffer {
+  const samples = Float32Array.from(buf.samples);
+  const len = Math.min(Math.round(durationSeconds * buf.sampleRate), samples.length);
+  for (let i = 0; i < len; i++) {
+    samples[samples.length - 1 - i] *= i / len;
+  }
+  return { samples, sampleRate: buf.sampleRate };
+}
+
+/**
+ * Normalize audio to peak amplitude 0.99.
+ */
+export function normalize(samples: Float32Array): Float32Array {
+  let max = 0;
+  for (let i = 0; i < samples.length; i++) {
+    max = Math.max(max, Math.abs(samples[i]));
+  }
+  if (max === 0) return new Float32Array(samples.length);
+  const factor = 0.99 / max;
+  const result = new Float32Array(samples.length);
+  for (let i = 0; i < samples.length; i++) {
+    result[i] = samples[i] * factor;
+  }
+  return result;
+}
+
+/**
+ * Extract a selection as a plain Float32Array.
+ */
+export function extractSelection(
+  samples: Float32Array,
+  sampleRate: number,
+  start: number,
+  end: number
+): Float32Array {
+  const startIdx = Math.max(0, Math.floor(start * sampleRate));
+  const endIdx = Math.min(samples.length, Math.ceil(end * sampleRate));
+  return samples.slice(startIdx, endIdx) as Float32Array;
 }

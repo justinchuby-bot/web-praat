@@ -27,12 +27,15 @@ interface MenuBarProps {
   onExportFormantCsv: () => void;
   onExportIntensityCsv: () => void;
   onExportHarmonicityCsv: () => void;
+  onExportIntervalStats?: () => void;
   onUndo: () => void;
   onRedo: () => void;
   onCut: () => void;
   onCopy: () => void;
   onPaste: () => void;
   onDelete: () => void;
+  onReverse?: () => void;
+  onNormalize?: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitToWindow: () => void;
@@ -128,6 +131,9 @@ export function MenuBar(props: MenuBarProps) {
           <MenubarItem disabled={!hasAudio} onClick={onExportFormantCsv}>Export Formant CSV</MenubarItem>
           <MenubarItem disabled={!hasAudio} onClick={onExportIntensityCsv}>Export Intensity CSV</MenubarItem>
           <MenubarItem disabled={!hasAudio} onClick={onExportHarmonicityCsv}>Export HNR CSV</MenubarItem>
+          {props.onExportIntervalStats && (
+            <MenubarItem disabled={!hasAudio} onClick={props.onExportIntervalStats}>Export Interval Statistics CSV</MenubarItem>
+          )}
         </MenubarContent>
       </MenubarMenu>
 
@@ -142,6 +148,9 @@ export function MenuBar(props: MenuBarProps) {
           <MenubarItem disabled={!selection} onClick={onCopy}>Copy <span className="menu-shortcut">⌘C</span></MenubarItem>
           <MenubarItem disabled={!hasAudio} onClick={onPaste}>Paste <span className="menu-shortcut">⌘V</span></MenubarItem>
           <MenubarItem disabled={!selection} onClick={onDelete}>Delete <span className="menu-shortcut">⌫</span></MenubarItem>
+          <MenubarSeparator />
+          {props.onReverse && <MenubarItem disabled={!hasAudio} onClick={props.onReverse}>Reverse</MenubarItem>}
+          {props.onNormalize && <MenubarItem disabled={!hasAudio} onClick={props.onNormalize}>Normalize</MenubarItem>}
         </MenubarContent>
       </MenubarMenu>
 

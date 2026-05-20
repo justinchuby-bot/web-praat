@@ -1619,3 +1619,15 @@ select:focus-visible {
 .selection-stats-item {
   color: var(--text-dim);
 }
+
+.ltas-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 200px;
+}
+
+.ltas-canvas {
+  width: 100%;
+  flex: 1;
+}

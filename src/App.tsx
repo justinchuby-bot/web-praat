@@ -54,6 +54,8 @@ import { Minimap } from './components/Minimap';
 import { FilterPanel } from './components/FilterPanel';
 import { ListingPanel, type ListingData } from './components/ListingPanel';
 import { SelectionStats } from './components/SelectionStats';
+import { computeIntervalStats, intervalStatsToCsv } from './audio/intervalStats';
+import { normalize as soundNormalize } from './audio/soundManipulation';
 import {
   downloadBinaryFile,
   downloadTextFile,
@@ -620,12 +622,32 @@ export default function App() {
         onExportFormantCsv={() => analysis && downloadTextFile('formants.csv', exportFormantCsv(analysis.formants), 'text/csv')}
         onExportIntensityCsv={() => analysis && downloadTextFile('intensity.csv', exportIntensityCsv(analysis.intensity), 'text/csv')}
         onExportHarmonicityCsv={() => analysis && downloadTextFile('harmonicity.csv', exportHarmonicityCsv(analysis.harmonicity), 'text/csv')}
+        onExportIntervalStats={() => {
+          if (analysis && textGrid) {
+            const stats = computeIntervalStats(analysis, textGrid);
+            downloadTextFile('interval_stats.csv', intervalStatsToCsv(stats), 'text/csv');
+          }
+        }}
         onUndo={handleUndo}
         onRedo={handleRedo}
         onCut={handleCut}
         onCopy={handleCopy}
         onPaste={handlePaste}
         onDelete={handleDelete}
+        onReverse={() => {
+          if (currentSamplesRef.current) {
+            const samples = currentSamplesRef.current;
+            const reversed = new Float32Array(samples.length);
+            for (let i = 0; i < samples.length; i++) reversed[i] = samples[samples.length - 1 - i];
+            processSamples(reversed, sampleRate);
+          }
+        }}
+        onNormalize={() => {
+          if (currentSamplesRef.current) {
+            const normalized = soundNormalize(currentSamplesRef.current);
+            processSamples(normalized, sampleRate);
+          }
+        }}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onFitToWindow={handleFitToWindow}
@@ -908,7 +930,7 @@ export default function App() {
           <RightSidebar>
             {{
               spectrum: analysis ? <SpectrumSlice slice={analysis.spectrumSlice} /> : <div className="empty-panel">Load audio to see spectrum</div>,
-              ltas: <LtasPanel samples={currentSamplesRef.current} sampleRate={sampleRate} />,
+              ltas: <LtasPanel samples={currentSamplesRef.current} sampleRate={sampleRate} selection={selection} />,
               excitation: analysis ? <ExcitationPattern samples={currentSamplesRef.current} sampleRate={sampleRate} /> : <div className="empty-panel">Load audio to see excitation pattern</div>,
               voice: analysis ? <VoiceQualityPanel metrics={analysis.voiceQuality} /> : <div className="empty-panel">Load audio for voice quality</div>,
               hnr: analysis ? <HarmonicityPanel data={analysis.harmonicity} viewStart={viewStart} viewEnd={viewEnd} /> : <div className="empty-panel">Load audio for HNR</div>,
