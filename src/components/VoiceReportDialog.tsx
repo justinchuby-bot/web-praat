@@ -32,7 +32,7 @@ export function VoiceReportDialog({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content voice-report-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-panel voice-report-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Voice Report</h2>
           <button className="modal-close" onClick={onClose}>×</button>
