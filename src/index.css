@@ -570,6 +570,27 @@ button, input, select {
   padding: 0 2px;
 }
 
+.panel-plot-container {
+  display: flex;
+  gap: 4px;
+  align-items: stretch;
+}
+
+.panel-plot-container .panel-plot {
+  flex: 1;
+}
+
+.panel-y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-size: 9px;
+  color: var(--text-dim);
+  padding: 2px 0;
+  min-width: 20px;
+}
+
 .stat-grid {
   display: grid;
   grid-template-columns: 1fr auto;

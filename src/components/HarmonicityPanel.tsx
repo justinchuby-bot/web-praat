@@ -37,15 +37,18 @@ export function HarmonicityPanel({ data, viewStart, viewEnd }: HarmonicityPanelP
         <span>Median HNR</span>
         <strong>{data.medianHnrDb > -200 ? data.medianHnrDb.toFixed(1) : '—'} dB</strong>
       </div>
-      <svg viewBox={`0 0 ${width} ${height}`} className="panel-plot" preserveAspectRatio="none">
-        {/* Zero line */}
-        <line x1="0" x2={width} y1={toY(0)} y2={toY(0)} stroke="var(--border)" strokeWidth="0.3" />
-        {/* HNR contour */}
-        {pathD && <path d={pathD} fill="none" stroke="var(--accent)" strokeWidth="0.8" />}
-      </svg>
-      <div className="panel-axis-labels">
-        <span>{yMin} dB</span>
-        <span>{yMax} dB</span>
+      <div className="panel-plot-container">
+        <div className="panel-y-axis">
+          <span>{yMax}</span>
+          <span>dB</span>
+          <span>{yMin}</span>
+        </div>
+        <svg viewBox={`0 0 ${width} ${height}`} className="panel-plot" preserveAspectRatio="none">
+          {/* Zero line */}
+          <line x1="0" x2={width} y1={toY(0)} y2={toY(0)} stroke="var(--border)" strokeWidth="0.3" strokeDasharray="2 1" />
+          {/* HNR contour */}
+          {pathD && <path d={pathD} fill="none" stroke="var(--accent)" strokeWidth="0.8" />}
+        </svg>
       </div>
     </section>
   );
