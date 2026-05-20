@@ -79,16 +79,33 @@ export async function analyzeAudioAsync(
   const resolved = mergeSettings(settings);
   const duration = samples.length / sampleRate;
 
+  // Yield between steps so progress messages get posted
+  const tick = () => new Promise<void>(r => setTimeout(r, 0));
+
   onProgress?.(0);
-  const spectrogram = await computeSpectrogramAsync(samples, sampleRate, resolved);
-  onProgress?.(20);
+  const spectrogram = await computeSpectrogramAsync(samples, sampleRate, resolved, (v) => {
+    // Spectrogram is 0-35% of total
+    onProgress?.(Math.round(v * 0.35));
+  });
+  onProgress?.(35);
+  await tick();
+
   const pitch = computePitch(samples, sampleRate, resolved);
-  onProgress?.(40);
+  onProgress?.(50);
+  await tick();
+
   const formants = computeFormants(samples, sampleRate, resolved);
-  onProgress?.(60);
+  onProgress?.(65);
+  await tick();
+
   const intensity = computeIntensity(samples, sampleRate);
+  onProgress?.(75);
+  await tick();
+
   const harmonicity = computeHarmonicity(samples, sampleRate);
-  onProgress?.(80);
+  onProgress?.(85);
+  await tick();
+
   const voiceQuality = computeVoiceQuality(samples, sampleRate);
   onProgress?.(100);
 
@@ -148,7 +165,8 @@ export function computeSpectrogram(
 export async function computeSpectrogramAsync(
   samples: Float32Array,
   sampleRate: number,
-  settings?: Partial<AnalysisSettings>
+  settings?: Partial<AnalysisSettings>,
+  onProgress?: (value: number) => void
 ): Promise<SpectrogramData> {
   const resolved = mergeSettings(settings);
   const fftSize = resolved.spectrogram.fftSize;
@@ -169,10 +187,17 @@ export async function computeSpectrogramAsync(
     const emphasized = preEmphasis(frame, preEmphasisDb);
     windowedFrames.push(applyWindow(emphasized, windowFunction));
     frameTimes.push((start + fftSize / 2) / sampleRate);
+    // Report sub-progress during frame preparation (0-50% of spectrogram)
+    if (onProgress && frameIndex % 100 === 0) {
+      onProgress(Math.round((frameIndex / totalFrames) * 50));
+    }
   }
+
+  onProgress?.(50);
 
   // Batch FFT (GPU if available, CPU fallback)
   const magnitudes = await batchFftMagnitude(windowedFrames, fftSize);
+  onProgress?.(100);
 
   return {
     magnitudes,
