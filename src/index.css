@@ -1929,3 +1929,28 @@ select:focus-visible {
   50% { transform: scaleX(1); opacity: 1; }
   100% { transform: scaleX(0); opacity: 0.5; }
 }
+
+.vowel-space-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  gap: 4px;
+}
+
+.vowel-space-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.vowel-space-svg {
+  border-radius: 4px;
+}
+
+.vowel-space-stats {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: monospace;
+}

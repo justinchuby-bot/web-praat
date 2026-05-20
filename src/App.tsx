@@ -42,6 +42,7 @@ import { ExperimentMFC } from './components/ExperimentMFC';
 import { ScriptEditor } from './components/ScriptEditor';
 import { PluginManager } from './components/PluginManager';
 import { BatchProcess } from './components/BatchProcess';
+import { VowelSpace } from './components/VowelSpace';
 import { VoiceReportDialog } from './components/VoiceReportDialog';
 import SpeechSynthesizerPanel from './components/SpeechSynthesizerPanel';
 import PitchSonificationPanel from './components/PitchSonificationPanel';
@@ -1045,6 +1046,7 @@ export default function App() {
                 </>
               ),
               script: <ScriptEditor samples={currentSamplesRef.current ?? undefined} sampleRate={sampleRate} />,
+              vowels: <VowelSpace analysis={analysis} selection={selection} currentTime={currentTime} />,
             }}
           </RightSidebar>
         )}
