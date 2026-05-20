@@ -156,7 +156,76 @@ export function reduceNoise(
   return output;
 }
 
-// ─── Pre-emphasis ───────────────────────────────────────────────────────────
+/**
+ * GPU-accelerated noise reduction using WebGPU FFT when available.
+ * Same algorithm as reduceNoise but async with GPU FFT path.
+ */
+export async function reduceNoiseAsync(
+  samples: Float32Array,
+  sampleRate: number,
+  options: NoiseReductionOptions = {}
+): Promise<Float32Array> {
+  const { fftComplexAuto } = await import('../utils/fft-adapter');
+
+  const {
+    noiseDuration = 0.5,
+    frameSize = 1024,
+    hopSize = 256,
+    subtraction = 2,
+    spectralFloor = 0.01,
+  } = options;
+
+  const noiseSamples = Math.min(Math.floor(noiseDuration * sampleRate), samples.length);
+
+  // Estimate noise spectrum
+  const noiseSpectrum = new Float32Array(frameSize);
+  let noiseFrameCount = 0;
+
+  for (let start = 0; start + frameSize <= noiseSamples; start += hopSize) {
+    const frame = new Float32Array(frameSize);
+    for (let i = 0; i < frameSize; i++) frame[i] = samples[start + i] * hann(i, frameSize);
+    const { re, im } = await fftComplexAuto(frame, frameSize);
+    for (let k = 0; k < frameSize; k++) noiseSpectrum[k] += Math.sqrt(re[k] * re[k] + im[k] * im[k]);
+    noiseFrameCount++;
+  }
+
+  if (noiseFrameCount > 0) {
+    for (let k = 0; k < frameSize; k++) noiseSpectrum[k] /= noiseFrameCount;
+  }
+
+  // Process full signal with overlap-add
+  const output = new Float32Array(samples.length);
+  const windowSum = new Float32Array(samples.length);
+
+  for (let start = 0; start + frameSize <= samples.length; start += hopSize) {
+    const frame = new Float32Array(frameSize);
+    for (let i = 0; i < frameSize; i++) frame[i] = samples[start + i] * hann(i, frameSize);
+
+    const { re, im } = await fftComplexAuto(frame, frameSize);
+
+    // Spectral subtraction
+    for (let k = 0; k < frameSize; k++) {
+      const mag = Math.sqrt(re[k] * re[k] + im[k] * im[k]);
+      const phase = Math.atan2(im[k], re[k]);
+      const cleanMag = Math.max(mag - subtraction * noiseSpectrum[k], spectralFloor * mag);
+      re[k] = cleanMag * Math.cos(phase);
+      im[k] = cleanMag * Math.sin(phase);
+    }
+
+    // IFFT (CPU — GPU IFFT not yet implemented)
+    const reconstructed = ifftReal(re, im);
+    for (let i = 0; i < frameSize; i++) {
+      output[start + i] += reconstructed[i] * hann(i, frameSize);
+      windowSum[start + i] += hann(i, frameSize) * hann(i, frameSize);
+    }
+  }
+
+  for (let i = 0; i < output.length; i++) {
+    if (windowSum[i] > 1e-8) output[i] /= windowSum[i];
+  }
+
+  return output;
+}
 
 export function preEmphasis(
   samples: Float32Array,

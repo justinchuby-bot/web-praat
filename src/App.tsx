@@ -57,8 +57,7 @@ import { ListingPanel, type ListingData } from './components/ListingPanel';
 import { SelectionStats } from './components/SelectionStats';
 import { computeIntervalStats, intervalStatsToCsv } from './audio/intervalStats';
 import { normalize as soundNormalize } from './audio/soundManipulation';
-import { reduceNoise, removeSilence } from './audio/soundEnhance';
-import { runAudioWorker } from './audioWorkerClient';
+import { reduceNoise, reduceNoiseAsync, removeSilence } from './audio/soundEnhance';
 import { generateSineWave } from './audio/psola';
 import {
   downloadBinaryFile,
@@ -685,26 +684,19 @@ export default function App() {
         onReduceNoise={async () => {
           if (currentSamplesRef.current) {
             try {
-              const input = currentSamplesRef.current.slice();
-              const cleaned = await runAudioWorker({ type: 'reduceNoise', samples: input, sampleRate });
+              const cleaned = await reduceNoiseAsync(currentSamplesRef.current, sampleRate);
               processSamples(cleaned, sampleRate);
             } catch {
-              // Fallback to main thread
+              // Fallback to sync CPU
               const cleaned = reduceNoise(currentSamplesRef.current, sampleRate);
               processSamples(cleaned, sampleRate);
             }
           }
         }}
-        onRemoveSilence={async () => {
+        onRemoveSilence={() => {
           if (currentSamplesRef.current) {
-            try {
-              const input = currentSamplesRef.current.slice();
-              const trimmed = await runAudioWorker({ type: 'removeSilence', samples: input, sampleRate });
-              processSamples(trimmed, sampleRate);
-            } catch {
-              const trimmed = removeSilence(currentSamplesRef.current, sampleRate);
-              processSamples(trimmed, sampleRate);
-            }
+            const trimmed = removeSilence(currentSamplesRef.current, sampleRate);
+            processSamples(trimmed, sampleRate);
           }
         }}
         onZoomIn={handleZoomIn}

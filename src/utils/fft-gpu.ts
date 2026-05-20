@@ -257,6 +257,105 @@ export async function fftMagnitudeGpu(
 }
 
 /**
+ * GPU-accelerated complex FFT — returns re and im arrays (Float32Array).
+ * Falls back to CPU if GPU not available.
+ */
+export async function fftComplexGpu(
+  signal: Float32Array,
+  fftSize: number,
+): Promise<{ re: Float32Array; im: Float32Array }> {
+  if (!isGpuAvailable() || !gpuDevice) {
+    return fftComplexCpu(signal, fftSize);
+  }
+
+  const device = gpuDevice;
+  const n = fftSize;
+  const re = new Float32Array(n);
+  const im = new Float32Array(n);
+  for (let i = 0; i < Math.min(signal.length, n); i++) re[i] = signal[i];
+
+  bitReverse(re, n);
+  bitReverse(im, n);
+
+  const reBuffer = device.createBuffer({ size: n * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
+  const imBuffer = device.createBuffer({ size: n * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
+  const paramsBuffer = device.createBuffer({ size: 8, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+
+  device.queue.writeBuffer(reBuffer, 0, re);
+  device.queue.writeBuffer(imBuffer, 0, im);
+
+  const { pipeline: pipe, layout } = getOrCreatePipeline(device);
+  const bindGroup = device.createBindGroup({ layout, entries: [
+    { binding: 0, resource: { buffer: reBuffer } },
+    { binding: 1, resource: { buffer: imBuffer } },
+    { binding: 2, resource: { buffer: paramsBuffer } },
+  ] });
+
+  const log2n = Math.log2(n);
+  const encoder = device.createCommandEncoder();
+  for (let s = 0; s < log2n; s++) {
+    const halfSize = 1 << s;
+    device.queue.writeBuffer(paramsBuffer, 0, new Uint32Array([n, halfSize]));
+    const pass = encoder.beginComputePass();
+    pass.setPipeline(pipe);
+    pass.setBindGroup(0, bindGroup);
+    pass.dispatchWorkgroups(Math.ceil(n / 2 / 256));
+    pass.end();
+  }
+
+  const readReBuffer = device.createBuffer({ size: n * 4, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
+  const readImBuffer = device.createBuffer({ size: n * 4, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
+  encoder.copyBufferToBuffer(reBuffer, 0, readReBuffer, 0, n * 4);
+  encoder.copyBufferToBuffer(imBuffer, 0, readImBuffer, 0, n * 4);
+  device.queue.submit([encoder.finish()]);
+
+  await readReBuffer.mapAsync(GPUMapMode.READ);
+  await readImBuffer.mapAsync(GPUMapMode.READ);
+
+  const outRe = new Float32Array(readReBuffer.getMappedRange()).slice();
+  const outIm = new Float32Array(readImBuffer.getMappedRange()).slice();
+
+  readReBuffer.unmap();
+  readImBuffer.unmap();
+  reBuffer.destroy();
+  imBuffer.destroy();
+  paramsBuffer.destroy();
+  readReBuffer.destroy();
+  readImBuffer.destroy();
+
+  return { re: outRe, im: outIm };
+}
+
+/** CPU fallback for complex FFT. */
+function fftComplexCpu(signal: Float32Array, fftSize: number): { re: Float32Array; im: Float32Array } {
+  const n = fftSize;
+  const re = new Float32Array(n);
+  const im = new Float32Array(n);
+  for (let i = 0; i < Math.min(signal.length, n); i++) re[i] = signal[i];
+  // Cooley-Tukey radix-2
+  bitReverse(re, n);
+  bitReverse(im, n);
+  for (let size = 2; size <= n; size *= 2) {
+    const half = size / 2;
+    const angle = -2 * Math.PI / size;
+    for (let i = 0; i < n; i += size) {
+      for (let k = 0; k < half; k++) {
+        const w = angle * k;
+        const wr = Math.cos(w), wi = Math.sin(w);
+        const j = i + k + half;
+        const tr = re[j] * wr - im[j] * wi;
+        const ti = re[j] * wi + im[j] * wr;
+        re[j] = re[i + k] - tr;
+        im[j] = im[i + k] - ti;
+        re[i + k] += tr;
+        im[i + k] += ti;
+      }
+    }
+  }
+  return { re, im };
+}
+
+/**
  * Synchronous fallback-only version for use in non-async contexts.
  * Always uses CPU. Use fftMagnitudeGpu for the GPU-accelerated path.
  */

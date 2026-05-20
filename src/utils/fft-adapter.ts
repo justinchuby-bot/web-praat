@@ -10,7 +10,7 @@
  */
 
 import { fftMagnitude as cpuFftMagnitude } from './fft';
-import { initGpuFft, isGpuAvailable, fftMagnitudeGpu } from './fft-gpu';
+import { initGpuFft, isGpuAvailable, fftMagnitudeGpu, fftComplexGpu } from './fft-gpu';
 
 let initialized = false;
 
@@ -70,4 +70,15 @@ export async function fftMagnitudeBatch(
     results.push(await fftMagnitudeGpu(frame, fftSize));
   }
   return results;
+}
+
+/**
+ * Complex FFT — returns re and im arrays. Uses GPU when available.
+ * Suitable for spectral processing that needs phase (e.g., noise reduction).
+ */
+export async function fftComplexAuto(
+  signal: Float32Array,
+  fftSize: number,
+): Promise<{ re: Float32Array; im: Float32Array }> {
+  return fftComplexGpu(signal, fftSize);
 }
