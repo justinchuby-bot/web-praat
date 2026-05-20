@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { oneDark } from "@codemirror/theme-one-dark";
+import { praatLanguage } from "../scripting/praatCodemirror";
 import { runPraatScript, InterpreterResult, runJavaScript, JsRunnerResult } from "../scripting";
 
 type ScriptLanguage = "praat" | "javascript";
@@ -125,7 +126,7 @@ praat.log("Done! Tip: F1 correlates with vowel height, F2 with frontness.");
     ? result?.errors
     : jsResult?.errors?.map(e => ({ line: 0, message: e.message }));
 
-  const extensions = language === "javascript" ? [javascript()] : [];
+  const extensions = language === "javascript" ? [javascript()] : [praatLanguage];
 
   return (
     <div className="script-editor-root">
