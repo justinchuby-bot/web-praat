@@ -35,9 +35,12 @@ const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'script', label: 'Script Editor', icon: Code },
 ];
 
+const DEFAULT_WIDTH: Record<string, number> = { script: 480 };
+const FALLBACK_WIDTH = 320;
+
 export function RightSidebar({ children }: RightSidebarProps) {
   const [activeTab, setActiveTab] = useState<Tab | null>(null);
-  const [width, setWidth] = useState(320);
+  const [width, setWidth] = useState(FALLBACK_WIDTH);
   const resizing = useRef(false);
   const startX = useRef(0);
   const startWidth = useRef(0);
@@ -46,13 +49,18 @@ export function RightSidebar({ children }: RightSidebarProps) {
     const handler = (e: Event) => {
       const tab = (e as CustomEvent).detail as Tab;
       setActiveTab(tab);
+      setWidth(DEFAULT_WIDTH[tab] ?? FALLBACK_WIDTH);
     };
     document.addEventListener('open-sidebar-tab', handler);
     return () => document.removeEventListener('open-sidebar-tab', handler);
   }, []);
 
   const handleTabClick = (tab: Tab) => {
-    setActiveTab((current) => (current === tab ? null : tab));
+    setActiveTab((current) => {
+      if (current === tab) return null;
+      setWidth(DEFAULT_WIDTH[tab] ?? FALLBACK_WIDTH);
+      return tab;
+    });
   };
 
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
@@ -64,7 +72,7 @@ export function RightSidebar({ children }: RightSidebarProps) {
     const handleMove = (ev: MouseEvent) => {
       if (!resizing.current) return;
       const delta = startX.current - ev.clientX;
-      setWidth(Math.max(240, Math.min(600, startWidth.current + delta)));
+      setWidth(Math.max(280, Math.min(800, startWidth.current + delta)));
     };
     const handleUp = () => {
       resizing.current = false;

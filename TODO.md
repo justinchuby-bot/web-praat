@@ -10,4 +10,4 @@
 
 ## Polish / Nice-to-have
 - [x] Script: better error messages when no audio loaded
-- [ ] Sidebar script tab: wider default width for code editing
+- [x] Sidebar script tab: wider default width for code editing
