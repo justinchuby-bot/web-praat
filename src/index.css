@@ -1598,3 +1598,24 @@ select:focus-visible {
   color: var(--text-dim);
   font-size: 13px;
 }
+
+.selection-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 12px;
+  background: var(--bg-surface, var(--bg-base));
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-family: monospace;
+  color: var(--text);
+}
+
+.selection-stats-duration {
+  font-weight: 600;
+  color: var(--accent, #89b4fa);
+}
+
+.selection-stats-item {
+  color: var(--text-dim);
+}
