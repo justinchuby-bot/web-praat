@@ -203,12 +203,41 @@ button, input, select {
   flex-shrink: 0;
 }
 
+.spectrogram-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 140px;
+}
+
 .spectrogram-canvas {
   width: 100%;
   flex: 1;
-  min-height: 140px;
   border-bottom: 1px solid var(--border);
   cursor: crosshair;
+}
+
+.spectrogram-crosshair {
+  position: absolute;
+  pointer-events: none;
+  width: 1px;
+  height: 100%;
+  top: 0;
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.15);
+}
+
+.spectrogram-readout {
+  position: absolute;
+  pointer-events: none;
+  font-size: 11px;
+  font-family: monospace;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 2px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
 }
 
 .textgrid-editor {

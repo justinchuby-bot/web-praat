@@ -42,6 +42,8 @@ export const Spectrogram = React.memo(function Spectrogram({
   const dragModeRef = useRef<DragMode>(null);
   const dragStartTimeRef = useRef(0);
   const lastPanTimeRef = useRef(0);
+  const crosshairRef = useRef<HTMLDivElement>(null);
+  const readoutRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -307,16 +309,50 @@ export const Spectrogram = React.memo(function Spectrogram({
   const zoomPanCallbacks = useMemo(() => ({ onWheelZoom, onPan }), [onWheelZoom, onPan]);
   useZoomPan(canvasRef, viewRange, zoomPanCallbacks, !!analysis);
 
+  const handleCrosshairMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const container = event.currentTarget;
+    const rect = container.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    if (crosshairRef.current) {
+      crosshairRef.current.style.left = `${x}px`;
+      crosshairRef.current.style.top = `${y}px`;
+      crosshairRef.current.style.display = 'block';
+    }
+    if (readoutRef.current && analysis) {
+      const maxDisplayFreq = Math.min(analysis.settings.spectrogram.maxViewFrequency, analysis.spectrogram.maxFreq);
+      const time = xToTime(x, rect.width, viewRange);
+      const freq = (1 - y / rect.height) * maxDisplayFreq;
+      readoutRef.current.textContent = `${time.toFixed(3)}s  ${Math.round(freq)} Hz`;
+      readoutRef.current.style.left = `${x + 8}px`;
+      readoutRef.current.style.top = `${y - 18}px`;
+      readoutRef.current.style.display = 'block';
+    }
+  };
+
+  const handleCrosshairLeave = () => {
+    if (crosshairRef.current) crosshairRef.current.style.display = 'none';
+    if (readoutRef.current) readoutRef.current.style.display = 'none';
+  };
+
   return (
-    <canvas
-      ref={canvasRef}
-      className="spectrogram-canvas"
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={() => {
-        dragModeRef.current = null;
-      }}
-    />
+    <div
+      className="spectrogram-container"
+      onMouseMove={handleCrosshairMove}
+      onMouseLeave={handleCrosshairLeave}
+    >
+      <canvas
+        ref={canvasRef}
+        className="spectrogram-canvas"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={() => {
+          dragModeRef.current = null;
+        }}
+      />
+      <div ref={crosshairRef} className="spectrogram-crosshair" style={{ display: 'none' }} />
+      <div ref={readoutRef} className="spectrogram-readout" style={{ display: 'none' }} />
+    </div>
   );
 });
