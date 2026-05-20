@@ -222,6 +222,15 @@ export default function App() {
   const handleLoadFile = useCallback(async (file: File) => {
     try {
       const buffer = await loadAudioFile(file);
+      // Warn for very long files
+      if (buffer.duration > 300) {
+        const proceed = confirm(
+          `This file is ${Math.round(buffer.duration / 60)} minutes long. ` +
+          `Analysis may be slow. For long recordings, consider trimming first.\n\n` +
+          `Continue?`
+        );
+        if (!proceed) return;
+      }
       processAudioBuffer(buffer, true);
     } catch (err) {
       alert(`Failed to load audio: ${err instanceof Error ? err.message : 'Unknown error'}`);
