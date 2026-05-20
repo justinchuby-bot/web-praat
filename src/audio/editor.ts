@@ -105,8 +105,11 @@ export class AudioEditorHistory {
   execute(command: AudioEditCommand): AudioEditState {
     this.state = command.apply(this.state);
     this.undoStack.push(command);
-    if (this.undoStack.length > this.maxUndoSteps) {
-      this.undoStack.shift(); // drop oldest
+    // Dynamic limit based on memory: cap total undo memory at ~200 MB
+    const bytesPerStep = this.state.samples.byteLength;
+    const maxSteps = bytesPerStep > 0 ? Math.max(5, Math.min(this.maxUndoSteps, Math.floor(200_000_000 / bytesPerStep))) : this.maxUndoSteps;
+    while (this.undoStack.length > maxSteps) {
+      this.undoStack.shift();
     }
     this.redoStack = [];
     return this.getState();
