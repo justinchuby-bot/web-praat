@@ -1171,6 +1171,18 @@ select:focus-visible {
   min-height: 500px;
 }
 
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
 .modal-close {
   position: absolute;
   top: 12px;
