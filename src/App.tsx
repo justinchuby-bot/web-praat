@@ -251,28 +251,41 @@ export default function App() {
     const buffer = createAudioBufferFromSamples(currentSamplesRef.current, sampleRate);
     const ctx = new AudioContext();
     audioCtxRef.current = ctx;
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(ctx.destination);
 
     const startOffset = selection?.start ?? currentTimeRef.current;
     const duration = selection ? selection.end - selection.start : undefined;
-    source.start(0, startOffset, duration);
-    sourceRef.current = source;
-    playStartRef.current = ctx.currentTime - startOffset;
+    const selEnd = selection?.end;
+    const looping = !!selection;
+
+    function startSource() {
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0, startOffset, duration);
+      sourceRef.current = source;
+      playStartRef.current = ctx.currentTime - startOffset;
+
+      source.onended = () => {
+        if (looping && audioCtxRef.current === ctx) {
+          // Loop: restart from selection start
+          startSource();
+        } else {
+          setIsPlaying(false);
+          cancelAnimationFrame(animFrameRef.current);
+          if (selEnd !== undefined) setCurrentTime(startOffset);
+        }
+      };
+    }
+
+    startSource();
     setIsPlaying(true);
 
-    source.onended = () => {
-      setIsPlaying(false);
-      // Stay at end position instead of jumping back to 0
-      if (selection) {
-        setCurrentTime(selection.end);
-      }
-    };
-
     const updateTime = () => {
-      if (!audioCtxRef.current) return;
-      setCurrentTime(audioCtxRef.current.currentTime - playStartRef.current);
+      if (!audioCtxRef.current || audioCtxRef.current !== ctx) return;
+      let t = audioCtxRef.current.currentTime - playStartRef.current;
+      // Clamp to selection bounds
+      if (selEnd !== undefined && t > selEnd) t = selEnd;
+      setCurrentTime(t);
       animFrameRef.current = requestAnimationFrame(updateTime);
     };
     updateTime();
@@ -280,7 +293,9 @@ export default function App() {
 
   const handlePause = useCallback(() => {
     sourceRef.current?.stop();
-    audioCtxRef.current?.close();
+    const ctx = audioCtxRef.current;
+    audioCtxRef.current = null;
+    ctx?.close();
     cancelAnimationFrame(animFrameRef.current);
     setIsPlaying(false);
   }, []);
