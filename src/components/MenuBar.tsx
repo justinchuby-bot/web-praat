@@ -31,6 +31,7 @@ interface MenuBarProps {
   onExportFigure?: () => void;
   onCheckSpelling?: () => void;
   onGenerateTone?: () => void;
+  onBatchProcess?: () => void;
   onUndo: () => void;
   onRedo: () => void;
   onCut: () => void;
@@ -232,6 +233,8 @@ export function MenuBar(props: MenuBarProps) {
           <MenubarSeparator />
           {props.onCheckSpelling && <MenubarItem disabled={!hasAudio} onClick={props.onCheckSpelling}>Label Report (TextGrid)</MenubarItem>}
           {props.onGenerateTone && <MenubarItem onClick={props.onGenerateTone}>Generate Tone…</MenubarItem>}
+          <MenubarSeparator />
+          {props.onBatchProcess && <MenubarItem onClick={props.onBatchProcess}>Batch Process…</MenubarItem>}
         </MenubarContent>
       </MenubarMenu>
 

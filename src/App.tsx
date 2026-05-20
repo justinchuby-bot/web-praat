@@ -41,6 +41,7 @@ import { ExperimentDesigner } from './components/ExperimentDesigner';
 import { ExperimentMFC } from './components/ExperimentMFC';
 import { ScriptEditor } from './components/ScriptEditor';
 import { PluginManager } from './components/PluginManager';
+import { BatchProcess } from './components/BatchProcess';
 import { VoiceReportDialog } from './components/VoiceReportDialog';
 import SpeechSynthesizerPanel from './components/SpeechSynthesizerPanel';
 import PitchSonificationPanel from './components/PitchSonificationPanel';
@@ -116,6 +117,7 @@ export default function App() {
   const [showPitchSonification, setShowPitchSonification] = useState(false);
   const [showNoteTranscription, setShowNoteTranscription] = useState(false);
   const [showPlugins, setShowPlugins] = useState(false);
+  const [showBatch, setShowBatch] = useState(false);
   const [showVoiceReport, setShowVoiceReport] = useState(false);
   const [experimentConfig, setExperimentConfig] = useState<{ config: any; audioMap: Record<string, string> } | null>(null);
   const [settings, setSettings] = useState<AnalysisSettings>(defaultAnalysisSettings);
@@ -689,6 +691,7 @@ export default function App() {
           const tone = generateSineWave(freq, dur, sr);
           processSamples(tone, sr);
         }}
+        onBatchProcess={() => setShowBatch(true)}
         onUndo={handleUndo}
         onRedo={handleRedo}
         onCut={handleCut}
@@ -1197,6 +1200,7 @@ export default function App() {
       )}
 
       {showPlugins && <PluginManager onClose={() => setShowPlugins(false)} samples={currentSamplesRef.current ?? undefined} sampleRate={sampleRate} />}
+      {showBatch && <BatchProcess onClose={() => setShowBatch(false)} />}
 
       <VoiceReportDialog
         open={showVoiceReport}
