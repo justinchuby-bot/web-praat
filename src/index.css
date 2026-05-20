@@ -702,9 +702,6 @@ button, input, select {
   border-top: 1px solid var(--border);
 }
 
-.settings-dialog {
-  max-width: 420px;
-}
 
 .settings-grid {
   display: grid;
@@ -937,13 +934,6 @@ select:focus-visible {
   font-size: 11px;
   color: var(--text-dim);
   opacity: 0.6;
-}
-
-.menu-file-label {
-  display: block;
-  width: 100%;
-  padding: 6px 8px;
-  cursor: pointer;
 }
 
 /* Toolbar */
