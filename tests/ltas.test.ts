@@ -1,54 +1,55 @@
 import { describe, it, expect } from 'vitest';
 import { computeLtas } from '../src/audio/ltas';
 
-function generateSineWave(freq: number, sampleRate: number, duration: number): Float32Array {
-  const n = Math.round(sampleRate * duration);
-  const samples = new Float32Array(n);
-  for (let i = 0; i < n; i++) {
-    samples[i] = Math.sin(2 * Math.PI * freq * i / sampleRate);
-  }
-  return samples;
-}
-
-describe('computeLtas', () => {
-  it('returns frequency and value arrays of equal length', () => {
-    const samples = generateSineWave(440, 16000, 1.0);
-    const result = computeLtas(samples, 16000);
-    expect(result.frequencies.length).toBe(result.values.length);
-    expect(result.frequencies.length).toBeGreaterThan(0);
-  });
-
-  it('shows a peak near the sine frequency', () => {
-    const freq = 440;
-    const sampleRate = 16000;
-    const samples = generateSineWave(freq, sampleRate, 1.0);
-    const result = computeLtas(samples, sampleRate);
-
-    // Find bin with max power
-    let maxIdx = 0;
-    let maxVal = -Infinity;
-    for (let i = 0; i < result.values.length; i++) {
-      if (result.values[i] > maxVal) {
-        maxVal = result.values[i];
-        maxIdx = i;
-      }
+describe('LTAS panel computation', () => {
+  function makeSine(freq: number, sampleRate: number, duration: number): Float32Array {
+    const n = Math.round(sampleRate * duration);
+    const out = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      out[i] = Math.sin(2 * Math.PI * freq * i / sampleRate);
     }
-    const peakFreq = result.frequencies[maxIdx];
-    // Peak should be within 1 bin of 440 Hz
-    expect(Math.abs(peakFreq - freq)).toBeLessThan(result.frequencyResolution * 2);
-  });
+    return out;
+  }
 
-  it('handles very short signals', () => {
-    const samples = new Float32Array(100);
-    for (let i = 0; i < 100; i++) samples[i] = Math.sin(2 * Math.PI * 200 * i / 8000);
-    const result = computeLtas(samples, 8000);
-    expect(result.frequencies.length).toBeGreaterThan(0);
+  it('computes LTAS for a sine wave with peak near the frequency', () => {
+    const sr = 16000;
+    const samples = makeSine(1000, sr, 1.0);
+    const ltas = computeLtas(samples, sr, { fftSize: 4096, hopFraction: 0.5, maxFrequency: 5000 });
+
+    expect(ltas.frequencies.length).toBeGreaterThan(0);
+    expect(ltas.values.length).toBe(ltas.frequencies.length);
+    expect(ltas.maxFrequency).toBe(5000);
+
+    // Peak should be near 1000 Hz
+    let peakIdx = 0;
+    for (let i = 1; i < ltas.values.length; i++) {
+      if (ltas.values[i] > ltas.values[peakIdx]) peakIdx = i;
+    }
+    const peakFreq = ltas.frequencies[peakIdx];
+    expect(peakFreq).toBeGreaterThan(900);
+    expect(peakFreq).toBeLessThan(1100);
   });
 
   it('respects maxFrequency setting', () => {
-    const samples = generateSineWave(200, 16000, 0.5);
-    const result = computeLtas(samples, 16000, { maxFrequency: 4000 });
-    const lastFreq = result.frequencies[result.frequencies.length - 1];
-    expect(lastFreq).toBeLessThanOrEqual(4000);
+    const sr = 44100;
+    const samples = makeSine(440, sr, 0.5);
+    const ltas = computeLtas(samples, sr, { fftSize: 2048, hopFraction: 0.5, maxFrequency: 3000 });
+    const lastFreq = ltas.frequencies[ltas.frequencies.length - 1];
+    expect(lastFreq).toBeLessThanOrEqual(3000);
+  });
+
+  it('handles very short signals', () => {
+    const sr = 16000;
+    const samples = new Float32Array(100); // very short
+    samples[0] = 1;
+    const ltas = computeLtas(samples, sr, { fftSize: 4096, hopFraction: 0.5, maxFrequency: 8000 });
+    expect(ltas.values.length).toBeGreaterThan(0);
+  });
+
+  it('returns correct frequency resolution', () => {
+    const sr = 16000;
+    const samples = makeSine(500, sr, 1.0);
+    const ltas = computeLtas(samples, sr, { fftSize: 4096, hopFraction: 0.5, maxFrequency: 8000 });
+    expect(ltas.frequencyResolution).toBeCloseTo(sr / 4096, 2);
   });
 });

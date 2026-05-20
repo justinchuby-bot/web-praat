@@ -22,6 +22,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { Spectrogram } from './components/Spectrogram';
 import { Cochleagram } from './components/Cochleagram';
 import { SpectrumSlice } from './components/SpectrumSlice';
+import { LtasPanel } from './components/LtasPanel';
 import { ExcitationPattern } from './components/ExcitationPattern';
 import { StatusBar } from './components/StatusBar';
 import { TextGridEditor } from './components/TextGridEditor';
@@ -907,6 +908,7 @@ export default function App() {
           <RightSidebar>
             {{
               spectrum: analysis ? <SpectrumSlice slice={analysis.spectrumSlice} /> : <div className="empty-panel">Load audio to see spectrum</div>,
+              ltas: <LtasPanel samples={currentSamplesRef.current} sampleRate={sampleRate} />,
               excitation: analysis ? <ExcitationPattern samples={currentSamplesRef.current} sampleRate={sampleRate} /> : <div className="empty-panel">Load audio to see excitation pattern</div>,
               voice: analysis ? <VoiceQualityPanel metrics={analysis.voiceQuality} /> : <div className="empty-panel">Load audio for voice quality</div>,
               hnr: analysis ? <HarmonicityPanel data={analysis.harmonicity} viewStart={viewStart} viewEnd={viewEnd} /> : <div className="empty-panel">Load audio for HNR</div>,
