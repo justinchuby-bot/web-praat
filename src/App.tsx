@@ -57,7 +57,7 @@ import { ListingPanel, type ListingData } from './components/ListingPanel';
 import { SelectionStats } from './components/SelectionStats';
 import { computeIntervalStats, intervalStatsToCsv } from './audio/intervalStats';
 import { normalize as soundNormalize } from './audio/soundManipulation';
-import { reduceNoise, reduceNoiseAsync, removeSilence } from './audio/soundEnhance';
+import { removeSilence } from './audio/soundEnhance';
 import { generateSineWave } from './audio/psola';
 import {
   downloadBinaryFile,
@@ -92,6 +92,7 @@ export default function App() {
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [selection, setSelection] = useState<TimeSelection | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const currentTimeRef = useRef(0);
@@ -697,17 +698,29 @@ export default function App() {
             processSamples(normalized, sampleRate);
           }
         }}
-        onReduceNoise={async () => {
-          if (currentSamplesRef.current) {
-            try {
-              const cleaned = await reduceNoiseAsync(currentSamplesRef.current, sampleRate);
-              processSamples(cleaned, sampleRate);
-            } catch {
-              // Fallback to sync CPU
-              const cleaned = reduceNoise(currentSamplesRef.current, sampleRate);
-              processSamples(cleaned, sampleRate);
+        onReduceNoise={() => {
+          if (!currentSamplesRef.current || isProcessing) return;
+          setIsProcessing(true);
+          const worker = new Worker(
+            new URL('./workers/noiseWorker.ts', import.meta.url),
+            { type: 'module' }
+          );
+          const input = currentSamplesRef.current.slice();
+          worker.postMessage(
+            { type: 'reduceNoise', samples: input, sampleRate },
+            [input.buffer]
+          );
+          worker.onmessage = (e) => {
+            setIsProcessing(false);
+            worker.terminate();
+            if (e.data.type === 'result') {
+              processSamples(e.data.samples, sampleRate);
             }
-          }
+          };
+          worker.onerror = () => {
+            setIsProcessing(false);
+            worker.terminate();
+          };
         }}
         onRemoveSilence={() => {
           if (currentSamplesRef.current) {
@@ -919,6 +932,12 @@ export default function App() {
 
           {analysis && (
             <>
+              {isProcessing && (
+                <div className="processing-overlay">
+                  <div className="processing-spinner" />
+                  <span>Processing audio…</span>
+                </div>
+              )}
               <div className="audio-visualizations">
               <TimeRuler duration={analysis.duration} viewRange={viewRange} />
               <Waveform
