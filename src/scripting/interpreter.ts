@@ -2,6 +2,7 @@
 
 import { tokenize } from "./lexer";
 import { parse, ASTNode, ExprNode, ParseError, CallNode, IndexExpr } from "./parser";
+import { computeFormants, computePitch } from "../audio/analyzer";
 
 export class RuntimeError extends Error {
   line: number;
@@ -345,14 +346,30 @@ export class Interpreter {
 
     if (name === "To Pitch" || name.startsWith("To Pitch")) {
       if (!this.selectedObject) throw new RuntimeError("No object selected", node.line);
+      const soundData = this.selectedObject.data;
+      const samples = soundData.samples as Float32Array | undefined;
+      const sr = soundData.sampleRate as number | undefined;
+      const minPitch = Number(args[1]) || 75;
+      const maxPitch = Number(args[2]) || 600;
+
+      let pitchTimes: number[] = [];
+      let pitchValues: (number | null)[] = [];
+
+      if (samples && sr) {
+        const pitchData = computePitch(samples, sr, { pitch: { minHz: minPitch, maxHz: maxPitch } } as Partial<import('../types').AnalysisSettings>);
+        pitchTimes = pitchData.times;
+        pitchValues = pitchData.frequencies;
+      }
+
       const obj: PraatObject = {
         id: this.nextId++,
         type: "Pitch",
         name: this.selectedObject.name,
         data: {
-          timestep: args[0] ?? 0,
-          minPitch: args[1] ?? 75,
-          maxPitch: args[2] ?? 600,
+          minPitch,
+          maxPitch,
+          times: pitchTimes,
+          values: pitchValues,
         },
       };
       this.objects.push(obj);
@@ -362,16 +379,36 @@ export class Interpreter {
 
     if (name.startsWith("To Formant")) {
       if (!this.selectedObject) throw new RuntimeError("No object selected", node.line);
+      const soundData = this.selectedObject.data;
+      const samples = soundData.samples as Float32Array | undefined;
+      const sr = soundData.sampleRate as number | undefined;
+      const timeStep = Number(args[0]) || 0.01;
+      const maxFormant = Number(args[1]) || 5500;
+      const numFormants = Number(args[2]) || 5;
+      const lpcOrder = Math.round(2 * numFormants + 2);
+
+      // Run real LPC formant analysis if we have audio
+      let formantData: { times: number[]; tracked: Array<Array<number | null>>; f1: (number|null)[]; f2: (number|null)[]; f3: (number|null)[] } | null = null;
+      if (samples && sr) {
+        formantData = computeFormants(samples, sr, {
+          formant: { maxFrequency: maxFormant, numberOfFormants: numFormants, lpcOrder },
+        } as Partial<import('../types').AnalysisSettings>);
+      }
+
       const obj: PraatObject = {
         id: this.nextId++,
         type: "Formant",
         name: this.selectedObject.name,
         data: {
-          timestep: args[0] ?? 0,
-          maxFormant: args[1] ?? 5500,
-          numFormants: args[2] ?? 5,
-          // Generate some dummy formant data
-          numFrames: 100,
+          timestep: timeStep,
+          maxFormant,
+          numFormants,
+          numFrames: formantData?.times.length ?? 0,
+          times: formantData?.times ?? [],
+          tracked: formantData?.tracked ?? [],
+          f1: formantData?.f1 ?? [],
+          f2: formantData?.f2 ?? [],
+          f3: formantData?.f3 ?? [],
         },
       };
       this.objects.push(obj);
@@ -381,18 +418,32 @@ export class Interpreter {
 
     if (name === "Down to Table") {
       if (!this.selectedObject) throw new RuntimeError("No object selected", node.line);
-      // Create a Table from Formant
-      const numRows = (this.selectedObject.data.numFrames as number) || 10;
-      const columns = ["time(s)", "nformants", "F1(Hz)", "B1(Hz)", "F2(Hz)", "B2(Hz)"];
-      const rows: (number | string)[][] = [];
-      for (let r = 0; r < numRows; r++) {
-        rows.push([r * 0.01, 5, 500 + r, 50, 1500 + r, 100]);
+      const data = this.selectedObject.data;
+      const times = data.times as number[] | undefined;
+      const tracked = data.tracked as Array<Array<number | null>> | undefined;
+      const numFrames = times?.length ?? 0;
+      const numFormants = tracked?.length ?? 3;
+
+      const columns = ["time(s)", "nformants"];
+      for (let f = 1; f <= Math.min(numFormants, 4); f++) {
+        columns.push(`F${f}(Hz)`, `B${f}(Hz)`);
       }
+
+      const rows: (number | string)[][] = [];
+      for (let r = 0; r < numFrames; r++) {
+        const row: (number | string)[] = [times![r], numFormants];
+        for (let f = 0; f < Math.min(numFormants, 4); f++) {
+          const freq = tracked?.[f]?.[r] ?? 0;
+          row.push(freq ?? 0, 50); // bandwidth placeholder
+        }
+        rows.push(row);
+      }
+
       const obj: PraatObject = {
         id: this.nextId++,
         type: "Table",
         name: this.selectedObject.name,
-        data: { columns, rows, numRows },
+        data: { columns, rows, numRows: numFrames },
       };
       this.objects.push(obj);
       this.selectedObject = obj;
@@ -611,13 +662,56 @@ export class Interpreter {
     }
 
     if (name === "Get mean") {
-      // Generic - returns dummy if not on table
-      this.variables.set("_lastResult", 150.0);
+      if (this.selectedObject?.type === "Formant") {
+        // Get mean of a formant track: args[0]=start, args[1]=end, args[2]=unit
+        const data = this.selectedObject.data;
+        const tracked = data.tracked as Array<Array<number | null>> | undefined;
+        // Default to F1 mean
+        const formantIdx = 0;
+        if (tracked && tracked[formantIdx]) {
+          const values = tracked[formantIdx].filter((v): v is number => v !== null && v > 0);
+          const mean = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+          this.variables.set("_lastResult", mean);
+        } else {
+          this.variables.set("_lastResult", 0);
+        }
+      } else if (this.selectedObject?.type === "Pitch") {
+        const data = this.selectedObject.data;
+        const values = data.values as number[] | undefined;
+        if (values) {
+          const voiced = values.filter(v => v > 0);
+          const mean = voiced.length > 0 ? voiced.reduce((a, b) => a + b, 0) / voiced.length : 0;
+          this.variables.set("_lastResult", mean);
+        } else {
+          this.variables.set("_lastResult", 0);
+        }
+      } else {
+        this.variables.set("_lastResult", 0);
+      }
       return;
     }
 
     if (name === "Get value at time") {
-      this.variables.set("_lastResult", 200.0);
+      if (!this.selectedObject) { this.variables.set("_lastResult", 0); return; }
+      const formantNum = Number(args[0]) || 1;
+      const time = Number(args[1]) || 0;
+      const data = this.selectedObject.data;
+      const times = data.times as number[] | undefined;
+      const tracked = data.tracked as Array<Array<number | null>> | undefined;
+
+      if (times && tracked && tracked[formantNum - 1]) {
+        // Find closest time frame
+        let bestIdx = 0;
+        let bestDist = Infinity;
+        for (let i = 0; i < times.length; i++) {
+          const dist = Math.abs(times[i] - time);
+          if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+        }
+        const val = tracked[formantNum - 1][bestIdx];
+        this.variables.set("_lastResult", val ?? 0);
+      } else {
+        this.variables.set("_lastResult", 0);
+      }
       return;
     }
 
