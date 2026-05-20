@@ -966,13 +966,34 @@ export default function App() {
         </BottomSheet>
       )}
 
-      <StatusBar
+            <StatusBar
         hasAudio={!!analysis}
         duration={analysis?.duration ?? 0}
         selection={selection}
         sampleRate={sampleRate}
         isRecording={isRecording}
         streamDuration={streaming.streamDuration}
+        cursorTime={analysis ? currentTime : undefined}
+        pitchAtCursor={(() => {
+          if (!analysis) return undefined;
+          const p = analysis.pitch;
+          let bestIdx = 0, bestDist = Infinity;
+          for (let i = 0; i < p.times.length; i++) {
+            const d = Math.abs(p.times[i] - currentTime);
+            if (d < bestDist) { bestDist = d; bestIdx = i; }
+          }
+          return p.frequencies[bestIdx];
+        })()}
+        formantsAtCursor={(() => {
+          if (!analysis) return undefined;
+          const f = analysis.formants;
+          let bestIdx = 0, bestDist = Infinity;
+          for (let i = 0; i < f.times.length; i++) {
+            const d = Math.abs(f.times[i] - currentTime);
+            if (d < bestDist) { bestDist = d; bestIdx = i; }
+          }
+          return { f1: f.f1[bestIdx], f2: f.f2[bestIdx], f3: f.f3[bestIdx] };
+        })()}
       />
       <KeyboardShortcutsDialog />
       <AboutDialog />

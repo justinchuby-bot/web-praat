@@ -5,9 +5,12 @@ interface StatusBarProps {
   sampleRate: number;
   isRecording: boolean;
   streamDuration?: number;
+  cursorTime?: number;
+  pitchAtCursor?: number | null;
+  formantsAtCursor?: { f1: number | null; f2: number | null; f3: number | null };
 }
 
-export function StatusBar({ hasAudio, duration, selection, sampleRate, isRecording, streamDuration }: StatusBarProps) {
+export function StatusBar({ hasAudio, duration, selection, sampleRate, isRecording, streamDuration, cursorTime, pitchAtCursor, formantsAtCursor }: StatusBarProps) {
   const fmt = (t: number) => t.toFixed(3) + 's';
 
   return (
@@ -24,6 +27,14 @@ export function StatusBar({ hasAudio, duration, selection, sampleRate, isRecordi
           {selection && (
             <span className="statusbar-item">
               Selection: {fmt(selection.start)} – {fmt(selection.end)} ({fmt(selection.end - selection.start)})
+            </span>
+          )}
+          {cursorTime != null && (
+            <span className="statusbar-item statusbar-cursor-info">
+              {pitchAtCursor != null && pitchAtCursor > 0 ? `F0: ${pitchAtCursor.toFixed(1)} Hz` : 'F0: —'}
+              {formantsAtCursor && (
+                <> · F1: {formantsAtCursor.f1 != null && formantsAtCursor.f1 > 0 ? Math.round(formantsAtCursor.f1) : '—'} · F2: {formantsAtCursor.f2 != null && formantsAtCursor.f2 > 0 ? Math.round(formantsAtCursor.f2) : '—'}</>
+              )}
             </span>
           )}
         </>
