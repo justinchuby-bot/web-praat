@@ -474,7 +474,12 @@ export class Interpreter {
 
     if (name.startsWith("To Formant")) {
       if (!this.selectedObject) throw new RuntimeError("No object selected", node.line);
-      const soundData = this.selectedObject.data;
+      // Find the Sound object - either the selected object or the first Sound in the list
+      let soundObj = this.selectedObject;
+      if (!soundObj.data.samples) {
+        soundObj = this.objects.find(o => o.type === "Sound" && o.data.samples) ?? this.selectedObject;
+      }
+      const soundData = soundObj.data;
       const samples = soundData.samples as Float32Array | undefined;
       const sr = soundData.sampleRate as number | undefined;
       const timeStep = Number(args[0]) || 0.01;
