@@ -1,5 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
+import {
+  AudioWaveform, Mic, Activity, Drum, Ear, Video, BookOpen, Settings,
+} from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 type Tab = 'spectrum' | 'voice' | 'hnr' | 'rhythm' | 'excitation' | 'video' | 'vocabulary' | 'settings';
 
@@ -16,47 +20,78 @@ interface RightSidebarProps {
   };
 }
 
-const tabLabels: { id: Tab; label: string }[] = [
-  { id: 'spectrum', label: 'Spectrum' },
-  { id: 'voice', label: 'Voice Quality' },
-  { id: 'hnr', label: 'HNR' },
-  { id: 'rhythm', label: 'Rhythm' },
-  { id: 'excitation', label: 'Excitation' },
-  { id: 'video', label: 'Video' },
-  { id: 'vocabulary', label: 'Vocab' },
-  { id: 'settings', label: 'Settings' },
+const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
+  { id: 'spectrum', label: 'Spectrum', icon: AudioWaveform },
+  { id: 'voice', label: 'Voice Quality', icon: Mic },
+  { id: 'hnr', label: 'HNR', icon: Activity },
+  { id: 'rhythm', label: 'Rhythm', icon: Drum },
+  { id: 'excitation', label: 'Excitation', icon: Ear },
+  { id: 'video', label: 'Video', icon: Video },
+  { id: 'vocabulary', label: 'Vocabulary', icon: BookOpen },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 export function RightSidebar({ children }: RightSidebarProps) {
   const [activeTab, setActiveTab] = useState<Tab | null>(null);
+  const [width, setWidth] = useState(320);
+  const resizing = useRef(false);
+  const startX = useRef(0);
+  const startWidth = useRef(0);
 
   const handleTabClick = (tab: Tab) => {
     setActiveTab((current) => (current === tab ? null : tab));
   };
 
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    resizing.current = true;
+    startX.current = e.clientX;
+    startWidth.current = width;
+
+    const handleMove = (ev: MouseEvent) => {
+      if (!resizing.current) return;
+      const delta = startX.current - ev.clientX;
+      setWidth(Math.max(240, Math.min(600, startWidth.current + delta)));
+    };
+    const handleUp = () => {
+      resizing.current = false;
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleUp);
+    };
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleUp);
+  }, [width]);
+
   const isOpen = activeTab !== null;
 
   return (
-    <div className="right-sidebar" data-open={isOpen}>
-      <div className="right-sidebar-tabs">
-        {tabLabels.map(({ id, label }) => (
-          <button
-            key={id}
-            className={`right-sidebar-tab ${activeTab === id ? 'active' : ''}`}
-            onClick={() => handleTabClick(id)}
-            title={label}
-          >
-            {label}
-          </button>
+    <div className="right-sidebar" data-open={isOpen} style={isOpen ? { width: `${width}px` } : undefined}>
+      {isOpen && (
+        <div className="right-sidebar-resize" onMouseDown={handleResizeStart} />
+      )}
+      <div className="right-sidebar-header">
+        {tabs.map(({ id, label, icon: Icon }) => (
+          <TooltipProvider key={id} delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className={`right-sidebar-tab ${activeTab === id ? 'active' : ''}`}
+                  onClick={() => handleTabClick(id)}
+                  aria-label={label}
+                >
+                  <Icon size={16} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">{label}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         ))}
       </div>
-      <div className="right-sidebar-panel">
-        {isOpen && (
-          <div className="right-sidebar-content">
-            {children[activeTab!]}
-          </div>
-        )}
-      </div>
+      {isOpen && (
+        <div className="right-sidebar-content">
+          {children[activeTab!]}
+        </div>
+      )}
     </div>
   );
 }

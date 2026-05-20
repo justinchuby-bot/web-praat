@@ -1,6 +1,7 @@
 import {
   Play, Pause, Square, Circle, ZoomIn, ZoomOut, Maximize,
   Scissors, Copy, ClipboardPaste, Trash2, Undo2, Redo2,
+  AudioLines, Waves, Activity, Languages, Ear,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
@@ -24,15 +25,27 @@ interface ToolbarProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitToWindow: () => void;
+  // Overlay toggles
+  showPitch: boolean;
+  showFormants: boolean;
+  showIntensity: boolean;
+  showIpa: boolean;
+  showCochleagram: boolean;
+  onTogglePitch: () => void;
+  onToggleFormants: () => void;
+  onToggleIntensity: () => void;
+  onToggleIpa: () => void;
+  onToggleCochleagram: () => void;
 }
 
-function IconBtn({ icon: Icon, label, onClick, disabled, active, danger }: {
+function IconBtn({ icon: Icon, label, onClick, disabled, active, danger, color }: {
   icon: React.ElementType;
   label: string;
   onClick: () => void;
   disabled?: boolean;
   active?: boolean;
   danger?: boolean;
+  color?: string;
 }) {
   return (
     <TooltipProvider delayDuration={300}>
@@ -43,6 +56,7 @@ function IconBtn({ icon: Icon, label, onClick, disabled, active, danger }: {
             onClick={onClick}
             disabled={disabled}
             aria-label={label}
+            style={active && color ? { color, borderColor: color } : undefined}
           >
             <Icon size={18} />
           </button>
@@ -59,6 +73,8 @@ export function Toolbar(props: ToolbarProps) {
     onRecord, onStopRecord, onPlay, onPause,
     onUndo, onRedo, onCut, onCopy, onPaste, onDelete,
     onZoomIn, onZoomOut, onFitToWindow,
+    showPitch, showFormants, showIntensity, showIpa, showCochleagram,
+    onTogglePitch, onToggleFormants, onToggleIntensity, onToggleIpa, onToggleCochleagram,
   } = props;
 
   return (
@@ -101,6 +117,16 @@ export function Toolbar(props: ToolbarProps) {
         <IconBtn icon={ZoomIn} label="Zoom In" onClick={onZoomIn} />
         <IconBtn icon={ZoomOut} label="Zoom Out" onClick={onZoomOut} />
         <IconBtn icon={Maximize} label="Fit to Window" onClick={onFitToWindow} disabled={!hasAudio} />
+      </div>
+
+      <div className="toolbar-separator" />
+
+      <div className="toolbar-group">
+        <IconBtn icon={AudioLines} label="Pitch" onClick={onTogglePitch} active={showPitch} color="#89b4fa" />
+        <IconBtn icon={Waves} label="Formants" onClick={onToggleFormants} active={showFormants} color="#f38ba8" />
+        <IconBtn icon={Activity} label="Intensity" onClick={onToggleIntensity} active={showIntensity} color="#a6e3a1" />
+        <IconBtn icon={Languages} label="IPA Vowels" onClick={onToggleIpa} active={showIpa} color="#fab387" />
+        <IconBtn icon={Ear} label="Cochleagram" onClick={onToggleCochleagram} active={showCochleagram} color="#94e2d5" />
       </div>
     </div>
   );

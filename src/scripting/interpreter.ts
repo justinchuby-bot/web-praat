@@ -40,6 +40,31 @@ export class Interpreter {
   // For procedure local scope
   private localScopes: Map<string, number | string | number[]>[] = [];
   private currentProcName: string | null = null;
+  // Include registry: path → source code
+  private includeRegistry: Map<string, string> = new Map();
+  private includedPaths: Set<string> = new Set();
+
+  /**
+   * Register a script source that can be resolved by `include` statements.
+   * Path matching is flexible: "utils.praat", "./utils.praat", or full path.
+   */
+  registerInclude(path: string, source: string): void {
+    this.includeRegistry.set(path, source);
+    // Also register the basename for convenience
+    const basename = path.replace(/^.*[\/]/, "");
+    if (basename !== path) {
+      this.includeRegistry.set(basename, source);
+    }
+  }
+
+  /**
+   * Register multiple includes at once.
+   */
+  registerIncludes(files: Record<string, string>): void {
+    for (const [path, source] of Object.entries(files)) {
+      this.registerInclude(path, source);
+    }
+  }
 
   private mathFunctions: Record<string, (args: number[]) => number> = {
     sqrt: (a) => Math.sqrt(a[0]),
@@ -78,6 +103,7 @@ export class Interpreter {
     this.output = "";
     this.localScopes = [];
     this.currentProcName = null;
+    this.includedPaths.clear();
 
     // Pre-load audio as a Sound object if provided
     if (preloadedSound && preloadedSound.samples.length > 0) {
@@ -215,7 +241,25 @@ export class Interpreter {
         break;
       }
       case "Include": {
-        // No-op in web context
+        const includePath = node.path;
+        if (includePath && !this.includedPaths.has(includePath)) {
+          this.includedPaths.add(includePath);
+          // Try to resolve from registry
+          const source = this.includeRegistry.get(includePath)
+            ?? this.includeRegistry.get(includePath.replace(/^.*[\/]/, ""));
+          if (source) {
+            const tokens = tokenize(source);
+            const ast = parse(tokens);
+            // Collect procedures from included file
+            for (const n of ast) {
+              if (n.type === "Procedure") {
+                this.procedures.set(n.name, { params: n.params, body: n.body });
+              }
+            }
+            this.executeBlock(ast);
+          }
+          // If not found in registry, silently skip (web context)
+        }
         break;
       }
       case "ExpressionStatement": {
@@ -328,6 +372,44 @@ export class Interpreter {
 
     // editor/endeditor block — handled as no-op calls
     if (nameLower === "editor" || nameLower === "endeditor") {
+      return;
+    }
+
+    // Create Table with column names: name, numRows, colNames (space-separated)
+    if (name === "Create Table with column names" || name === "Create Table with column names:") {
+      const tableName = String(args[0] ?? "table");
+      const numRows = Number(args[1] ?? 0);
+      const colNamesStr = String(args[2] ?? "");
+      const columns = colNamesStr.split(/\s+/).filter(c => c.length > 0);
+      const rows: (number | string)[][] = [];
+      for (let i = 0; i < numRows; i++) {
+        rows.push(columns.map(() => 0));
+      }
+      const obj: PraatObject = {
+        id: this.nextId++,
+        type: "Table",
+        name: tableName,
+        data: { columns, rows, numRows },
+      };
+      this.objects.push(obj);
+      this.selectedObject = obj;
+      return;
+    }
+
+    if (name === "Create simple Matrix" || name === "Create simple Matrix:") {
+      const matName = String(args[0] ?? "matrix");
+      const numRows = Number(args[1] ?? 1);
+      const numCols = Number(args[2] ?? 1);
+      // args[3] is formula, currently unused for Matrix creation
+      void args[3];
+      const obj: PraatObject = {
+        id: this.nextId++,
+        type: "Matrix",
+        name: matName,
+        data: { rows: numRows, cols: numCols, values: Array(numRows * numCols).fill(0) },
+      };
+      this.objects.push(obj);
+      this.selectedObject = obj;
       return;
     }
 
@@ -608,6 +690,106 @@ export class Interpreter {
         for (const row of rows) {
           const diff = idx1 >= 0 && idx2 >= 0 ? Number(row[idx1]) - Number(row[idx2]) : 0;
           row.push(diff);
+        }
+        return;
+      }
+
+      if (name === "Append row") {
+        rows.push(columns.map(() => 0));
+        table.data.numRows = rows.length;
+        return;
+      }
+
+      if (name === "Set numeric value") {
+        const rowNum = Number(args[0] ?? 1);
+        const colName = String(args[1] ?? "");
+        const value = Number(args[2] ?? 0);
+        const colIdx = columns.indexOf(colName);
+        if (colIdx >= 0 && rowNum >= 1 && rowNum <= rows.length) {
+          rows[rowNum - 1][colIdx] = value;
+        }
+        return;
+      }
+
+      if (name === "Set string value") {
+        const rowNum = Number(args[0] ?? 1);
+        const colName = String(args[1] ?? "");
+        const value = String(args[2] ?? "");
+        const colIdx = columns.indexOf(colName);
+        if (colIdx >= 0 && rowNum >= 1 && rowNum <= rows.length) {
+          rows[rowNum - 1][colIdx] = value;
+        }
+        return;
+      }
+
+      if (name === "Get string value") {
+        const rowNum = Number(args[0] ?? 1);
+        const colName = String(args[1] ?? "");
+        const colIdx = columns.indexOf(colName);
+        if (colIdx >= 0 && rowNum >= 1 && rowNum <= rows.length) {
+          this.variables.set("_lastResult$", String(rows[rowNum - 1][colIdx] ?? ""));
+          this.variables.set("_lastResult", String(rows[rowNum - 1][colIdx] ?? ""));
+        } else {
+          this.variables.set("_lastResult$", "");
+          this.variables.set("_lastResult", "");
+        }
+        return;
+      }
+
+      if (name === "Get column index") {
+        const colName = String(args[0] ?? "");
+        const colIdx = columns.indexOf(colName);
+        this.variables.set("_lastResult", colIdx >= 0 ? colIdx + 1 : 0);
+        return;
+      }
+
+      if (name === "Sort rows") {
+        const colName = String(args[0] ?? "");
+        const colIdx = columns.indexOf(colName);
+        if (colIdx >= 0) {
+          rows.sort((a, b) => {
+            const va = a[colIdx], vb = b[colIdx];
+            if (typeof va === "number" && typeof vb === "number") return va - vb;
+            return String(va).localeCompare(String(vb));
+          });
+        }
+        return;
+      }
+
+      if (name === "Get minimum") {
+        const colName = String(args[0] ?? "");
+        const colIdx = columns.indexOf(colName);
+        if (colIdx >= 0 && rows.length > 0) {
+          const min = Math.min(...rows.map(r => Number(r[colIdx] ?? Infinity)));
+          this.variables.set("_lastResult", min);
+        } else {
+          this.variables.set("_lastResult", 0);
+        }
+        return;
+      }
+
+      if (name === "Get maximum") {
+        const colName = String(args[0] ?? "");
+        const colIdx = columns.indexOf(colName);
+        if (colIdx >= 0 && rows.length > 0) {
+          const max = Math.max(...rows.map(r => Number(r[colIdx] ?? -Infinity)));
+          this.variables.set("_lastResult", max);
+        } else {
+          this.variables.set("_lastResult", 0);
+        }
+        return;
+      }
+
+      if (name === "Get standard deviation") {
+        const colName = String(args[0] ?? "");
+        const colIdx = columns.indexOf(colName);
+        if (colIdx >= 0 && rows.length > 1) {
+          const vals = rows.map(r => Number(r[colIdx] ?? 0));
+          const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+          const variance = vals.reduce((s, v) => s + (v - mean) ** 2, 0) / (vals.length - 1);
+          this.variables.set("_lastResult", Math.sqrt(variance));
+        } else {
+          this.variables.set("_lastResult", 0);
         }
         return;
       }

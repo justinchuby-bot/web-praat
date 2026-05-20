@@ -19,7 +19,6 @@ import { CommandPalette, Command } from './components/CommandPalette';
 import { RhythmPanel } from './components/RhythmPanel';
 import { RightSidebar } from './components/RightSidebar';
 import { SettingsPanel } from './components/SettingsPanel';
-import { Sidebar } from './components/Sidebar';
 import { Spectrogram } from './components/Spectrogram';
 import { Cochleagram } from './components/Cochleagram';
 import { SpectrumSlice } from './components/SpectrumSlice';
@@ -674,24 +673,19 @@ export default function App() {
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onFitToWindow={handleFitToWindow}
+        showPitch={showPitch}
+        showFormants={showFormants}
+        showIntensity={showIntensity}
+        showIpa={showIpa}
+        showCochleagram={showCochleagram}
+        onTogglePitch={() => setShowPitch((v) => !v)}
+        onToggleFormants={() => setShowFormants((v) => !v)}
+        onToggleIntensity={() => setShowIntensity((v) => !v)}
+        onToggleIpa={() => setShowIpa((v) => !v)}
+        onToggleCochleagram={() => setShowCochleagram((v) => !v)}
       />
 
       <div className="app-body">
-        {!isMobile && (
-          <Sidebar
-            showPitch={showPitch}
-            showFormants={showFormants}
-            showIntensity={showIntensity}
-            showIpa={showIpa}
-            showCochleagram={showCochleagram}
-            onTogglePitch={() => setShowPitch((value) => !value)}
-            onToggleFormants={() => setShowFormants((value) => !value)}
-            onToggleIntensity={() => setShowIntensity((value) => !value)}
-            onToggleIpa={() => setShowIpa((value) => !value)}
-            onToggleCochleagram={() => setShowCochleagram((value) => !value)}
-          />
-        )}
-
         <main className="main-area" role="main" aria-label="Audio editor">
           <div className="visualizations">
           {!analysis && !streaming.streamAnalysis && (
