@@ -58,6 +58,7 @@ import { SelectionStats } from './components/SelectionStats';
 import { computeIntervalStats, intervalStatsToCsv } from './audio/intervalStats';
 import { normalize as soundNormalize } from './audio/soundManipulation';
 import { reduceNoise, removeSilence } from './audio/soundEnhance';
+import { runAudioWorker } from './audioWorkerClient';
 import { generateSineWave } from './audio/psola';
 import {
   downloadBinaryFile,
@@ -681,16 +682,29 @@ export default function App() {
             processSamples(normalized, sampleRate);
           }
         }}
-        onReduceNoise={() => {
+        onReduceNoise={async () => {
           if (currentSamplesRef.current) {
-            const cleaned = reduceNoise(currentSamplesRef.current, sampleRate);
-            processSamples(cleaned, sampleRate);
+            try {
+              const input = currentSamplesRef.current.slice();
+              const cleaned = await runAudioWorker({ type: 'reduceNoise', samples: input, sampleRate });
+              processSamples(cleaned, sampleRate);
+            } catch {
+              // Fallback to main thread
+              const cleaned = reduceNoise(currentSamplesRef.current, sampleRate);
+              processSamples(cleaned, sampleRate);
+            }
           }
         }}
-        onRemoveSilence={() => {
+        onRemoveSilence={async () => {
           if (currentSamplesRef.current) {
-            const trimmed = removeSilence(currentSamplesRef.current, sampleRate);
-            processSamples(trimmed, sampleRate);
+            try {
+              const input = currentSamplesRef.current.slice();
+              const trimmed = await runAudioWorker({ type: 'removeSilence', samples: input, sampleRate });
+              processSamples(trimmed, sampleRate);
+            } catch {
+              const trimmed = removeSilence(currentSamplesRef.current, sampleRate);
+              processSamples(trimmed, sampleRate);
+            }
           }
         }}
         onZoomIn={handleZoomIn}
