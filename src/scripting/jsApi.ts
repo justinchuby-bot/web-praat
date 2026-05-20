@@ -62,14 +62,16 @@ export function createPraatApi(context: JsApiContext, result: JsApiResult) {
     // Formants
     toFormant(
       audio?: Float32Array,
-      options?: { maxFormant?: number; numFormants?: number }
+      options?: { maxFormant?: number; numFormants?: number; lpcOrder?: number }
     ): FormantData {
       const samples = audio ?? context.samples;
+      const numFormants = options?.numFormants ?? 5;
+      const lpcOrder = options?.lpcOrder ?? (2 * numFormants + 2);
       return computeFormants(samples, context.sampleRate, {
         formant: {
           maxFrequency: options?.maxFormant ?? 5500,
-          numberOfFormants: options?.numFormants ?? 5,
-          lpcOrder: 12,
+          numberOfFormants: numFormants,
+          lpcOrder,
           smoothingWindowMs: 20,
           transitionCostWeight: 1.0,
           medianFilterSize: 3,
