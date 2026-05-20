@@ -56,6 +56,7 @@ import { FilterPanel } from './components/FilterPanel';
 import { ListingPanel, type ListingData } from './components/ListingPanel';
 import { SelectionStats } from './components/SelectionStats';
 import { computeIntervalStats, intervalStatsToCsv } from './audio/intervalStats';
+import { exportFigurePng } from './export/figure';
 import { normalize as soundNormalize } from './audio/soundManipulation';
 import { removeSilence } from './audio/soundEnhance';
 import { generateSineWave } from './audio/psola';
@@ -646,6 +647,16 @@ export default function App() {
           if (analysis && textGrid) {
             const stats = computeIntervalStats(analysis, textGrid);
             downloadTextFile('interval_stats.csv', intervalStatsToCsv(stats), 'text/csv');
+          }
+        }}
+        onExportFigure={() => {
+          if (analysis) {
+            exportFigurePng(analysis, {
+              showPitch,
+              showFormants,
+              viewRange,
+              textGrid: textGrid ?? null,
+            });
           }
         }}
         onCheckSpelling={() => {

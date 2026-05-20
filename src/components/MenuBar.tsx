@@ -28,6 +28,7 @@ interface MenuBarProps {
   onExportIntensityCsv: () => void;
   onExportHarmonicityCsv: () => void;
   onExportIntervalStats?: () => void;
+  onExportFigure?: () => void;
   onCheckSpelling?: () => void;
   onGenerateTone?: () => void;
   onUndo: () => void;
@@ -137,6 +138,9 @@ export function MenuBar(props: MenuBarProps) {
           <MenubarItem disabled={!hasAudio} onClick={onExportHarmonicityCsv}>Export HNR CSV</MenubarItem>
           {props.onExportIntervalStats && (
             <MenubarItem disabled={!hasAudio} onClick={props.onExportIntervalStats}>Export Interval Statistics CSV</MenubarItem>
+          )}
+          {props.onExportFigure && (
+            <MenubarItem disabled={!hasAudio} onClick={props.onExportFigure}>Export Figure (PNG)</MenubarItem>
           )}
         </MenubarContent>
       </MenubarMenu>
