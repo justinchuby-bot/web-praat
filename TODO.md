@@ -13,26 +13,14 @@
 - **React 19 + TypeScript 6 + Vite 8 + vitest 4.1**
 - Coverage: 84% statements, 93% audio module
 - Build: 467KB / 145KB gzip
+- **Praat Script interpreter: 998 lines** — 连接真实音频分析引擎（LPC formant + autocorrelation pitch）
+- **Plugin 系统** — 加载 .praat 文件作为 plugin，内置 Vowel Space + Jitter/Shimmer
 
 ## 当前优先任务
 
-- [x] **自动 IPA 标注** — 根据 F1/F2 值自动在语谱图/波形图上标注国际音标元音符号
-- [x] **MenuBar hover 切换** — 打开菜单后 hover 其他菜单项立即切换；实现 Amazon triangle trick（防止斜向移动误触发切换）
-- [x] **布局修复**：波形/語谱图区域默认占主视图 ~65% 高度（flex:7）；TextGrid 区域 ~35%（flex:3，可滚动）；RightSidebar 已默认折叠 + tab 切换
-- [x] Wire BottomSheet + useIsMobile to App.tsx（移动端显示 BottomSheet 替代 Sidebar）
-- [x] JS API 补全（intensity, spectrogram, textGrid, mfcc, resample, getMin/getMax, fft/ifft）
-- [x] Shiki 语法高亮（Praat Script TextMate grammar）
-- [x] MCP Server 层（暴露语音分析给 AI agent）
-- [x] **WebGPU FFT 接入** — fft-adapter.ts 统一接口 + worker 自动探测 GPU + CPU fallback
-- [x] **Excitation pattern** — 听觉激励模式可视化
-- [x] **SpeechSynthesizer（TTS）** — Web Speech API 集成
-- [x] **Pitch sonification** — 听 pitch track，验证准确性
-- [x] **Note transcription** — pitch → 音符/半音转写
-- [x] **Hierarchical tiers** — tier parent-child 关系（借鉴 ELAN）
-- [x] **ELAN (.eaf) 导入导出** — 支持 ELAN 注释格式互转
-- [x] **Video sync** — 标注跟视频对齐
-- [x] **Controlled vocabulary** — 标注预定义词表
+- [ ] **FastTrack 完整支持** — Praat Script interpreter 已连接真实引擎，下一步让 FastTrack 脚本端到端跑通（include registry + 完整 Table 操作）
 - [ ] **SpellingChecker** — WordList-based 拼写检查
+- [ ] **Spectrum Slice UX** — 频率轴标注 + formant peak markers
 
 ## Backlog（按优先级）
 
@@ -115,6 +103,14 @@
 - [x] **ELAN (.eaf) 导入导出** — parseElan (XML→TextGrid) + serializeElan (TextGrid→XML) + parent tier mapping + 15 tests (413 total)
 - [x] **Video sync** — VideoSync component in RightSidebar; load video, extract audio, bidirectional time sync (muted video + main audio); 6 tests (419 total)
 - [x] **Controlled vocabulary** — vocabulary.ts (create/parse/serialize/validate/autocomplete) + ControlledVocabularyEditor UI (manage, import/export, tier bindings, strict mode) + RightSidebar 'Vocab' tab; 16 new tests (435 total)
+- [x] **Spectrum Slice dB 修复** — FFT magnitude 用 dB 刻度; LPC envelope 不再双重 log; 两曲线共享 scale
+- [x] **波形图点击更新 spectrum slice** — 不再只有语谱图能触发
+- [x] **空格键播放修复** — 修 stale closure bug，现在从光标位置播放
+- [x] **侧边栏可折叠** — ‹/› 按钮收起/展开，动画过渡
+- [x] **主题一致性** — 所有 modal/dialog/command palette 用统一 CSS vars，切主题不会出现白块
+- [x] **Plugin 系统** — 加载 .praat 脚本作为 plugin; 内置 Vowel Space + Jitter/Shimmer; Tools > 🧩 Plugins
+- [x] **Praat Script interpreter 大升级** — 386→998行; include/dot-local vars/向量数组/Table操作/selectObject/nocheck/字符串插值/线性回归
+- [x] **Interpreter 连接真实引擎** — To Formant/To Pitch/Get value at time/Get mean 调用真实 LPC + autocorrelation 分析
 
 ## 规则
 
