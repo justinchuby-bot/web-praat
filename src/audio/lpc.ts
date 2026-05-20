@@ -177,11 +177,11 @@ function extractFormantCandidates(
   for (const root of roots) {
     if (root.im <= 0) continue;
     const magnitude = Math.hypot(root.re, root.im);
-    if (magnitude < 0.3 || magnitude > 1.0) continue;
+    if (magnitude < 0.2 || magnitude > 1.0) continue;
     const angle = Math.atan2(root.im, root.re);
     const frequency = (angle * prepared.effectiveRate) / (2 * Math.PI);
     const bandwidth = (-Math.log(magnitude) * prepared.effectiveRate) / Math.PI;
-    if (frequency > 50 && frequency < Math.min(prepared.effectiveRate / 2, maxFrequency) && bandwidth < 700) {
+    if (frequency > 50 && frequency < Math.min(prepared.effectiveRate / 2, maxFrequency) && bandwidth < 1000) {
       candidates.push({ freq: frequency, bandwidth });
     }
   }
