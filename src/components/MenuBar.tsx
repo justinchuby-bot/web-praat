@@ -225,8 +225,8 @@ export function MenuBar(props: MenuBarProps) {
           <MenubarItem onClick={onOpenExperiment}>Experiment (MFC)</MenubarItem>
           <MenubarItem onClick={onOpenSpeechSynthesizer}>SpeechSynthesizer (TTS)</MenubarItem>
           <MenubarItem onClick={onOpenPitchSonification}>Pitch Sonification</MenubarItem>
-          <MenubarItem onClick={onOpenNoteTranscription}>Note Transcription</MenubarItem>
-                    <MenubarItem onClick={onOpenScriptEditor}>Script Editor</MenubarItem>
+                    <MenubarItem onClick={onOpenNoteTranscription}>Note Transcription</MenubarItem>
+          <MenubarItem onClick={onOpenScriptEditor}>Script Editor</MenubarItem>
           <MenubarItem onClick={onOpenPlugins}>🧩 Plugins</MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onOpenControlledVocabulary}>Controlled Vocabulary</MenubarItem>
