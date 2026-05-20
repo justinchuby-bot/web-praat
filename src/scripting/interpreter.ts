@@ -348,8 +348,17 @@ export class Interpreter {
       return;
     }
 
-    if (nameLower === "select" || name === "select") {
-      const fullName = args.map(String).join(" ");
+    if (nameLower === "select" || name === "select" || nameLower.startsWith("select ")) {
+      // Handle both: select Table "name" (parsed as command "select Table", args=["name"])
+      // and: select "Table name" (parsed as command "select", args=["Table name"])
+      let fullName: string;
+      if (nameLower.startsWith("select ")) {
+        // command name includes the type, e.g. "select Table" + args=["results"]
+        const typePart = name.slice(7); // after "select "
+        fullName = typePart + (args.length > 0 ? " " + args.map(String).join(" ") : "");
+      } else {
+        fullName = args.map(String).join(" ");
+      }
       const obj = this.objects.find((o) => `${o.type} ${o.name}` === fullName || o.name === fullName);
       if (obj) this.selectedObject = obj;
       return;
@@ -839,6 +848,113 @@ export class Interpreter {
         this.selectedObject = lr;
         return;
       }
+
+      if (name === "Fit polynomial") {
+        // Fit polynomial: xColumn$, yColumn$, order
+        const xCol = String(args[0]);
+        const yCol = String(args[1]);
+        const order = Math.round(Number(args[2]) || 3);
+        const xIdx = columns.indexOf(xCol);
+        const yIdx = columns.indexOf(yCol);
+        if (xIdx < 0) throw new RuntimeError(`Column '${xCol}' not found`, node.line);
+        if (yIdx < 0) throw new RuntimeError(`Column '${yCol}' not found`, node.line);
+        const xVals = rows.map(r => Number(r[xIdx]));
+        const yVals = rows.map(r => Number(r[yIdx]));
+        const coeffs = this.polyFit(xVals, yVals, order);
+        let sse = 0;
+        for (let i = 0; i < xVals.length; i++) {
+          sse += (yVals[i] - this.polyEval(coeffs, xVals[i])) ** 2;
+        }
+        const rmse = Math.sqrt(sse / xVals.length);
+        const poly: PraatObject = {
+          id: this.nextId++,
+          type: "Polynomial",
+          name: `${table.name}_poly${order}`,
+          data: { coefficients: coeffs, order, rmse, xColumn: xCol, yColumn: yCol },
+        };
+        this.objects.push(poly);
+        this.selectedObject = poly;
+        this.variables.set("_lastResult", rmse);
+        return;
+      }
+
+      if (name === "Get fitting error" || name === "Get rmse") {
+        // Get fitting error: xColumn$, yColumn$, order
+        const xCol = String(args[0]);
+        const yCol = String(args[1]);
+        const order = Math.round(Number(args[2]) || 3);
+        const xIdx = columns.indexOf(xCol);
+        const yIdx = columns.indexOf(yCol);
+        if (xIdx < 0 || yIdx < 0) { this.variables.set("_lastResult", 0); return; }
+        const xVals = rows.map(r => Number(r[xIdx]));
+        const yVals = rows.map(r => Number(r[yIdx]));
+        const coeffs = this.polyFit(xVals, yVals, order);
+        let sse = 0;
+        for (let i = 0; i < xVals.length; i++) {
+          sse += (yVals[i] - this.polyEval(coeffs, xVals[i])) ** 2;
+        }
+        this.variables.set("_lastResult", Math.sqrt(sse / xVals.length));
+        return;
+      }
+
+      if (name === "Remove column") {
+        const col = String(args[0]);
+        const idx = columns.indexOf(col);
+        if (idx >= 0) {
+          columns.splice(idx, 1);
+          for (const row of rows) row.splice(idx, 1);
+        }
+        return;
+      }
+
+      if (name === "Extract rows where" || name === "Extract rows where column") {
+        // Extract rows where column: column$, operator$, value
+        const col = String(args[0]);
+        const op = String(args[1]);
+        const val = Number(args[2]);
+        const idx = columns.indexOf(col);
+        if (idx < 0) throw new RuntimeError(`Column '${col}' not found`, node.line);
+        const filtered = rows.filter(r => {
+          const v = Number(r[idx]);
+          switch (op) {
+            case "<": return v < val;
+            case ">": return v > val;
+            case "<=": return v <= val;
+            case ">=": return v >= val;
+            case "=": case "==": return v === val;
+            case "!=": case "<>": return v !== val;
+            default: return true;
+          }
+        });
+        const newTable: PraatObject = {
+          id: this.nextId++,
+          type: "Table",
+          name: table.name + "_extract",
+          data: { columns: [...columns], rows: filtered.map(r => [...r]) },
+        };
+        this.objects.push(newTable);
+        this.selectedObject = newTable;
+        return;
+      }
+    }
+
+    // Info command for Polynomial
+    if (name === "Info" && this.selectedObject?.type === "Polynomial") {
+      const d = this.selectedObject.data;
+      const coeffs = d.coefficients as number[];
+      let info = `Polynomial of order ${d.order}\n`;
+      info += `RMSE: ${(d.rmse as number).toFixed(6)}\n`;
+      info += `Coefficients: ${coeffs.map((c: number) => c.toFixed(6)).join(", ")}\n`;
+      this.output += info;
+      return;
+    }
+
+    // Get value at time for Polynomial (evaluate)
+    if ((name === "Get value at time" || name === "Get value") && this.selectedObject?.type === "Polynomial") {
+      const t = Number(args[0]) || 0;
+      const coeffs = this.selectedObject.data.coefficients as number[];
+      this.variables.set("_lastResult", this.polyEval(coeffs, t));
+      return;
     }
 
     // Info command for LinearRegression
@@ -1043,6 +1159,35 @@ export class Interpreter {
       }
     }
     return aug.map(row => row[p]);
+  }
+
+  /**
+   * Fit a polynomial of given order to (x, y) data.
+   * Returns coefficients [a0, a1, ..., an] where y = a0 + a1*x + a2*x^2 + ... + an*x^n
+   */
+  private polyFit(x: number[], y: number[], order: number): number[] {
+    const n = x.length;
+    if (n === 0) return Array(order + 1).fill(0);
+    // Build Vandermonde matrix
+    const X = x.map(xi => {
+      const row: number[] = [];
+      for (let p = 0; p <= order; p++) {
+        row.push(xi ** p);
+      }
+      return row;
+    });
+    return this.olsRegression(X, y);
+  }
+
+  /**
+   * Evaluate polynomial at x. coeffs = [a0, a1, ..., an]
+   */
+  private polyEval(coeffs: number[], x: number): number {
+    let result = 0;
+    for (let i = 0; i < coeffs.length; i++) {
+      result += coeffs[i] * (x ** i);
+    }
+    return result;
   }
 
   private evalExpr(node: ExprNode): number | string | number[] {

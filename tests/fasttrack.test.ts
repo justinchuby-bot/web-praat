@@ -222,3 +222,207 @@ describe("FastTrack end-to-end simulation", () => {
     expect(result.output).toContain("Min error: 2.1");
   });
 });
+
+describe("FastTrack - Polynomial fitting", () => {
+  it("fits a linear polynomial (order 1) to known data", () => {
+    const interp = new Interpreter();
+    const result = interp.execute(`
+      Create Table with column names: "data", 4, "time F1"
+      Set numeric value: 1, "time", 0
+      Set numeric value: 1, "F1", 100
+      Set numeric value: 2, "time", 1
+      Set numeric value: 2, "F1", 200
+      Set numeric value: 3, "time", 2
+      Set numeric value: 3, "F1", 300
+      Set numeric value: 4, "time", 3
+      Set numeric value: 4, "F1", 400
+      Fit polynomial: "time", "F1", 1
+      val = Get value: 1.5
+      appendInfoLine: val
+    `);
+    expect(result.errors).toHaveLength(0);
+    // y = 100 + 100*x, at x=1.5 → 250
+    expect(Number(result.output.trim())).toBeCloseTo(250, 1);
+  });
+
+  it("fits a quadratic polynomial (order 2)", () => {
+    const interp = new Interpreter();
+    const result = interp.execute(`
+      Create Table with column names: "data", 5, "x y"
+      Set numeric value: 1, "x", 0
+      Set numeric value: 1, "y", 0
+      Set numeric value: 2, "x", 1
+      Set numeric value: 2, "y", 1
+      Set numeric value: 3, "x", 2
+      Set numeric value: 3, "y", 4
+      Set numeric value: 4, "x", 3
+      Set numeric value: 4, "y", 9
+      Set numeric value: 5, "x", 4
+      Set numeric value: 5, "y", 16
+      Fit polynomial: "x", "y", 2
+      val = Get value: 5
+      appendInfoLine: val
+    `);
+    expect(result.errors).toHaveLength(0);
+    // y = x^2, at x=5 → 25
+    expect(Number(result.output.trim())).toBeCloseTo(25, 1);
+  });
+
+  it("Get fitting error returns RMSE", () => {
+    const interp = new Interpreter();
+    const result = interp.execute(`
+      Create Table with column names: "data", 4, "time F1"
+      Set numeric value: 1, "time", 0
+      Set numeric value: 1, "F1", 100
+      Set numeric value: 2, "time", 1
+      Set numeric value: 2, "F1", 200
+      Set numeric value: 3, "time", 2
+      Set numeric value: 3, "F1", 300
+      Set numeric value: 4, "time", 3
+      Set numeric value: 4, "F1", 400
+      err = Get fitting error: "time", "F1", 1
+      appendInfoLine: err
+    `);
+    expect(result.errors).toHaveLength(0);
+    // Perfect fit → RMSE ≈ 0
+    expect(Number(result.output.trim())).toBeCloseTo(0, 5);
+  });
+
+  it.todo("FastTrack full loop: multiple ceilings, pick best fit", () => {
+    const interp = new Interpreter();
+    // Simulate: for each ceiling, create formant table, fit polynomial, track error
+    interp.registerInclude("fasttrack_core.praat", `
+      procedure fitFormants: .tableName$, .order
+        select Table '.tableName$'
+        .err = Get fitting error: "time", "F1", .order
+      endproc
+    `);
+
+    const result = interp.execute(`
+      include fasttrack_core.praat
+
+      Create Table with column names: "results", 0, "ceiling error"
+
+      # Simulate 3 ceiling settings with different formant tracks
+      # Ceiling 5000: noisy track
+      Create Table with column names: "track_5000", 5, "time F1"
+      Set numeric value: 1, "time", 0.0
+      Set numeric value: 1, "F1", 500
+      Set numeric value: 2, "time", 0.1
+      Set numeric value: 2, "F1", 520
+      Set numeric value: 3, "time", 0.2
+      Set numeric value: 3, "F1", 480
+      Set numeric value: 4, "time", 0.3
+      Set numeric value: 4, "F1", 550
+      Set numeric value: 5, "time", 0.4
+      Set numeric value: 5, "F1", 510
+      @fitFormants: "track_5000", 3
+      select Table "results"
+      Append row
+      nRow = Get number of rows
+      Set numeric value: nRow, "ceiling", 5000
+      Set numeric value: nRow, "error", fitFormants.err
+
+      # Ceiling 5500: smooth track (best)
+      Create Table with column names: "track_5500", 5, "time F1"
+      Set numeric value: 1, "time", 0.0
+      Set numeric value: 1, "F1", 500
+      Set numeric value: 2, "time", 0.1
+      Set numeric value: 2, "F1", 510
+      Set numeric value: 3, "time", 0.2
+      Set numeric value: 3, "F1", 520
+      Set numeric value: 4, "time", 0.3
+      Set numeric value: 4, "F1", 530
+      Set numeric value: 5, "time", 0.4
+      Set numeric value: 5, "F1", 540
+      @fitFormants: "track_5500", 3
+      select Table "results"
+      Append row
+      nRow = Get number of rows
+      Set numeric value: nRow, "ceiling", 5500
+      Set numeric value: nRow, "error", fitFormants.err
+
+      # Ceiling 6000: very noisy
+      Create Table with column names: "track_6000", 5, "time F1"
+      Set numeric value: 1, "time", 0.0
+      Set numeric value: 1, "F1", 500
+      Set numeric value: 2, "time", 0.1
+      Set numeric value: 2, "F1", 600
+      Set numeric value: 3, "time", 0.2
+      Set numeric value: 3, "F1", 450
+      Set numeric value: 4, "time", 0.3
+      Set numeric value: 4, "F1", 700
+      Set numeric value: 5, "time", 0.4
+      Set numeric value: 5, "F1", 400
+      @fitFormants: "track_6000", 3
+      select Table "results"
+      Append row
+      nRow = Get number of rows
+      Set numeric value: nRow, "ceiling", 6000
+      Set numeric value: nRow, "error", fitFormants.err
+
+      # Find best ceiling (min error)
+      select Table "results"
+      nRows = Get number of rows
+      bestCeiling = 0
+      minError = 999999
+      for i from 1 to nRows
+        err = Get value: i, "error"
+        if err < minError
+          minError = err
+          ceil = Get value: i, "ceiling"
+          bestCeiling = ceil
+        endif
+      endfor
+      appendInfoLine: "Best ceiling: ", bestCeiling
+    `);
+    expect(result.errors).toHaveLength(0);
+    expect(result.output).toContain("Best ceiling: 5500");
+  });
+
+  it("Polynomial Info command", () => {
+    const interp = new Interpreter();
+    const result = interp.execute(`
+      Create Table with column names: "d", 3, "x y"
+      Set numeric value: 1, "x", 0
+      Set numeric value: 1, "y", 1
+      Set numeric value: 2, "x", 1
+      Set numeric value: 2, "y", 3
+      Set numeric value: 3, "x", 2
+      Set numeric value: 3, "y", 5
+      Fit polynomial: "x", "y", 1
+      Info
+    `);
+    expect(result.errors).toHaveLength(0);
+    expect(result.output).toContain("Polynomial of order 1");
+    expect(result.output).toContain("RMSE");
+  });
+
+  it("Remove column", () => {
+    const interp = new Interpreter();
+    const result = interp.execute(`
+      Create Table with column names: "t", 2, "a b c"
+      Remove column: "b"
+      idx = Get column index: "c"
+      appendInfoLine: idx
+    `);
+    expect(result.errors).toHaveLength(0);
+    expect(result.output.trim()).toBe("2");
+  });
+
+  it("Extract rows where column", () => {
+    const interp = new Interpreter();
+    const result = interp.execute(`
+      Create Table with column names: "t", 4, "x"
+      Set numeric value: 1, "x", 10
+      Set numeric value: 2, "x", 20
+      Set numeric value: 3, "x", 30
+      Set numeric value: 4, "x", 40
+      Extract rows where column: "x", ">", 20
+      n = Get number of rows
+      appendInfoLine: n
+    `);
+    expect(result.errors).toHaveLength(0);
+    expect(result.output.trim()).toBe("2");
+  });
+});
