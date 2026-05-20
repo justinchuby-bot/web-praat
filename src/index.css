@@ -209,11 +209,13 @@ button, input, select {
   flex-direction: column;
   flex: 1;
   min-height: 140px;
+  overflow: hidden;
 }
 
 .spectrogram-canvas {
   width: 100%;
   flex: 1;
+  min-height: 0;
   border-bottom: 1px solid var(--border);
   cursor: crosshair;
 }
