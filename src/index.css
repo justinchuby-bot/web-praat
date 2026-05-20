@@ -635,6 +635,44 @@ button, input, select {
 }
 
 /* Settings Dialog */
+.settings-section {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.settings-section + .settings-section {
+  margin-top: 8px;
+}
+
+.settings-section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: var(--bg-surface, var(--bg-base));
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.settings-section-header:hover {
+  background: var(--bg-hover, rgba(0,0,0,0.04));
+}
+
+.settings-section-title {
+  flex: 1;
+}
+
+.settings-section .settings-grid {
+  padding: 8px 12px 12px;
+  border-top: 1px solid var(--border);
+}
+
 .settings-dialog {
   max-width: 420px;
 }
