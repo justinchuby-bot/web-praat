@@ -31,14 +31,15 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-bg-surface p-6 shadow-lg rounded-xl animate-in fade-in-0 zoom-in-95",
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border p-6 shadow-lg rounded-xl animate-in fade-in-0 zoom-in-95",
         className
       )}
+      style={{ background: 'var(--bg-surface)', borderColor: 'var(--border)', color: 'var(--text)' }}
       {...props}
     >
       {children}
       <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none">
-        <X className="h-4 w-4 text-text-dim" />
+        <X className="h-4 w-4" style={{ color: "var(--text-dim)" }} />
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
   </DialogPrimitive.Portal>
@@ -55,7 +56,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold leading-none tracking-tight text-text-primary", className)}
+    className={cn("text-lg font-semibold leading-none tracking-tight", className)} style={{ color: "var(--text)" }}
     {...props}
   />
 ));

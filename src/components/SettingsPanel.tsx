@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Button } from './ui/button';
+import { Settings2, Music, BarChart3 } from 'lucide-react';
 import type { AnalysisSettings, ColormapName, WindowFunction } from '../types';
 
 interface SettingsPanelProps {
@@ -41,7 +42,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button variant="outline" size="sm" className="w-full">
-            ⚙ Spectrogram Settings…
+            <Settings2 size={14} className="inline mr-1" /> Spectrogram Settings…
           </Button>
         </DialogTrigger>
         <DialogContent className="settings-dialog">
@@ -140,7 +141,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
       <Dialog>
         <DialogTrigger asChild>
           <Button variant="outline" size="sm" className="w-full mt-2">
-            🎵 Pitch Settings…
+            <Music size={14} className="inline mr-1" /> Pitch Settings…
           </Button>
         </DialogTrigger>
         <DialogContent className="settings-dialog">
@@ -241,7 +242,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
       <Dialog>
         <DialogTrigger asChild>
           <Button variant="outline" size="sm" className="w-full mt-2">
-            📊 Formant Settings…
+            <BarChart3 size={14} className="inline mr-1" /> Formant Settings…
           </Button>
         </DialogTrigger>
         <DialogContent className="settings-dialog">

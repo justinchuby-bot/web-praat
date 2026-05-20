@@ -654,8 +654,8 @@ button, input, select {
 }
 
 .settings-field span {
-  color: var(--text-dim);
-  font-size: 11px;
+  color: var(--text);
+  font-size: 12px;
   font-weight: 500;
 }
 
@@ -671,6 +671,35 @@ button, input, select {
 
 .settings-field input:focus,
 .settings-field select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.settings-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.settings-row span {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.settings-row input,
+.settings-row select {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-base);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.settings-row input:focus,
+.settings-row select:focus {
   outline: none;
   border-color: var(--accent);
 }
