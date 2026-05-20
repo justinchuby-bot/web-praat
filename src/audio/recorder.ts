@@ -15,8 +15,18 @@ export class AudioRecorder {
   async start(): Promise<void> {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     this.audioContext = new AudioContext();
-    this.mediaRecorder = new MediaRecorder(stream);
     this.chunks = [];
+
+    // Choose supported MIME type (iOS doesn't support webm)
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+      ? 'audio/webm;codecs=opus'
+      : MediaRecorder.isTypeSupported('audio/mp4')
+        ? 'audio/mp4'
+        : '';
+
+    this.mediaRecorder = mimeType
+      ? new MediaRecorder(stream, { mimeType })
+      : new MediaRecorder(stream);
 
     this.mediaRecorder.ondataavailable = (e) => {
       if (e.data.size > 0) this.chunks.push(e.data);
@@ -33,21 +43,25 @@ export class AudioRecorder {
         return;
       }
 
+      const ctx = this.audioContext;
+      const mimeType = this.mediaRecorder.mimeType || 'audio/webm';
+
       this.mediaRecorder.onstop = async () => {
         this._isRecording = false;
-        const blob = new Blob(this.chunks, { type: 'audio/webm' });
+        const blob = new Blob(this.chunks, { type: mimeType });
         const arrayBuffer = await blob.arrayBuffer();
         try {
-          const audioBuffer = await this.audioContext!.decodeAudioData(arrayBuffer);
+          const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+          await ctx.close();
           resolve(audioBuffer);
         } catch (err) {
+          await ctx.close().catch(() => {});
           reject(err);
         }
       };
 
       this.mediaRecorder.stop();
       this.mediaRecorder.stream.getTracks().forEach((t) => t.stop());
-      this.audioContext?.close();
       this.audioContext = null;
     });
   }
