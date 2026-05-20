@@ -9,7 +9,7 @@
 
 ## 当前状态
 
-- **419 tests**, 70+ 源文件, 10000+ 行 TypeScript
+- **435 tests**, 70+ 源文件, 10000+ 行 TypeScript
 - **React 19 + TypeScript 6 + Vite 8 + vitest 4.1**
 - Coverage: 84% statements, 93% audio module
 - Build: 467KB / 145KB gzip
@@ -31,7 +31,8 @@
 - [x] **Hierarchical tiers** — tier parent-child 关系（借鉴 ELAN）
 - [x] **ELAN (.eaf) 导入导出** — 支持 ELAN 注释格式互转
 - [x] **Video sync** — 标注跟视频对齐
-- [ ] **Controlled vocabulary** — 标注预定义词表
+- [x] **Controlled vocabulary** — 标注预定义词表
+- [ ] **SpellingChecker** — WordList-based 拼写检查
 
 ## Backlog（按优先级）
 
@@ -48,7 +49,7 @@
 - [x] Hierarchical tiers（tier parent-child 关系）
 - [x] ELAN (.eaf) 导入导出
 - [x] Video sync（标注跟视频对齐）
-- [ ] Controlled vocabulary（标注预定义词表）
+- [x] Controlled vocabulary（标注预定义词表）
 
 ### 低优先
 - [ ] SpellingChecker
@@ -113,6 +114,7 @@
 - [x] **Hierarchical tiers** — parentId on tiers, hierarchy.ts (validate, tree, cycle detection), TextGridEditor indentation + Set Parent UI, 23 tests (398 total)
 - [x] **ELAN (.eaf) 导入导出** — parseElan (XML→TextGrid) + serializeElan (TextGrid→XML) + parent tier mapping + 15 tests (413 total)
 - [x] **Video sync** — VideoSync component in RightSidebar; load video, extract audio, bidirectional time sync (muted video + main audio); 6 tests (419 total)
+- [x] **Controlled vocabulary** — vocabulary.ts (create/parse/serialize/validate/autocomplete) + ControlledVocabularyEditor UI (manage, import/export, tier bindings, strict mode) + RightSidebar 'Vocab' tab; 16 new tests (435 total)
 
 ## 规则
 
