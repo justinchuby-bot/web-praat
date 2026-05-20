@@ -1445,7 +1445,9 @@ select:focus-visible {
 .listing-panel {
   border-top: 1px solid var(--border);
   background: var(--bg-base);
-  max-height: 240px;
+  flex: 0 1 50%;
+  min-height: 120px;
+  max-height: 60%;
   display: flex;
   flex-direction: column;
 }

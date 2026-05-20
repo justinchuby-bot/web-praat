@@ -899,9 +899,9 @@ export default function App() {
           )}
         </div>
 
-        </main>
-
         <ListingPanel data={listingData} onClose={() => setListingData(null)} />
+
+        </main>
 
         {analysis && !isMobile && (
           <RightSidebar>
