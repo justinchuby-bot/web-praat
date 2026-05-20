@@ -223,29 +223,7 @@ export const Spectrogram = React.memo(function Spectrogram({
       ctx.fillRect(x1, 0, x2 - x1, height);
     }
 
-    // IPA vowel annotations
-    if (showIpa && showFormants) {
-      const ipaAnnotations = generateIpaAnnotations(
-        analysis.formants.times,
-        analysis.formants.tracked[0] ?? [],
-        analysis.formants.tracked[1] ?? [],
-        analysis.intensity.values,
-        { minTimeGap: 0.08, minConfidence: 0.35 }
-      );
-      ctx.font = '12px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'bottom';
-      for (const ann of ipaAnnotations) {
-        if (ann.time < viewRange.start || ann.time > viewRange.end) continue;
-        const x = timeToX(ann.time, width, viewRange);
-        // Position label above F1 position (F1 maps to height axis)
-        const f1Y = height - (ann.f1 / maxDisplayFreq) * height;
-        const labelY = Math.max(14, f1Y - 6);
-        const alpha = 0.5 + ann.confidence * 0.5;
-        ctx.fillStyle = style.getPropertyValue('--text-overlay').trim() || `rgba(205, 214, 244, ${alpha})`;
-        ctx.fillText(ann.symbol, x, labelY);
-      }
-    }
+    // IPA annotations rendered as HTML tier below (not on canvas)
 
     if (currentTime >= viewRange.start && currentTime <= viewRange.end) {
       const x = timeToX(currentTime, width, viewRange);
@@ -335,6 +313,17 @@ export const Spectrogram = React.memo(function Spectrogram({
     if (readoutRef.current) readoutRef.current.style.display = 'none';
   };
 
+  const ipaAnnotations = useMemo(() => {
+    if (!showIpa || !showFormants || !analysis) return [];
+    return generateIpaAnnotations(
+      analysis.formants.times,
+      analysis.formants.tracked[0] ?? [],
+      analysis.formants.tracked[1] ?? [],
+      analysis.intensity.values,
+      { minTimeGap: 0.08, minConfidence: 0.35 }
+    );
+  }, [showIpa, showFormants, analysis]);
+
   return (
     <div
       className="spectrogram-container"
@@ -351,6 +340,23 @@ export const Spectrogram = React.memo(function Spectrogram({
           dragModeRef.current = null;
         }}
       />
+      {ipaAnnotations.length > 0 && (
+        <div className="ipa-tier">
+          {ipaAnnotations.map((ann, i) => {
+            if (ann.time < viewRange.start || ann.time > viewRange.end) return null;
+            const pct = (ann.time - viewRange.start) / (viewRange.end - viewRange.start) * 100;
+            return (
+              <span
+                key={i}
+                className="ipa-label"
+                style={{ left: `${pct}%`, opacity: 0.5 + ann.confidence * 0.5 }}
+              >
+                {ann.symbol}
+              </span>
+            );
+          })}
+        </div>
+      )}
       <div ref={crosshairRef} className="spectrogram-crosshair" style={{ display: 'none' }} />
       <div ref={readoutRef} className="spectrogram-readout" style={{ display: 'none' }} />
     </div>

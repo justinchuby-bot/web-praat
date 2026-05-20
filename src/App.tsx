@@ -392,6 +392,7 @@ export default function App() {
 
   const handleSpectrumSliceSelect = useCallback((time: number) => {
     if (!currentSamplesRef.current || !analysis) return;
+    setSelection(null);
     setCurrentTime(time);
     const slice = computeSpectrumSlice(currentSamplesRef.current, sampleRate, time, settings);
     setAnalysis({ ...analysis, spectrumSlice: slice });
@@ -913,7 +914,7 @@ export default function App() {
                 pulses={showPulses ? analysis?.voiceQuality?.pulses : undefined}
                 showPulses={showPulses}
                 onSelectionChange={setSelection}
-                onCursorChange={(time: number) => { setCurrentTime(time); handleSpectrumSliceSelect(time); }}
+                onCursorChange={(time: number) => { setSelection(null); setCurrentTime(time); handleSpectrumSliceSelect(time); }}
                 onWheelZoom={handleWheelZoom}
                 onPan={handlePan}
                 onZoomSelection={handleZoomSelection}

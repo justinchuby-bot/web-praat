@@ -1751,3 +1751,22 @@ select:focus-visible {
   user-select: none;
   padding-right: 8px;
 }
+
+.ipa-tier {
+  position: relative;
+  height: 22px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.ipa-label {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-family: 'Doulos SIL', 'Charis SIL', serif;
+  color: var(--text);
+  line-height: 22px;
+  user-select: none;
+}
