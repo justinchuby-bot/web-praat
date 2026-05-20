@@ -1727,3 +1727,13 @@ select:focus-visible {
   color: var(--text);
   white-space: pre-wrap;
 }
+
+.menu-version {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-dim);
+  opacity: 0.6;
+  font-family: monospace;
+  user-select: none;
+  padding-right: 8px;
+}

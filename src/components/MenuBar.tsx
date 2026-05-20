@@ -286,6 +286,7 @@ export function MenuBar(props: MenuBarProps) {
     <button className="command-palette-trigger" onClick={onOpenCommandPalette} title="Command Palette (⌘⇧P)">
       ⌘⇧P
     </button>
+    <span className="menu-version">v{__APP_VERSION__}+{__COMMIT_HASH__}</span>
     </div>
   );
 }
