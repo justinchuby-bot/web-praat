@@ -9,7 +9,7 @@
 
 ## 当前状态
 
-- **461 tests**, 70+ 源文件, 10000+ 行 TypeScript
+- **465 tests**, 50 源文件, 10000+ 行 TypeScript
 - **React 19 + TypeScript 6 + Vite 8 + vitest 4.1**
 - Coverage: 84% statements, 93% audio module
 - Build: 467KB / 145KB gzip
@@ -18,9 +18,9 @@
 
 ## 当前优先任务
 
-- [ ] **Praat Editor 菜单补全** — Query 菜单（Get spectral power at cursor）、Select 菜单完善、Pulses 菜单扩展（Jitter/Shimmer from pulses 独立计算）
 - [ ] **SpellingChecker** — WordList-based 拼写检查
 - [ ] **SpeechSynthesizer (TTS)** — Web Speech API integration
+- [ ] **JS API: spectral queries** — `praat.getSpectralPower()`, `praat.getIntensityAtTime()`, `praat.getHnrAtTime()`
 
 ## Backlog（按优先级）
 
@@ -114,6 +114,7 @@
 - [x] **Interpreter 连接真实引擎** — To Formant/To Pitch/Get value at time/Get mean 调用真实 LPC + autocorrelation 分析
 - [x] **FastTrack 端到端跑通** — polynomial fitting (Fit polynomial/Get fitting error) + select Type Name fix + Remove column + Extract rows where + full fitting loop
 - [x] **Pulses (PointProcess)** — 声门脉冲检测 + 可视化 overlay + Pulses 菜单（Show pulses, Voice report）+ VoiceReportDialog
+- [x] **Praat Editor 菜单补全** — Query菜单 (Get spectral power/intensity/HNR at cursor) + Pulses菜单 (Jitter local/Shimmer local) + Select菜单完善
 - [x] **Spectrum Slice UX** — formant peak markers (F1/F2/F3) + dB axis labels + hover cursor readout
 
 ## 规则
