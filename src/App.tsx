@@ -69,6 +69,7 @@ import type {
   TimeSelection,
 } from './types';
 import { fitToWindow, panViewRange, selectionToView, zoomAroundPoint } from './utils/view';
+import { findNearestZeroCrossing } from "./utils/zeroCrossing";
 
 function createAudioBufferFromSamples(samples: Float32Array, sampleRate: number): AudioBuffer {
   const buffer = new AudioBuffer({ length: samples.length, sampleRate, numberOfChannels: 1 });
