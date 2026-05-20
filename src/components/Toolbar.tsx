@@ -31,11 +31,13 @@ interface ToolbarProps {
   showIntensity: boolean;
   showIpa: boolean;
   showCochleagram: boolean;
+  showPulses: boolean;
   onTogglePitch: () => void;
   onToggleFormants: () => void;
   onToggleIntensity: () => void;
   onToggleIpa: () => void;
   onToggleCochleagram: () => void;
+  onTogglePulses: () => void;
 }
 
 function IconBtn({ icon: Icon, label, onClick, disabled, active, danger, color }: {
@@ -73,8 +75,8 @@ export function Toolbar(props: ToolbarProps) {
     onRecord, onStopRecord, onPlay, onPause,
     onUndo, onRedo, onCut, onCopy, onPaste, onDelete,
     onZoomIn, onZoomOut, onFitToWindow,
-    showPitch, showFormants, showIntensity, showIpa, showCochleagram,
-    onTogglePitch, onToggleFormants, onToggleIntensity, onToggleIpa, onToggleCochleagram,
+    showPitch, showFormants, showIntensity, showIpa, showCochleagram, showPulses: _showPulses,
+    onTogglePitch, onToggleFormants, onToggleIntensity, onToggleIpa, onToggleCochleagram, onTogglePulses: _onTogglePulses,
   } = props;
 
   return (

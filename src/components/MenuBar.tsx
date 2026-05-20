@@ -63,6 +63,18 @@ interface MenuBarProps {
   onOpenCommandPalette?: () => void;
   themeSetting?: ThemeSetting;
   onThemeChange?: (theme: ThemeSetting) => void;
+  // Query menu
+  onGetCursorPosition?: () => void;
+  onGetSelectionBounds?: () => void;
+  onGetPitchAtCursor?: () => void;
+  onGetFormantAtCursor?: () => void;
+  onPitchListing?: () => void;
+  onFormantListing?: () => void;
+  // Select menu
+  onSelectAll?: () => void;
+  onMoveCursorToZeroCrossing?: () => void;
+  onMoveStartToZeroCrossing?: () => void;
+  onMoveEndToZeroCrossing?: () => void;
 }
 
 function FileInput({ accept, onFile, children }: { accept: string; onFile: (f: File) => void; children: React.ReactNode }) {
@@ -196,6 +208,33 @@ export function MenuBar(props: MenuBarProps) {
           <MenubarItem onClick={onOpenPlugins}>🧩 Plugins</MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onOpenControlledVocabulary}>Controlled Vocabulary</MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
+
+      {/* Query */}
+      <MenubarMenu>
+        <MenubarTrigger>Query</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem disabled={!hasAudio} onClick={props.onGetCursorPosition}>Get cursor position</MenubarItem>
+          <MenubarItem disabled={!selection} onClick={props.onGetSelectionBounds}>Get selection bounds</MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem disabled={!hasAudio} onClick={props.onGetPitchAtCursor}>Get pitch at cursor</MenubarItem>
+          <MenubarItem disabled={!hasAudio} onClick={props.onGetFormantAtCursor}>Get formant at cursor</MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem disabled={!hasAudio} onClick={props.onPitchListing}>Pitch listing</MenubarItem>
+          <MenubarItem disabled={!hasAudio} onClick={props.onFormantListing}>Formant listing</MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
+
+      {/* Select */}
+      <MenubarMenu>
+        <MenubarTrigger>Select</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem disabled={!hasAudio} onClick={props.onSelectAll}>Select all</MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem disabled={!hasAudio} onClick={props.onMoveCursorToZeroCrossing}>Move cursor to nearest zero crossing</MenubarItem>
+          <MenubarItem disabled={!selection} onClick={props.onMoveStartToZeroCrossing}>Move start to zero crossing</MenubarItem>
+          <MenubarItem disabled={!selection} onClick={props.onMoveEndToZeroCrossing}>Move end to zero crossing</MenubarItem>
         </MenubarContent>
       </MenubarMenu>
 
