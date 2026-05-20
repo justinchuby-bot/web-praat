@@ -32,6 +32,7 @@ interface MenuBarProps {
   onCheckSpelling?: () => void;
   onGenerateTone?: () => void;
   onBatchProcess?: () => void;
+  onAnalyzeSelection?: () => void;
   onUndo: () => void;
   onRedo: () => void;
   onCut: () => void;
@@ -173,6 +174,7 @@ export function MenuBar(props: MenuBarProps) {
           <MenubarItem onClick={onZoomOut}>Zoom Out <span className="menu-shortcut">⌘-</span></MenubarItem>
           <MenubarItem disabled={!hasAudio} onClick={onFitToWindow}>Fit to Window <span className="menu-shortcut">⌘0</span></MenubarItem>
           <MenubarItem disabled={!selection} onClick={onZoomToSelection}>Zoom to Selection</MenubarItem>
+          {props.onAnalyzeSelection && <MenubarItem disabled={!hasAudio} onClick={props.onAnalyzeSelection}>Analyze Visible Region</MenubarItem>}
           <MenubarSeparator />
           <MenubarSub>
             <MenubarSubTrigger>Theme</MenubarSubTrigger>

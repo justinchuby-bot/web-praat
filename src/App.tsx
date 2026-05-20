@@ -200,9 +200,43 @@ export default function App() {
       if (resetEditor) {
         originalSamplesRef.current = Float32Array.from(samples);
       }
+      // For long audio (>5 min), show waveform immediately without full analysis
+      const LONG_THRESHOLD = 300; // seconds
+      if (buffer.duration > LONG_THRESHOLD) {
+        currentSamplesRef.current = samples;
+        setSampleRate(buffer.sampleRate);
+        if (resetEditor) {
+          editorRef.current.setSamples(samples);
+          syncHistoryFlags();
+        }
+        const duration = buffer.duration;
+        // Create minimal analysis with just waveform data
+        const emptyAnalysis: AnalysisResult = {
+          waveform: samples,
+          sampleRate: buffer.sampleRate,
+          duration,
+          spectrogram: { magnitudes: [], timeStep: 0.01, freqStep: 0, maxFreq: buffer.sampleRate / 2, frameTimes: [] },
+          pitch: { frequencies: [], times: [] },
+          formants: { tracked: [[], [], []], times: [], f1: [], f2: [], f3: [], candidates: [] },
+          intensity: { values: [], times: [] },
+          harmonicity: { values: [], times: [], meanHnrDb: 0, medianHnrDb: 0 },
+          voiceQuality: { pulses: [], periodDurations: [], pulseAmplitudes: [], jitterLocalPercent: 0, jitterAbsolute: 0, rap: 0, ppq5: 0, shimmerLocalPercent: 0, shimmerDb: 0, apq3: 0, apq5: 0 },
+          spectrumSlice: null,
+          settings: settingsRef.current as AnalysisSettings,
+        };
+        setAnalysis(emptyAnalysis);
+        setAnalyzing(false);
+        const nextGrid = createEmptyTextGrid(duration);
+        textGridRef.current = nextGrid;
+        setTextGrid(nextGrid);
+        setActiveTierId(nextGrid.tiers[0]?.id ?? null);
+        setViewStart(0);
+        setViewEnd(Math.min(30, duration)); // Show first 30s
+        return;
+      }
       processSamples(samples, buffer.sampleRate, resetEditor);
     },
-    [processSamples]
+    [processSamples, syncHistoryFlags]
   );
 
   // Preload WebGPU device at mount to avoid first-analysis delay
@@ -225,8 +259,9 @@ export default function App() {
       // Warn for very long files
       if (buffer.duration > 300) {
         const proceed = confirm(
-          `This file is ${Math.round(buffer.duration / 60)} minutes long. ` +
-          `Analysis may be slow. For long recordings, consider trimming first.\n\n` +
+          `This file is ${Math.round(buffer.duration / 60)} minutes long.\n\n` +
+          `It will load in waveform-only mode (no spectrogram/pitch/formant).\n` +
+          `Zoom into a region and use View > Analyze Selection for detailed analysis.\n\n` +
           `Continue?`
         );
         if (!proceed) return;
@@ -708,6 +743,14 @@ export default function App() {
           processSamples(tone, sr);
         }}
         onBatchProcess={() => setShowBatch(true)}
+        onAnalyzeSelection={() => {
+          if (!currentSamplesRef.current) return;
+          const startSample = Math.floor(viewStart * sampleRate);
+          const endSample = Math.min(Math.floor(viewEnd * sampleRate), currentSamplesRef.current.length);
+          if (endSample - startSample < 100) return;
+          const region = currentSamplesRef.current.slice(startSample, endSample);
+          processSamples(region, sampleRate, false);
+        }}
         onUndo={handleUndo}
         onRedo={handleRedo}
         onCut={handleCut}
