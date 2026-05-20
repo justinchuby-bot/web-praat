@@ -76,9 +76,11 @@ export class AudioEditorHistory {
   private undoStack: AudioEditCommand[] = [];
   private redoStack: AudioEditCommand[] = [];
   private state: AudioEditState;
+  private readonly maxUndoSteps: number;
 
-  constructor(initialSamples: Float32Array<ArrayBufferLike>) {
+  constructor(initialSamples: Float32Array<ArrayBufferLike>, maxUndoSteps = 30) {
     this.state = { samples: Float32Array.from(initialSamples), clipboard: null };
+    this.maxUndoSteps = maxUndoSteps;
   }
 
   setSamples(samples: Float32Array<ArrayBufferLike>): void {
@@ -103,6 +105,9 @@ export class AudioEditorHistory {
   execute(command: AudioEditCommand): AudioEditState {
     this.state = command.apply(this.state);
     this.undoStack.push(command);
+    if (this.undoStack.length > this.maxUndoSteps) {
+      this.undoStack.shift(); // drop oldest
+    }
     this.redoStack = [];
     return this.getState();
   }
