@@ -1643,3 +1643,97 @@ select:focus-visible {
   width: 100%;
   flex: 1;
 }
+
+.script-editor-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.script-editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface, var(--bg-base));
+  flex-shrink: 0;
+}
+
+.script-editor-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.script-tab {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.script-tab.active {
+  background: var(--accent, #89b4fa);
+  color: #fff;
+}
+
+.script-run-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: none;
+  background: var(--accent, #89b4fa);
+  color: #fff;
+  cursor: pointer;
+}
+
+.script-run-btn:hover {
+  opacity: 0.9;
+}
+
+.script-warning {
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #d97706;
+  background: rgba(217, 119, 6, 0.1);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.script-editor-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.script-editor-body .cm-editor {
+  height: 100%;
+}
+
+.script-output {
+  max-height: 180px;
+  overflow: auto;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.script-errors {
+  padding: 8px 10px;
+  font-size: 12px;
+  font-family: monospace;
+  color: #ef4444;
+}
+
+.script-output-text {
+  padding: 8px 10px;
+  font-size: 12px;
+  font-family: monospace;
+  color: var(--text);
+  white-space: pre-wrap;
+}

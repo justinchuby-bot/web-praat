@@ -1,6 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useCallback } from "react";
+import CodeMirror from "@uiw/react-codemirror";
+import { javascript } from "@codemirror/lang-javascript";
+import { oneDark } from "@codemirror/theme-one-dark";
 import { runPraatScript, InterpreterResult, runJavaScript, JsRunnerResult } from "../scripting";
-import { HighlightedCode } from "./HighlightedCode";
 
 type ScriptLanguage = "praat" | "javascript";
 
@@ -13,7 +15,6 @@ export function ScriptEditor({ samples, sampleRate }: ScriptEditorProps) {
   const [language, setLanguage] = useState<ScriptLanguage>("praat");
   const [result, setResult] = useState<InterpreterResult | null>(null);
   const [jsResult, setJsResult] = useState<JsRunnerResult | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const praatExample = `# Vowel Formant Analysis
 # Analyze the loaded audio and report pitch + formant statistics
@@ -80,6 +81,7 @@ praat.log("Done! Tip: F1 correlates with vowel height, F2 with frontness.");
 `;
 
   const [code, setCode] = useState(praatExample);
+
   const handleLanguageChange = (lang: ScriptLanguage) => {
     setLanguage(lang);
     setResult(null);
@@ -99,7 +101,6 @@ praat.log("Done! Tip: F1 correlates with vowel height, F2 with frontness.");
       setResult(r);
       setJsResult(null);
     } else {
-      // JS mode — provide empty audio context if no audio loaded
       const context = {
         samples: samples ?? new Float32Array(0),
         sampleRate: sampleRate ?? 44100,
@@ -110,7 +111,7 @@ praat.log("Done! Tip: F1 correlates with vowel height, F2 with frontness.");
     }
   };
 
-  const lineNumbers = code.split("\n").map((_, i) => i + 1);
+  const onCodeChange = useCallback((val: string) => setCode(val), []);
 
   const hasErrors = language === "praat"
     ? (result?.errors?.length ?? 0) > 0
@@ -124,90 +125,71 @@ praat.log("Done! Tip: F1 correlates with vowel height, F2 with frontness.");
     ? result?.errors
     : jsResult?.errors?.map(e => ({ line: 0, message: e.message }));
 
+  const extensions = language === "javascript" ? [javascript()] : [];
+
   return (
-    <div className="flex flex-col h-full border rounded-lg overflow-hidden bg-white dark:bg-gray-900">
-      <div className="flex items-center justify-between px-4 py-2 bg-gray-100 dark:bg-gray-800 border-b">
-        <div className="flex items-center gap-1">
+    <div className="script-editor-root">
+      <div className="script-editor-toolbar">
+        <div className="script-editor-tabs">
           <button
             onClick={() => handleLanguageChange("praat")}
-            className={`px-3 py-1 text-sm rounded transition-colors ${
-              language === "praat"
-                ? "bg-blue-600 text-white"
-                : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-            }`}
+            className={`script-tab ${language === "praat" ? "active" : ""}`}
           >
             Praat Script
           </button>
           <button
             onClick={() => handleLanguageChange("javascript")}
-            className={`px-3 py-1 text-sm rounded transition-colors ${
-              language === "javascript"
-                ? "bg-yellow-600 text-white"
-                : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-            }`}
+            className={`script-tab ${language === "javascript" ? "active" : ""}`}
           >
             JavaScript
           </button>
         </div>
-        <button
-          onClick={handleRun}
-          className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-        >
+        <button onClick={handleRun} className="script-run-btn">
           ▶ Run
         </button>
       </div>
 
-      <div className="flex-1 flex flex-col min-h-0">
-        {/* No audio warning */}
-        {noAudioLoaded && (
-          <div className="px-4 py-2 text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800">
-            ⚠️ No audio loaded — analysis commands (To Pitch, To Formant, etc.) require a sound file.
-          </div>
-        )}
-        {/* Editor with syntax highlighting */}
-        <div className="flex-1 flex min-h-0 border-b">
-          <div className="py-2 px-2 text-right text-xs text-gray-400 select-none font-mono leading-5 bg-gray-50 dark:bg-gray-850 overflow-hidden">
-            {lineNumbers.map((n) => (
-              <div key={n}>{n}</div>
-            ))}
-          </div>
-          <div className="flex-1 relative min-h-0 overflow-auto">
-            {/* Highlighted layer (behind) */}
-            <div className="absolute inset-0 p-2 pointer-events-none" aria-hidden>
-              <HighlightedCode code={code} language={language} />
-            </div>
-            {/* Editable textarea (transparent text, visible caret) */}
-            <textarea
-              ref={textareaRef}
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="relative w-full h-full p-2 font-mono text-sm leading-5 resize-none outline-none bg-transparent text-transparent caret-gray-100 selection:bg-blue-500/30"
-              spellCheck={false}
-              placeholder={language === "praat" ? "Enter Praat Script code..." : "Enter JavaScript code..."}
-            />
-          </div>
+      {noAudioLoaded && (
+        <div className="script-warning">
+          ⚠️ No audio loaded — analysis commands require a sound file.
         </div>
+      )}
 
-        {/* Output */}
-        {(result || jsResult) && (
-          <div className="h-48 overflow-auto border-t">
-            {hasErrors ? (
-              <div className="p-3 text-sm text-red-600 dark:text-red-400 font-mono">
-                {errors?.map((e, i) => (
-                  <div key={i}>
-                    {e.line > 0 ? `Line ${e.line}: ` : ""}
-                    {e.message}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-3 text-sm font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
-                {output || "(no output)"}
-              </div>
-            )}
-          </div>
-        )}
+      <div className="script-editor-body">
+        <CodeMirror
+          value={code}
+          onChange={onCodeChange}
+          extensions={extensions}
+          theme={oneDark}
+          height="100%"
+          style={{ flex: 1, minHeight: 0, overflow: 'auto' }}
+          basicSetup={{
+            lineNumbers: true,
+            foldGutter: false,
+            highlightActiveLineGutter: true,
+            tabSize: 2,
+          }}
+        />
       </div>
+
+      {(result || jsResult) && (
+        <div className="script-output">
+          {hasErrors ? (
+            <div className="script-errors">
+              {errors?.map((e, i) => (
+                <div key={i}>
+                  {e.line > 0 ? `Line ${e.line}: ` : ""}
+                  {e.message}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="script-output-text">
+              {output || "(no output)"}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
