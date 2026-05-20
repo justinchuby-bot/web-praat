@@ -9,7 +9,7 @@
 
 ## 当前状态
 
-- **458 tests**, 70+ 源文件, 10000+ 行 TypeScript
+- **461 tests**, 70+ 源文件, 10000+ 行 TypeScript
 - **React 19 + TypeScript 6 + Vite 8 + vitest 4.1**
 - Coverage: 84% statements, 93% audio module
 - Build: 467KB / 145KB gzip
@@ -18,9 +18,9 @@
 
 ## 当前优先任务
 
-- [ ] **Pulses (PointProcess)** — 声门脉冲检测 + 可视化 overlay + Pulses 菜单（Show pulses, Voice report, Jitter/Shimmer from pulses）
-- [ ] **Praat Editor 菜单补全** — Query 菜单（Get cursor, Get spectral power, Pitch/Formant listing）、Pulses 菜单、Select 菜单（Move cursor to zero crossing）
+- [ ] **Praat Editor 菜单补全** — Query 菜单（Get spectral power at cursor）、Select 菜单完善、Pulses 菜单扩展（Jitter/Shimmer from pulses 独立计算）
 - [ ] **SpellingChecker** — WordList-based 拼写检查
+- [ ] **SpeechSynthesizer (TTS)** — Web Speech API integration
 
 ## Backlog（按优先级）
 
@@ -113,6 +113,7 @@
 - [x] **FastTrack include registry + Table ops** — registerInclude/registerIncludes, command-call assignment parsing (var = Get...), Append row/Set numeric/Set string/Get string/Get column index/Sort rows/Get min-max/Get stdev/Create Table with column names
 - [x] **Interpreter 连接真实引擎** — To Formant/To Pitch/Get value at time/Get mean 调用真实 LPC + autocorrelation 分析
 - [x] **FastTrack 端到端跑通** — polynomial fitting (Fit polynomial/Get fitting error) + select Type Name fix + Remove column + Extract rows where + full fitting loop
+- [x] **Pulses (PointProcess)** — 声门脉冲检测 + 可视化 overlay + Pulses 菜单（Show pulses, Voice report）+ VoiceReportDialog
 - [x] **Spectrum Slice UX** — formant peak markers (F1/F2/F3) + dB axis labels + hover cursor readout
 
 ## 规则
