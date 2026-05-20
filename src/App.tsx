@@ -933,9 +933,9 @@ export default function App() {
           {analysis && (
             <>
               {isProcessing && (
-                <div className="processing-overlay">
-                  <div className="processing-spinner" />
-                  <span>Processing audio…</span>
+                <div className="processing-bar">
+                  <div className="processing-bar-fill" />
+                  <span className="processing-bar-text">Processing audio…</span>
                 </div>
               )}
               <div className="audio-visualizations">

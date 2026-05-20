@@ -1899,29 +1899,33 @@ select:focus-visible {
   user-select: none;
 }
 
-.processing-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 50;
+.processing-bar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  font-size: 14px;
-  backdrop-filter: blur(2px);
+  gap: 8px;
+  padding: 4px 12px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
-.processing-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.processing-bar-fill {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent, #89b4fa), #a6e3a1);
+  animation: indeterminate 1.5s ease-in-out infinite;
+  transform-origin: left;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.processing-bar-text {
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+@keyframes indeterminate {
+  0% { transform: scaleX(0); opacity: 0.5; }
+  50% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(0); opacity: 0.5; }
 }
