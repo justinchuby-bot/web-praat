@@ -310,6 +310,13 @@ export default function App() {
     syncHistoryFlags();
   }, [processSamples, sampleRate, syncHistoryFlags]);
 
+  /** Record a full-buffer transformation in undo history, then apply */
+  const applyEffect = useCallback((newSamples: Float32Array) => {
+    const len = currentSamplesRef.current?.length ?? 0;
+    const state = editorRef.current.execute(new ReplaceRangeCommand(0, len, newSamples));
+    commitSamples(state.samples);
+  }, [commitSamples]);
+
   const selectionToSampleRange = useCallback(() => {
     if (!selection || !currentSamplesRef.current) return null;
     return {
@@ -365,9 +372,8 @@ export default function App() {
   const handleApplyFilter = useCallback(() => {
     if (!currentSamplesRef.current) return;
     const filtered = applyBiquadFilter(currentSamplesRef.current, sampleRate, filterSettings);
-    editorRef.current.setSamples(filtered);
-    commitSamples(filtered);
-  }, [commitSamples, filterSettings, sampleRate]);
+    applyEffect(filtered);
+  }, [applyEffect, filterSettings, sampleRate]);
 
   const handleResetFilter = useCallback(() => {
     if (!originalSamplesRef.current) return;
@@ -704,13 +710,13 @@ export default function App() {
             const samples = currentSamplesRef.current;
             const reversed = new Float32Array(samples.length);
             for (let i = 0; i < samples.length; i++) reversed[i] = samples[samples.length - 1 - i];
-            processSamples(reversed, sampleRate);
+            applyEffect(reversed);
           }
         }}
         onNormalize={() => {
           if (currentSamplesRef.current) {
             const normalized = soundNormalize(currentSamplesRef.current);
-            processSamples(normalized, sampleRate);
+            applyEffect(normalized);
           }
         }}
         onReduceNoise={() => {
@@ -729,7 +735,7 @@ export default function App() {
             setIsProcessing(false);
             worker.terminate();
             if (e.data.type === 'result') {
-              processSamples(e.data.samples, sampleRate);
+              applyEffect(e.data.samples);
             }
           };
           worker.onerror = () => {
@@ -740,7 +746,7 @@ export default function App() {
         onRemoveSilence={() => {
           if (currentSamplesRef.current) {
             const trimmed = removeSilence(currentSamplesRef.current, sampleRate);
-            processSamples(trimmed, sampleRate);
+            applyEffect(trimmed);
           }
         }}
         onZoomIn={handleZoomIn}
