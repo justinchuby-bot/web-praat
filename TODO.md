@@ -1,7 +1,7 @@
 # Web-Praat TODO
 
 ## Remaining Features
-- [ ] Sound manipulation (combine/concatenate/extract parts)
+- [x] Sound manipulation (combine/concatenate/extract parts)
 - [ ] Full LTAS panel (not just spectrum slice)
 - [ ] Per-interval table/statistics export (mean/stdev per TextGrid interval, CSV)
 
