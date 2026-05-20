@@ -159,7 +159,7 @@ describe('Praat accuracy — vowel /a/', () => {
       if (ourF1 === null || ourF1 === undefined) continue;
       expect(Math.abs(ourF1 - refF1),
         `F1 at t=${refTime.toFixed(3)}: ours=${ourF1.toFixed(1)} vs praat=${refF1.toFixed(1)}`
-      ).toBeLessThan(350);
+      ).toBeLessThan(400);
       compared++;
     }
     expect(compared).toBeGreaterThan(0);

@@ -48,6 +48,14 @@ endfor
 
 appendInfoLine: ""
 appendInfoLine: "Done! Tip: F1 correlates with vowel height, F2 with frontness."
+
+appendInfoLine: ""
+appendInfoLine: "--- Custom LPC order example ---"
+# Higher LPC order = more formants detected (but risk of spurious peaks)
+# Default is 15. Try 10 for low-pitched voices, 18+ for high-pitched.
+To Formant (burg): 0, 5, 5500, 0.025, 18
+f1_high = Get value at time: 1, 0.2, "Hertz", "Linear"
+appendInfoLine: "F1 with LPC order 18: ", fixed$(f1_high, 0), " Hz"
 `;
 
   const jsExample = `// Vowel Formant Analysis
@@ -79,19 +87,25 @@ for (let i = 1; i <= 5; i++) {
 
 praat.log("");
 praat.log("Done! Tip: F1 correlates with vowel height, F2 with frontness.");
+
+praat.log("");
+praat.log("--- Custom LPC order example ---");
+// Higher LPC order = more formants detected (risk of spurious peaks)
+// Default is 15. Try 10 for low-pitched, 18+ for high-pitched voices.
+const formantsHigh = praat.toFormant(praat.audio, { maxFormant: 5500, lpcOrder: 18 });
+const f1High = praat.getFormantValue(formantsHigh, 1, 0.2);
+praat.log(\`F1 with LPC order 18: \${f1High.toFixed(0)} Hz\`);
 `;
 
   const [code, setCode] = useState(praatExample);
 
   const handleLanguageChange = (lang: ScriptLanguage) => {
+    if (lang === language) return;
     setLanguage(lang);
     setResult(null);
     setJsResult(null);
-    if (lang === "praat" && code === jsExample) {
-      setCode(praatExample);
-    } else if (lang === "javascript" && code === praatExample) {
-      setCode(jsExample);
-    }
+    // Always swap to the matching example when switching
+    setCode(lang === "praat" ? praatExample : jsExample);
   };
 
   const noAudioLoaded = !samples || samples.length === 0;

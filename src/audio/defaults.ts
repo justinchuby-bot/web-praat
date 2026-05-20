@@ -22,7 +22,7 @@ export const defaultAnalysisSettings: AnalysisSettings = {
   },
   formant: {
     maxFrequency: 5500,
-    lpcOrder: 12,
+    lpcOrder: 15,
     numberOfFormants: 5,
     smoothingWindowMs: 20,
     transitionCostWeight: 1.0,
