@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Settings2, Music, BarChart3, ChevronDown, ChevronRight } from 'lucide-react';
 import type { AnalysisSettings, ColormapName, WindowFunction } from '../types';
+import { SliderField } from './SliderField';
 
 interface SettingsPanelProps {
   settings: AnalysisSettings;
@@ -103,29 +104,25 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
           />
         </label>
 
-        <label className="settings-field">
-          <span>Dynamic range (dB)</span>
-          <input
-            type="number"
-            min={20}
-            max={120}
-            step={5}
-            value={local.spectrogram.dynamicRangeDb}
-            onChange={(e) => updateSpectrogram({ dynamicRangeDb: Number(e.target.value) })}
-          />
-        </label>
+        <SliderField
+          label="Dynamic range"
+          value={local.spectrogram.dynamicRangeDb}
+          min={20}
+          max={120}
+          step={5}
+          unit=" dB"
+          onChange={(v) => updateSpectrogram({ dynamicRangeDb: v })}
+        />
 
-        <label className="settings-field">
-          <span>Max view frequency (Hz)</span>
-          <input
-            type="number"
-            min={500}
-            max={22050}
-            step={500}
-            value={local.spectrogram.maxViewFrequency}
-            onChange={(e) => updateSpectrogram({ maxViewFrequency: Number(e.target.value) })}
-          />
-        </label>
+        <SliderField
+          label="Max frequency"
+          value={local.spectrogram.maxViewFrequency}
+          min={2000}
+          max={22050}
+          step={500}
+          unit=" Hz"
+          onChange={(v) => updateSpectrogram({ maxViewFrequency: v })}
+        />
 
         <label className="settings-field">
           <span>Pre-emphasis (dB/oct)</span>
@@ -153,37 +150,32 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
       </Section>
 
       <Section title="Pitch" icon={Music}>
-        <label className="settings-field">
-          <span>Min Hz</span>
-          <input
-            type="number"
-            min={30}
-            max={500}
-            value={local.pitch.minHz}
-            onChange={(e) => updatePitch({ minHz: Number(e.target.value) })}
-          />
-        </label>
-        <label className="settings-field">
-          <span>Max Hz</span>
-          <input
-            type="number"
-            min={100}
-            max={2000}
-            value={local.pitch.maxHz}
-            onChange={(e) => updatePitch({ maxHz: Number(e.target.value) })}
-          />
-        </label>
-        <label className="settings-field">
-          <span>Voicing threshold</span>
-          <input
-            type="number"
-            step={0.05}
-            min={0}
-            max={1}
-            value={local.pitch.voicingThreshold}
-            onChange={(e) => updatePitch({ voicingThreshold: Number(e.target.value) })}
-          />
-        </label>
+        <SliderField
+          label="Min pitch"
+          value={local.pitch.minHz}
+          min={30}
+          max={300}
+          step={5}
+          unit=" Hz"
+          onChange={(v) => updatePitch({ minHz: v })}
+        />
+        <SliderField
+          label="Max pitch"
+          value={local.pitch.maxHz}
+          min={100}
+          max={1000}
+          step={10}
+          unit=" Hz"
+          onChange={(v) => updatePitch({ maxHz: v })}
+        />
+        <SliderField
+          label="Voicing threshold"
+          value={local.pitch.voicingThreshold}
+          min={0}
+          max={1}
+          step={0.05}
+          onChange={(v) => updatePitch({ voicingThreshold: v })}
+        />
         <label className="settings-field">
           <span>Silence threshold</span>
           <input
@@ -253,16 +245,14 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             onChange={(e) => updateFormant({ maxFrequency: Number(e.target.value) })}
           />
         </label>
-        <label className="settings-field">
-          <span>LPC order</span>
-          <input
-            type="number"
-            min={6}
-            max={24}
-            value={local.formant.lpcOrder}
-            onChange={(e) => updateFormant({ lpcOrder: Number(e.target.value) })}
-          />
-        </label>
+        <SliderField
+          label="LPC order"
+          value={local.formant.lpcOrder}
+          min={6}
+          max={24}
+          step={1}
+          onChange={(v) => updateFormant({ lpcOrder: v })}
+        />
         <label className="settings-field">
           <span>Number of formants</span>
           <input
