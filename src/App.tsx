@@ -685,6 +685,42 @@ export default function App() {
           const f1 = f.f1[bestIdx], f2 = f.f2[bestIdx], f3 = f.f3[bestIdx];
           window.alert(`Formants at ${t.toFixed(4)} s:\nF1: ${f1 != null && f1 > 0 ? f1.toFixed(0) + ' Hz' : '--'}\nF2: ${f2 != null && f2 > 0 ? f2.toFixed(0) + ' Hz' : '--'}\nF3: ${f3 != null && f3 > 0 ? f3.toFixed(0) + ' Hz' : '--'}`);
         }}
+        onGetSpectralPowerAtCursor={() => {
+          if (!analysis) return;
+          const t = currentTimeRef.current;
+          const sg = analysis.spectrogram;
+          const frameIdx = Math.round(t / sg.timeStep);
+          if (frameIdx < 0 || frameIdx >= sg.magnitudes.length) { window.alert('No spectrogram data at cursor'); return; }
+          const frame = sg.magnitudes[frameIdx];
+          let totalPower = 0;
+          for (let i = 0; i < frame.length; i++) totalPower += frame[i] * frame[i];
+          const powerDensity = totalPower * sg.freqStep;
+          window.alert(`Spectral power at ${t.toFixed(4)} s: ${powerDensity.toExponential(4)} Pa²/Hz`);
+        }}
+        onGetIntensityAtCursor={() => {
+          if (!analysis) return;
+          const t = currentTimeRef.current;
+          const int = analysis.intensity;
+          let bestIdx = 0;
+          let bestDist = Infinity;
+          for (let i = 0; i < int.times.length; i++) {
+            const d = Math.abs(int.times[i] - t);
+            if (d < bestDist) { bestDist = d; bestIdx = i; }
+          }
+          window.alert(`Intensity at ${t.toFixed(4)} s: ${int.values[bestIdx].toFixed(2)} dB`);
+        }}
+        onGetHnrAtCursor={() => {
+          if (!analysis) return;
+          const t = currentTimeRef.current;
+          const hnr = analysis.harmonicity;
+          let bestIdx = 0;
+          let bestDist = Infinity;
+          for (let i = 0; i < hnr.times.length; i++) {
+            const d = Math.abs(hnr.times[i] - t);
+            if (d < bestDist) { bestDist = d; bestIdx = i; }
+          }
+          window.alert(`HNR at ${t.toFixed(4)} s: ${hnr.values[bestIdx].toFixed(2)} dB`);
+        }}
         onPitchListing={() => {
           if (!analysis) return;
           const p = analysis.pitch;
@@ -725,6 +761,14 @@ export default function App() {
         showPulses={showPulses}
         onTogglePulses={() => setShowPulses((v) => !v)}
         onShowVoiceReport={() => setShowVoiceReport(true)}
+        onGetJitterLocal={() => {
+          if (!analysis?.voiceQuality) return;
+          window.alert(`Jitter (local): ${analysis.voiceQuality.jitterLocalPercent.toFixed(3)}%\nJitter (absolute): ${(analysis.voiceQuality.jitterAbsolute * 1000).toFixed(4)} ms`);
+        }}
+        onGetShimmerLocal={() => {
+          if (!analysis?.voiceQuality) return;
+          window.alert(`Shimmer (local): ${analysis.voiceQuality.shimmerLocalPercent.toFixed(3)}%\nShimmer (dB): ${analysis.voiceQuality.shimmerDb.toFixed(4)} dB`);
+        }}
       />
 
       <CommandPalette commands={paletteCommands} open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />

@@ -639,6 +639,32 @@ button, input, select {
   max-width: 420px;
 }
 
+.settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 4px;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.settings-section-header:hover {
+  background: var(--bg-hover, rgba(0,0,0,0.05));
+}
+
 .settings-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
