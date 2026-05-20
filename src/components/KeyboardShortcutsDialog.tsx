@@ -42,6 +42,12 @@ export function KeyboardShortcutsDialog() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  useEffect(() => {
+    const handleCustomOpen = () => setOpen(true);
+    document.addEventListener('open-shortcuts-dialog', handleCustomOpen);
+    return () => document.removeEventListener('open-shortcuts-dialog', handleCustomOpen);
+  }, []);
+
   if (!open) return null;
 
   return (
