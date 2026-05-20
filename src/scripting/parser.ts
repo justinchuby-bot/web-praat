@@ -59,6 +59,7 @@ export interface CallNode {
   line: number;
   nocheck?: boolean;
   noprogress?: boolean;
+  assignTo?: string; // If set, store _lastResult into this variable after call
 }
 
 export interface ProcedureNode {
@@ -200,7 +201,32 @@ export function parse(tokens: Token[]): ASTNode[] {
     }
 
     // Check for assignment: identifier = expr (or .dotVar = expr)
+    // Also handles: var = CommandCall (e.g., nRows = Get number of rows)
     if (t.type === TokenType.Identifier && pos + 1 < tokens.length && tokens[pos + 1].type === TokenType.Equals) {
+      // Peek ahead: if after '=' we have a capitalized identifier that looks like a command
+      // (i.e., followed by more identifiers or colon before newline), parse as command-call assignment
+      if (pos + 2 < tokens.length) {
+        const rhsToken = tokens[pos + 2];
+        if (rhsToken.type === TokenType.Identifier && /^[A-Z]/.test(rhsToken.value)) {
+          // Check if this is multi-word or has colon (command pattern)
+          let lookAhead = pos + 3;
+          let isCommand = false;
+          while (lookAhead < tokens.length) {
+            const la = tokens[lookAhead];
+            if (la.type === TokenType.Colon) { isCommand = true; break; }
+            if (la.type === TokenType.Newline || la.type === TokenType.EOF) {
+              // Multi-word without colon (e.g., "Get number of rows")
+              if (lookAhead > pos + 3) isCommand = true;
+              break;
+            }
+            if (la.type === TokenType.Identifier) { lookAhead++; continue; }
+            break;
+          }
+          if (isCommand) {
+            return parseCommandAssignment();
+          }
+        }
+      }
       return parseAssignment();
     }
 
@@ -252,6 +278,27 @@ export function parse(tokens: Token[]): ASTNode[] {
     const value = parseExpression();
     expectNewlineOrEOF();
     return { type: "Assignment", name: nameToken.value, value, line: nameToken.line };
+  }
+
+  function parseCommandAssignment(): CallNode {
+    const nameToken = advance(); // variable name
+    advance(); // =
+    // Now parse the rest as a command call
+    let cmdName = advance().value;
+    while (
+      current().type !== TokenType.Colon &&
+      current().type !== TokenType.Newline &&
+      current().type !== TokenType.EOF
+    ) {
+      cmdName += " " + advance().value;
+    }
+    const args: ExprNode[] = [];
+    if (current().type === TokenType.Colon) {
+      advance();
+      args.push(...parseArgList());
+    }
+    expectNewlineOrEOF();
+    return { type: "Call", name: cmdName.trim(), args, line: nameToken.line, assignTo: nameToken.value };
   }
 
   function parseAtCall(): CallNode {

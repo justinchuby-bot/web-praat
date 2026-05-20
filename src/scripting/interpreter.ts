@@ -234,6 +234,10 @@ export class Interpreter {
       }
       case "Call": {
         this.executeCall(node);
+        if (node.assignTo) {
+          const result = this.getVar("_lastResult") ?? this.getVar("_lastResult$") ?? 0;
+          this.setVar(node.assignTo, result as number | string | number[]);
+        }
         break;
       }
       case "Procedure": {
