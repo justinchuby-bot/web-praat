@@ -36,6 +36,8 @@ interface MenuBarProps {
   onDelete: () => void;
   onReverse?: () => void;
   onNormalize?: () => void;
+  onReduceNoise?: () => void;
+  onRemoveSilence?: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitToWindow: () => void;
@@ -151,6 +153,8 @@ export function MenuBar(props: MenuBarProps) {
           <MenubarSeparator />
           {props.onReverse && <MenubarItem disabled={!hasAudio} onClick={props.onReverse}>Reverse</MenubarItem>}
           {props.onNormalize && <MenubarItem disabled={!hasAudio} onClick={props.onNormalize}>Normalize</MenubarItem>}
+          {props.onReduceNoise && <MenubarItem disabled={!hasAudio} onClick={props.onReduceNoise}>Reduce Noise</MenubarItem>}
+          {props.onRemoveSilence && <MenubarItem disabled={!hasAudio} onClick={props.onRemoveSilence}>Remove Silence</MenubarItem>}
         </MenubarContent>
       </MenubarMenu>
 

@@ -30,7 +30,79 @@ function ensureIntervalCoverage(intervals: Interval[], xmin: number, xmax: numbe
   return sorted;
 }
 
+/**
+ * Parse Praat short-format TextGrid.
+ * Lines are just raw values without "key = value" syntax.
+ */
+function parseTextGridShort(rawLines: string[]): TextGrid {
+  // Filter out empty lines and trim, but keep order
+  const lines = rawLines.map(l => l.trim()).filter(l => l.length > 0);
+
+  // Skip header lines (File type, Object class)
+  let i = 0;
+  while (i < lines.length && (lines[i].startsWith('File type') || lines[i].startsWith('Object class'))) i++;
+
+  const xmin = Number(lines[i++]);
+  const xmax = Number(lines[i++]);
+
+  // <exists> or tiers flag
+  const existsLine = lines[i++];
+  if (existsLine !== '<exists>') {
+    // If it's a number, it might be the tier count directly
+    i--;
+  }
+
+  const tierCount = Number(lines[i++]);
+  const tiers: TextGridTier[] = [];
+
+  for (let t = 0; t < tierCount; t++) {
+    const tierClass = lines[i++].replace(/"/g, '');
+    const tierName = lines[i++].replace(/"/g, '');
+    const tierXmin = Number(lines[i++]);
+    const tierXmax = Number(lines[i++]);
+    const size = Number(lines[i++]);
+
+    if (tierClass === 'IntervalTier') {
+      const intervals: Interval[] = [];
+      for (let s = 0; s < size; s++) {
+        const start = Number(lines[i++]);
+        const end = Number(lines[i++]);
+        const label = lines[i++].replace(/^"|"$/g, '');
+        intervals.push({ id: createId('interval'), start, end, label });
+      }
+      tiers.push({
+        id: createId('tier'),
+        name: tierName,
+        kind: 'interval',
+        intervals: ensureIntervalCoverage(intervals, tierXmin, tierXmax),
+      });
+    } else if (tierClass === 'TextTier') {
+      const points: Point[] = [];
+      for (let s = 0; s < size; s++) {
+        const time = Number(lines[i++]);
+        const label = lines[i++].replace(/^"|"$/g, '');
+        points.push({ id: createId('point'), time, label });
+      }
+      tiers.push({
+        id: createId('tier'),
+        name: tierName,
+        kind: 'point',
+        points,
+      });
+    }
+  }
+
+  return { xmin, xmax, tiers };
+}
+
 export function parseTextGrid(text: string): TextGrid {
+  // Detect short format (no "=" signs in data lines)
+  const rawLines = text.split(/\r?\n/);
+  const hasEquals = rawLines.some(l => l.includes('xmin =') || l.includes('xmax ='));
+  if (!hasEquals) {
+    return parseTextGridShort(rawLines);
+  }
+
   const lines = text
     .split(/\r?\n/)
     .map((line) => line.trim())

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Settings2, Music, BarChart3, ChevronDown, ChevronRight } from 'lucide-react';
 import type { AnalysisSettings, ColormapName, WindowFunction } from '../types';
 
@@ -42,14 +42,26 @@ function Section({ title, icon: Icon, children }: { title: string; icon: React.C
 }
 
 export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
+  const [local, setLocal] = useState(settings);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Sync external changes
+  useEffect(() => { setLocal(settings); }, [settings]);
+
+  const debouncedOnChange = useCallback((next: AnalysisSettings) => {
+    setLocal(next);
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => onChange(next), 400);
+  }, [onChange]);
+
   const updateSpectrogram = (patch: Partial<AnalysisSettings['spectrogram']>) => {
-    onChange({ ...settings, spectrogram: { ...settings.spectrogram, ...patch } });
+    debouncedOnChange({ ...local, spectrogram: { ...local.spectrogram, ...patch } });
   };
   const updatePitch = (patch: Partial<AnalysisSettings['pitch']>) => {
-    onChange({ ...settings, pitch: { ...settings.pitch, ...patch } });
+    debouncedOnChange({ ...local, pitch: { ...local.pitch, ...patch } });
   };
   const updateFormant = (patch: Partial<AnalysisSettings['formant']>) => {
-    onChange({ ...settings, formant: { ...settings.formant, ...patch } });
+    debouncedOnChange({ ...local, formant: { ...local.formant, ...patch } });
   };
 
   return (
@@ -58,7 +70,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
         <label className="settings-field">
           <span>Window function</span>
           <select
-            value={settings.spectrogram.windowFunction}
+            value={local.spectrogram.windowFunction}
             onChange={(e) => updateSpectrogram({ windowFunction: e.target.value as WindowFunction })}
           >
             {WINDOW_FUNCTIONS.map((w) => (
@@ -70,8 +82,8 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
         <label className="settings-field">
           <span>FFT size</span>
           <select
-            value={settings.spectrogram.fftSize}
-            onChange={(e) => updateSpectrogram({ fftSize: Number(e.target.value) as typeof settings.spectrogram.fftSize })}
+            value={local.spectrogram.fftSize}
+            onChange={(e) => updateSpectrogram({ fftSize: Number(e.target.value) as typeof local.spectrogram.fftSize })}
           >
             {FFT_SIZES.map((size) => (
               <option key={size} value={size}>{size}</option>
@@ -86,7 +98,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             min={32}
             max={2048}
             step={32}
-            value={settings.spectrogram.hopSize}
+            value={local.spectrogram.hopSize}
             onChange={(e) => updateSpectrogram({ hopSize: Number(e.target.value) })}
           />
         </label>
@@ -98,7 +110,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             min={20}
             max={120}
             step={5}
-            value={settings.spectrogram.dynamicRangeDb}
+            value={local.spectrogram.dynamicRangeDb}
             onChange={(e) => updateSpectrogram({ dynamicRangeDb: Number(e.target.value) })}
           />
         </label>
@@ -110,7 +122,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             min={500}
             max={22050}
             step={500}
-            value={settings.spectrogram.maxViewFrequency}
+            value={local.spectrogram.maxViewFrequency}
             onChange={(e) => updateSpectrogram({ maxViewFrequency: Number(e.target.value) })}
           />
         </label>
@@ -122,7 +134,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             min={0}
             max={12}
             step={1}
-            value={settings.spectrogram.preEmphasis}
+            value={local.spectrogram.preEmphasis}
             onChange={(e) => updateSpectrogram({ preEmphasis: Number(e.target.value) })}
           />
         </label>
@@ -130,7 +142,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
         <label className="settings-field">
           <span>Colormap</span>
           <select
-            value={settings.spectrogram.colormap}
+            value={local.spectrogram.colormap}
             onChange={(e) => updateSpectrogram({ colormap: e.target.value as ColormapName })}
           >
             {COLORMAPS.map((c) => (
@@ -147,7 +159,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             type="number"
             min={30}
             max={500}
-            value={settings.pitch.minHz}
+            value={local.pitch.minHz}
             onChange={(e) => updatePitch({ minHz: Number(e.target.value) })}
           />
         </label>
@@ -157,7 +169,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             type="number"
             min={100}
             max={2000}
-            value={settings.pitch.maxHz}
+            value={local.pitch.maxHz}
             onChange={(e) => updatePitch({ maxHz: Number(e.target.value) })}
           />
         </label>
@@ -168,7 +180,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             step={0.05}
             min={0}
             max={1}
-            value={settings.pitch.voicingThreshold}
+            value={local.pitch.voicingThreshold}
             onChange={(e) => updatePitch({ voicingThreshold: Number(e.target.value) })}
           />
         </label>
@@ -179,7 +191,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             step={0.01}
             min={0}
             max={1}
-            value={settings.pitch.silenceThreshold}
+            value={local.pitch.silenceThreshold}
             onChange={(e) => updatePitch({ silenceThreshold: Number(e.target.value) })}
           />
         </label>
@@ -190,7 +202,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             step={0.005}
             min={0}
             max={1}
-            value={settings.pitch.octaveCost}
+            value={local.pitch.octaveCost}
             onChange={(e) => updatePitch({ octaveCost: Number(e.target.value) })}
           />
         </label>
@@ -201,7 +213,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             step={0.05}
             min={0}
             max={2}
-            value={settings.pitch.octaveJumpCost}
+            value={local.pitch.octaveJumpCost}
             onChange={(e) => updatePitch({ octaveJumpCost: Number(e.target.value) })}
           />
         </label>
@@ -212,7 +224,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             step={0.01}
             min={0}
             max={2}
-            value={settings.pitch.voicedUnvoicedCost}
+            value={local.pitch.voicedUnvoicedCost}
             onChange={(e) => updatePitch({ voicedUnvoicedCost: Number(e.target.value) })}
           />
         </label>
@@ -223,7 +235,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             step={1}
             min={2}
             max={30}
-            value={settings.pitch.maxCandidates}
+            value={local.pitch.maxCandidates}
             onChange={(e) => updatePitch({ maxCandidates: Number(e.target.value) })}
           />
         </label>
@@ -237,7 +249,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             min={3000}
             max={8000}
             step={500}
-            value={settings.formant.maxFrequency}
+            value={local.formant.maxFrequency}
             onChange={(e) => updateFormant({ maxFrequency: Number(e.target.value) })}
           />
         </label>
@@ -247,7 +259,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             type="number"
             min={6}
             max={24}
-            value={settings.formant.lpcOrder}
+            value={local.formant.lpcOrder}
             onChange={(e) => updateFormant({ lpcOrder: Number(e.target.value) })}
           />
         </label>
@@ -257,7 +269,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             type="number"
             min={1}
             max={5}
-            value={settings.formant.numberOfFormants}
+            value={local.formant.numberOfFormants}
             onChange={(e) => updateFormant({ numberOfFormants: Number(e.target.value) })}
           />
         </label>
@@ -268,7 +280,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             min={0}
             max={100}
             step={5}
-            value={settings.formant.smoothingWindowMs}
+            value={local.formant.smoothingWindowMs}
             onChange={(e) => updateFormant({ smoothingWindowMs: Number(e.target.value) })}
           />
         </label>
@@ -279,7 +291,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             min={0}
             max={5}
             step={0.1}
-            value={settings.formant.transitionCostWeight}
+            value={local.formant.transitionCostWeight}
             onChange={(e) => updateFormant({ transitionCostWeight: Number(e.target.value) })}
           />
         </label>
@@ -290,7 +302,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             min={1}
             max={9}
             step={2}
-            value={settings.formant.medianFilterSize}
+            value={local.formant.medianFilterSize}
             onChange={(e) => updateFormant({ medianFilterSize: Number(e.target.value) })}
           />
         </label>

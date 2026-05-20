@@ -56,6 +56,7 @@ import { ListingPanel, type ListingData } from './components/ListingPanel';
 import { SelectionStats } from './components/SelectionStats';
 import { computeIntervalStats, intervalStatsToCsv } from './audio/intervalStats';
 import { normalize as soundNormalize } from './audio/soundManipulation';
+import { reduceNoise, removeSilence } from './audio/soundEnhance';
 import {
   downloadBinaryFile,
   downloadTextFile,
@@ -646,6 +647,18 @@ export default function App() {
           if (currentSamplesRef.current) {
             const normalized = soundNormalize(currentSamplesRef.current);
             processSamples(normalized, sampleRate);
+          }
+        }}
+        onReduceNoise={() => {
+          if (currentSamplesRef.current) {
+            const cleaned = reduceNoise(currentSamplesRef.current, sampleRate);
+            processSamples(cleaned, sampleRate);
+          }
+        }}
+        onRemoveSilence={() => {
+          if (currentSamplesRef.current) {
+            const trimmed = removeSilence(currentSamplesRef.current, sampleRate);
+            processSamples(trimmed, sampleRate);
           }
         }}
         onZoomIn={handleZoomIn}
