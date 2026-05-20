@@ -440,7 +440,10 @@ export class Interpreter {
     }
 
     if (name === "To Pitch" || name.startsWith("To Pitch")) {
-      if (!this.selectedObject) throw new RuntimeError("No object selected", node.line);
+      if (!this.selectedObject) throw new RuntimeError("No Sound object selected. Please load an audio file first.", node.line);
+      if (this.selectedObject.type !== "Sound" && !this.objects.some(o => o.type === "Sound")) {
+        throw new RuntimeError("No Sound object available. Please load an audio file before running analysis commands.", node.line);
+      }
       const soundData = this.selectedObject.data;
       const samples = soundData.samples as Float32Array | undefined;
       const sr = soundData.sampleRate as number | undefined;
@@ -473,7 +476,7 @@ export class Interpreter {
     }
 
     if (name.startsWith("To Formant")) {
-      if (!this.selectedObject) throw new RuntimeError("No object selected", node.line);
+      if (!this.selectedObject) throw new RuntimeError("No Sound object selected. Please load an audio file first.", node.line);
       // Find the Sound object - either the selected object or the first Sound in the list
       let soundObj = this.selectedObject;
       if (!soundObj.data.samples) {
@@ -517,7 +520,7 @@ export class Interpreter {
     }
 
     if (name === "Down to Table") {
-      if (!this.selectedObject) throw new RuntimeError("No object selected", node.line);
+      if (!this.selectedObject) throw new RuntimeError("No object selected. Run an analysis command (e.g. To Formant) first.", node.line);
       const data = this.selectedObject.data;
       const times = data.times as number[] | undefined;
       const tracked = data.tracked as Array<Array<number | null>> | undefined;

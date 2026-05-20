@@ -9,5 +9,5 @@
 - [ ] Forced alignment (no external API calls; revisit when good WASM solution exists)
 
 ## Polish / Nice-to-have
-- [ ] Script: better error messages when no audio loaded
+- [x] Script: better error messages when no audio loaded
 - [ ] Sidebar script tab: wider default width for code editing
