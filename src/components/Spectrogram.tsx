@@ -76,18 +76,29 @@ export const Spectrogram = React.memo(function Spectrogram({
     }, 1e-6);
 
     const colorForValue = getColormap(analysis.settings.spectrogram.colormap);
-    const rowHeight = height / binsToShow;
 
-    for (let frameIndex = 0; frameIndex < spectrogram.magnitudes.length; frameIndex++) {
-      const time = spectrogram.frameTimes[frameIndex];
-      if (time < viewRange.start || time > viewRange.end) continue;
-      const x = timeToX(time, width, viewRange);
-      const nextTime = time + spectrogram.timeStep;
-      const nextX = timeToX(nextTime, width, viewRange);
-      const colWidth = Math.max(1, nextX - x);
+    // Determine visible frames
+    const visibleFrames: number[] = [];
+    for (let i = 0; i < spectrogram.magnitudes.length; i++) {
+      const time = spectrogram.frameTimes[i];
+      if (time >= viewRange.start && time <= viewRange.end) visibleFrames.push(i);
+    }
+    if (visibleFrames.length === 0) return;
 
+    // Render to offscreen canvas at native STFT resolution
+    const offW = visibleFrames.length;
+    const offH = binsToShow;
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = offW;
+    offCanvas.height = offH;
+    const offCtx = offCanvas.getContext('2d')!;
+    const imgData = offCtx.createImageData(offW, offH);
+    const pixels = imgData.data;
+
+    for (let col = 0; col < visibleFrames.length; col++) {
+      const frame = spectrogram.magnitudes[visibleFrames[col]];
       for (let bin = 0; bin < binsToShow; bin++) {
-        const value = spectrogram.magnitudes[frameIndex][bin] / globalMax;
+        const value = frame[bin] / globalMax;
         const db = 20 * Math.log10(Math.max(value, 1e-6));
         const normalized = Math.max(
           0,
@@ -95,11 +106,23 @@ export const Spectrogram = React.memo(function Spectrogram({
         );
         const mapInput = shouldInvert ? 1 - normalized : normalized;
         const [r, g, b] = colorForValue(mapInput);
-        ctx.fillStyle = `rgb(${r},${g},${b})`;
-        const y = height - (bin + 1) * rowHeight;
-        ctx.fillRect(x, y, colWidth + 1, rowHeight + 1);
+        // Flip vertically: bin 0 = lowest freq → bottom row
+        const row = offH - 1 - bin;
+        const idx = (row * offW + col) * 4;
+        pixels[idx] = r;
+        pixels[idx + 1] = g;
+        pixels[idx + 2] = b;
+        pixels[idx + 3] = 255;
       }
     }
+    offCtx.putImageData(imgData, 0, 0);
+
+    // Draw scaled with bilinear interpolation
+    const startX = timeToX(spectrogram.frameTimes[visibleFrames[0]], width, viewRange);
+    const endX = timeToX(spectrogram.frameTimes[visibleFrames[visibleFrames.length - 1]] + spectrogram.timeStep, width, viewRange);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(offCanvas, startX, 0, endX - startX, height);
 
     // Y-axis frequency labels
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
