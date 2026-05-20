@@ -59,6 +59,7 @@ interface MenuBarProps {
   onOpenNoteTranscription?: () => void;
   onOpenScriptEditor?: () => void;
   onOpenPlugins?: () => void;
+  onOpenControlledVocabulary?: () => void;
   onOpenCommandPalette?: () => void;
   themeSetting?: ThemeSetting;
   onThemeChange?: (theme: ThemeSetting) => void;
@@ -84,7 +85,7 @@ export function MenuBar(props: MenuBarProps) {
     showPitch, showFormants, showIntensity, showIpa, showCochleagram,
     onOpenManipulation, onOpenPitchTier, onOpenFormantGrid,
     onOpenDurationTier, onOpenAmplitudeTier, onOpenVocalTract,
-    onOpenSpectrumEditor, onOpenExperiment, onOpenSpeechSynthesizer, onOpenPitchSonification, onOpenNoteTranscription, onOpenScriptEditor, onOpenPlugins,
+    onOpenSpectrumEditor, onOpenExperiment, onOpenSpeechSynthesizer, onOpenPitchSonification, onOpenNoteTranscription, onOpenScriptEditor, onOpenPlugins, onOpenControlledVocabulary,
     onOpenCommandPalette,
     themeSetting, onThemeChange,
   } = props;
@@ -193,6 +194,8 @@ export function MenuBar(props: MenuBarProps) {
           <MenubarItem onClick={onOpenNoteTranscription}>Note Transcription</MenubarItem>
                     <MenubarItem onClick={onOpenScriptEditor}>Script Editor</MenubarItem>
           <MenubarItem onClick={onOpenPlugins}>🧩 Plugins</MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem onClick={onOpenControlledVocabulary}>Controlled Vocabulary</MenubarItem>
         </MenubarContent>
       </MenubarMenu>
 

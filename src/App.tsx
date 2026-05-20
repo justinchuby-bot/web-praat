@@ -44,6 +44,8 @@ import SpeechSynthesizerPanel from './components/SpeechSynthesizerPanel';
 import PitchSonificationPanel from './components/PitchSonificationPanel';
 import NoteTranscriptionPanel from './components/NoteTranscriptionPanel';
 import { VideoSync } from './components/VideoSync';
+import { ControlledVocabularyEditor } from './components/ControlledVocabularyEditor';
+import type { ControlledVocabulary, TierVocabularyBinding } from './textgrid/vocabulary';
 import { VoiceQualityPanel } from './components/VoiceQualityPanel';
 import { Waveform } from './components/Waveform';
 import { DropOverlay, DropFileType } from './components/DropOverlay';
@@ -107,6 +109,8 @@ export default function App() {
   const [settings, setSettings] = useState<AnalysisSettings>(defaultAnalysisSettings);
   const [filterSettings, setFilterSettings] = useState<FilterSettings>(defaultFilterSettings);
   const [textGrid, setTextGrid] = useState<TextGrid>(createEmptyTextGrid(1));
+  const [vocabularies, setVocabularies] = useState<ControlledVocabulary[]>([]);
+  const [vocabBindings, setVocabBindings] = useState<TierVocabularyBinding[]>([]);
   const [activeTierId, setActiveTierId] = useState<string | null>(null);
   const [viewStart, setViewStart] = useState(0);
   const [viewEnd, setViewEnd] = useState(1);
@@ -829,6 +833,7 @@ export default function App() {
               hnr: <HarmonicityPanel data={analysis.harmonicity} viewStart={viewStart} viewEnd={viewEnd} />,
               rhythm: <RhythmPanel metrics={rhythmMetrics} />,
               video: <VideoSync currentTime={currentTime} isPlaying={isPlaying} onAudioExtracted={(samples, sr) => { currentSamplesRef.current = samples; setSampleRate(sr); }} onSeek={(t) => setCurrentTime(t)} />,
+              vocabulary: <ControlledVocabularyEditor textGrid={textGrid} vocabularies={vocabularies} bindings={vocabBindings} onVocabulariesChange={setVocabularies} onBindingsChange={setVocabBindings} />,
               settings: (
                 <>
                   <SettingsPanel settings={settings} onChange={setSettings} />
