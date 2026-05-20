@@ -23,6 +23,7 @@ import { Spectrogram } from './components/Spectrogram';
 import { Cochleagram } from './components/Cochleagram';
 import { SpectrumSlice } from './components/SpectrumSlice';
 import { LtasPanel } from './components/LtasPanel';
+import { MfccPanel } from './components/MfccPanel';
 import { ExcitationPattern } from './components/ExcitationPattern';
 import { StatusBar } from './components/StatusBar';
 import { TextGridEditor } from './components/TextGridEditor';
@@ -57,6 +58,7 @@ import { SelectionStats } from './components/SelectionStats';
 import { computeIntervalStats, intervalStatsToCsv } from './audio/intervalStats';
 import { normalize as soundNormalize } from './audio/soundManipulation';
 import { reduceNoise, removeSilence } from './audio/soundEnhance';
+import { generateSineWave } from './audio/psola';
 import {
   downloadBinaryFile,
   downloadTextFile,
@@ -629,6 +631,36 @@ export default function App() {
             downloadTextFile('interval_stats.csv', intervalStatsToCsv(stats), 'text/csv');
           }
         }}
+        onCheckSpelling={() => {
+          if (textGrid) {
+            const emptyLabels: string[] = [];
+            const labelCounts = new Map<string, number>();
+            for (const tier of textGrid.tiers) {
+              if (tier.kind !== 'interval') continue;
+              for (const interval of tier.intervals) {
+                if (interval.label.trim()) {
+                  labelCounts.set(interval.label, (labelCounts.get(interval.label) || 0) + 1);
+                } else if (interval.end - interval.start > 0.01) {
+                  emptyLabels.push(`${interval.start.toFixed(3)}-${interval.end.toFixed(3)}`);
+                }
+              }
+            }
+            const report = [`TextGrid Label Report:`, `Unique labels: ${labelCounts.size}`, `Unlabeled intervals: ${emptyLabels.length}`];
+            if (emptyLabels.length > 0) report.push(`First unlabeled: ${emptyLabels.slice(0, 5).join(', ')}`);
+            alert(report.join('\n'));
+          }
+        }}
+        onGenerateTone={() => {
+          const freqStr = prompt('Frequency (Hz):', '440');
+          if (!freqStr) return;
+          const freq = Number(freqStr);
+          if (!freq || freq <= 0) return;
+          const durStr = prompt('Duration (seconds):', '1');
+          const dur = Number(durStr) || 1;
+          const sr = 44100;
+          const tone = generateSineWave(freq, dur, sr);
+          processSamples(tone, sr);
+        }}
         onUndo={handleUndo}
         onRedo={handleRedo}
         onCut={handleCut}
@@ -944,6 +976,7 @@ export default function App() {
             {{
               spectrum: analysis ? <SpectrumSlice slice={analysis.spectrumSlice} /> : <div className="empty-panel">Load audio to see spectrum</div>,
               ltas: <LtasPanel samples={currentSamplesRef.current} sampleRate={sampleRate} selection={selection} />,
+              mfcc: <MfccPanel samples={currentSamplesRef.current} sampleRate={sampleRate} selection={selection} />,
               excitation: analysis ? <ExcitationPattern samples={currentSamplesRef.current} sampleRate={sampleRate} /> : <div className="empty-panel">Load audio to see excitation pattern</div>,
               voice: analysis ? <VoiceQualityPanel metrics={analysis.voiceQuality} /> : <div className="empty-panel">Load audio for voice quality</div>,
               hnr: analysis ? <HarmonicityPanel data={analysis.harmonicity} viewStart={viewStart} viewEnd={viewEnd} /> : <div className="empty-panel">Load audio for HNR</div>,

@@ -1631,3 +1631,15 @@ select:focus-visible {
   width: 100%;
   flex: 1;
 }
+
+.mfcc-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 200px;
+}
+
+.mfcc-canvas {
+  width: 100%;
+  flex: 1;
+}

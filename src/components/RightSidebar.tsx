@@ -1,16 +1,17 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import {
-  AudioWaveform, Mic, Activity, Drum, Ear, Video, BookOpen, Settings, Code, BarChart3,
+  AudioWaveform, Mic, Activity, Drum, Ear, Video, BookOpen, Settings, Code, BarChart3, Layers,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
-type Tab = 'spectrum' | 'ltas' | 'voice' | 'hnr' | 'rhythm' | 'excitation' | 'video' | 'vocabulary' | 'settings' | 'script';
+type Tab = 'spectrum' | 'ltas' | 'mfcc' | 'voice' | 'hnr' | 'rhythm' | 'excitation' | 'video' | 'vocabulary' | 'settings' | 'script';
 
 interface RightSidebarProps {
   children: {
     spectrum: ReactNode;
     ltas: ReactNode;
+    mfcc: ReactNode;
     voice: ReactNode;
     hnr: ReactNode;
     rhythm: ReactNode;
@@ -25,6 +26,7 @@ interface RightSidebarProps {
 const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'spectrum', label: 'Spectrum', icon: AudioWaveform },
   { id: 'ltas', label: 'LTAS', icon: BarChart3 },
+  { id: 'mfcc', label: 'MFCC', icon: Layers },
   { id: 'voice', label: 'Voice Quality', icon: Mic },
   { id: 'hnr', label: 'HNR', icon: Activity },
   { id: 'rhythm', label: 'Rhythm', icon: Drum },

@@ -28,6 +28,8 @@ interface MenuBarProps {
   onExportIntensityCsv: () => void;
   onExportHarmonicityCsv: () => void;
   onExportIntervalStats?: () => void;
+  onCheckSpelling?: () => void;
+  onGenerateTone?: () => void;
   onUndo: () => void;
   onRedo: () => void;
   onCut: () => void;
@@ -223,6 +225,9 @@ export function MenuBar(props: MenuBarProps) {
           <MenubarItem onClick={onOpenPlugins}>🧩 Plugins</MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onOpenControlledVocabulary}>Controlled Vocabulary</MenubarItem>
+          <MenubarSeparator />
+          {props.onCheckSpelling && <MenubarItem disabled={!hasAudio} onClick={props.onCheckSpelling}>Label Report (TextGrid)</MenubarItem>}
+          {props.onGenerateTone && <MenubarItem onClick={props.onGenerateTone}>Generate Tone…</MenubarItem>}
         </MenubarContent>
       </MenubarMenu>
 
