@@ -54,6 +54,8 @@ button, input, select {
 .app {
   display: flex;
   height: 100%;
+  max-width: 100vw;
+  overflow: hidden;
 }
 
 /* Panel shared styles */
@@ -1040,6 +1042,36 @@ select:focus-visible {
 
   .app {
     flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  .menubar-root {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .menubar-root::-webkit-scrollbar {
+    display: none;
+  }
+
+  .menubar-trigger {
+    padding: 4px 8px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .menu-version {
+    display: none;
+  }
+
+  .command-palette-trigger {
+    display: none;
+  }
+
+  .toolbar {
+    padding: 0 6px;
+    overflow-x: auto;
   }
 
   .bottom-sheet-overlay {
@@ -1169,6 +1201,15 @@ select:focus-visible {
 .modal-panel-lg {
   min-width: 700px;
   min-height: 500px;
+}
+
+@media (max-width: 768px) {
+  .modal-panel-lg {
+    min-width: unset;
+    min-height: unset;
+    width: 95vw;
+    max-height: 85vh;
+  }
 }
 
 .modal-header {

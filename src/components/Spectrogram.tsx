@@ -315,6 +315,40 @@ export const Spectrogram = React.memo(function Spectrogram({
     if (readoutRef.current) readoutRef.current.style.display = 'none';
   };
 
+  // Touch handlers for single-finger selection
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length !== 1) return; // let useZoomPan handle multi-touch
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const time = xToTime(e.touches[0].clientX - rect.left, rect.width, viewRange);
+    dragStartTimeRef.current = time;
+    dragModeRef.current = 'select';
+    onSelectionChange(null);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length !== 1 || dragModeRef.current !== 'select') return;
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const time = xToTime(e.touches[0].clientX - rect.left, rect.width, viewRange);
+    const start = Math.min(dragStartTimeRef.current, time);
+    const end = Math.max(dragStartTimeRef.current, time);
+    if (end - start > 0.005) {
+      onSelectionChange({ start, end });
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (dragModeRef.current === 'select') {
+      if (!selection || selection.end - selection.start < 0.005) {
+        // Tap → set cursor
+        const rect = canvasRef.current!.getBoundingClientRect();
+        const touch = e.changedTouches[0];
+        const time = xToTime(touch.clientX - rect.left, rect.width, viewRange);
+        onSpectrumSliceSelect(time);
+      }
+    }
+    dragModeRef.current = null;
+  };
+
   const ipaAnnotations = useMemo(() => {
     if (!showIpa || !showFormants || !analysis) return [];
     return generateIpaAnnotations(
@@ -339,6 +373,9 @@ export const Spectrogram = React.memo(function Spectrogram({
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         onMouseLeave={() => {
           dragModeRef.current = null;
         }}
