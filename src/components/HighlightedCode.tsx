@@ -1,18 +1,16 @@
-/**
- * Shiki-powered syntax highlighting component for ScriptEditor.
- * Provides a transparent overlay that highlights code while the user types in a textarea beneath.
- */
-import { useEffect, useState, useMemo } from "react";
-import { createHighlighter, type Highlighter } from "shiki";
+import { useState, useEffect } from "react";
+import { createHighlighterCore, type HighlighterCore } from "shiki/core";
+import { createOnigurumaEngine } from "shiki/engine/oniguruma";
 import { praatScriptGrammar } from "../scripting/praatGrammar";
 
-let highlighterPromise: Promise<Highlighter> | null = null;
+let highlighterPromise: Promise<HighlighterCore> | null = null;
 
-function getHighlighter(): Promise<Highlighter> {
+function getHighlighter(): Promise<HighlighterCore> {
   if (!highlighterPromise) {
-    highlighterPromise = createHighlighter({
-      themes: ["github-dark"],
-      langs: [praatScriptGrammar, "javascript"],
+    highlighterPromise = createHighlighterCore({
+      themes: [import("shiki/themes/github-dark.mjs")],
+      langs: [praatScriptGrammar, import("shiki/langs/javascript.mjs")],
+      engine: createOnigurumaEngine(import("shiki/wasm")),
     });
   }
   return highlighterPromise;
@@ -24,28 +22,24 @@ interface HighlightedCodeProps {
 }
 
 export function HighlightedCode({ code, language }: HighlightedCodeProps) {
-  const [highlighter, setHighlighter] = useState<Highlighter | null>(null);
+  const [highlighter, setHighlighter] = useState<HighlighterCore | null>(null);
 
   useEffect(() => {
     getHighlighter().then(setHighlighter);
   }, []);
 
-  const html = useMemo(() => {
-    if (!highlighter) return null;
-    return highlighter.codeToHtml(code, {
-      lang: language === "praat" ? "praat" : "javascript",
-      theme: "github-dark",
-    });
-  }, [highlighter, code, language]);
-
-  if (!html) {
-    // Fallback: plain text while loading
+  if (!highlighter) {
     return (
       <pre className="font-mono text-sm leading-5 text-gray-100 whitespace-pre-wrap break-words">
-        {code || " "}
+        {code}
       </pre>
     );
   }
+
+  const html = highlighter.codeToHtml(code, {
+    lang: language,
+    theme: "github-dark",
+  });
 
   return (
     <div
