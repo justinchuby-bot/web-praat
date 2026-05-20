@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Menubar,
   MenubarMenu,
@@ -82,11 +83,12 @@ interface MenuBarProps {
 }
 
 function FileInput({ accept, onFile, children }: { accept: string; onFile: (f: File) => void; children: React.ReactNode }) {
+  const inputRef = React.useRef<HTMLInputElement>(null);
   return (
-    <label className="menu-file-label">
-      {children}
-      <input hidden type="file" accept={accept} onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
-    </label>
+    <>
+      <MenubarItem onClick={() => inputRef.current?.click()}>{children}</MenubarItem>
+      <input ref={inputRef} hidden type="file" accept={accept} onChange={(e) => { if (e.target.files?.[0]) onFile(e.target.files[0]); e.target.value = ''; }} />
+    </>
   );
 }
 
@@ -115,12 +117,8 @@ export function MenuBar(props: MenuBarProps) {
       <MenubarMenu>
         <MenubarTrigger>File</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem asChild>
-            <FileInput accept="audio/*" onFile={onLoadFile}>Open Audio…</FileInput>
-          </MenubarItem>
-          <MenubarItem asChild>
-            <FileInput accept=".TextGrid,.textgrid,text/plain" onFile={onImportTextGrid}>Import TextGrid…</FileInput>
-          </MenubarItem>
+          <FileInput accept="audio/*" onFile={onLoadFile}>Open Audio…</FileInput>
+          <FileInput accept=".TextGrid,.textgrid,text/plain" onFile={onImportTextGrid}>Import TextGrid…</FileInput>
           <MenubarSeparator />
           <MenubarItem disabled={!hasAudio} onClick={onExportFullWav}>Export WAV</MenubarItem>
           <MenubarItem disabled={!selection} onClick={onExportSelectionWav}>Export Selection WAV</MenubarItem>
