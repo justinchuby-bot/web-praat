@@ -9,7 +9,7 @@ export function SpectrumSlice({ slice }: SpectrumSliceProps) {
     return (
       <section className="panel">
         <h3>Spectrum Slice</h3>
-        <p className="panel-empty">Click the spectrogram to inspect one time slice.</p>
+        <p className="panel-empty">Click the spectrogram to see the frequency spectrum at one point in time.</p>
       </section>
     );
   }
@@ -32,16 +32,23 @@ export function SpectrumSlice({ slice }: SpectrumSliceProps) {
     return `${x},${y}`;
   });
 
+  // Frequency range
+  const maxFreq = slice.fftFrequencies[slice.fftFrequencies.length - 1] || 0;
+
   return (
     <section className="panel">
       <h3>Spectrum Slice</h3>
-      <p className="panel-caption">Time {slice.time.toFixed(3)} s</p>
+      <div className="panel-subtitle">t = {slice.time.toFixed(3)} s</div>
       <svg viewBox="0 0 100 100" className="spectrum-slice-plot" preserveAspectRatio="none">
-        <polyline fill="none" stroke="#89b4fa" strokeWidth="0.5" points={points.join(' ')} />
-        <polyline fill="none" stroke="#f38ba8" strokeWidth="0.5" points={envelopePoints.join(' ')} />
+        <polyline fill="none" stroke="var(--accent)" strokeWidth="0.4" points={points.join(' ')} />
+        <polyline fill="none" stroke="var(--red)" strokeWidth="0.6" points={envelopePoints.join(' ')} />
       </svg>
+      <div className="panel-axis-labels">
+        <span>0 Hz</span>
+        <span>{maxFreq > 1000 ? `${(maxFreq / 1000).toFixed(1)} kHz` : `${Math.round(maxFreq)} Hz`}</span>
+      </div>
       <div className="panel-legend">
-        <span className="legend-item legend-blue">FFT magnitude</span>
+        <span className="legend-item legend-blue">FFT</span>
         <span className="legend-item legend-red">LPC envelope</span>
       </div>
     </section>
