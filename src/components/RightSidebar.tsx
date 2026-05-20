@@ -1,11 +1,11 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import {
-  AudioWaveform, Mic, Activity, Drum, Ear, Video, BookOpen, Settings,
+  AudioWaveform, Mic, Activity, Drum, Ear, Video, BookOpen, Settings, Code,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
-type Tab = 'spectrum' | 'voice' | 'hnr' | 'rhythm' | 'excitation' | 'video' | 'vocabulary' | 'settings';
+type Tab = 'spectrum' | 'voice' | 'hnr' | 'rhythm' | 'excitation' | 'video' | 'vocabulary' | 'settings' | 'script';
 
 interface RightSidebarProps {
   children: {
@@ -17,6 +17,7 @@ interface RightSidebarProps {
     video: ReactNode;
     vocabulary: ReactNode;
     settings: ReactNode;
+    script: ReactNode;
   };
 }
 
@@ -29,6 +30,7 @@ const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'video', label: 'Video', icon: Video },
   { id: 'vocabulary', label: 'Vocabulary', icon: BookOpen },
   { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'script', label: 'Script Editor', icon: Code },
 ];
 
 export function RightSidebar({ children }: RightSidebarProps) {
@@ -37,6 +39,15 @@ export function RightSidebar({ children }: RightSidebarProps) {
   const resizing = useRef(false);
   const startX = useRef(0);
   const startWidth = useRef(0);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const tab = (e as CustomEvent).detail as Tab;
+      setActiveTab(tab);
+    };
+    document.addEventListener('open-sidebar-tab', handler);
+    return () => document.removeEventListener('open-sidebar-tab', handler);
+  }, []);
 
   const handleTabClick = (tab: Tab) => {
     setActiveTab((current) => (current === tab ? null : tab));

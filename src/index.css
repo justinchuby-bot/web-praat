@@ -1563,3 +1563,9 @@ select:focus-visible {
 .listing-panel-table tr:hover td {
   background: var(--bg-hover, rgba(0,0,0,0.03));
 }
+.empty-panel {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 13px;
+}

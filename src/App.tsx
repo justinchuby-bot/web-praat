@@ -106,7 +106,6 @@ export default function App() {
   const [showSpeechSynthesizer, setShowSpeechSynthesizer] = useState(false);
   const [showPitchSonification, setShowPitchSonification] = useState(false);
   const [showNoteTranscription, setShowNoteTranscription] = useState(false);
-  const [showScriptEditor, setShowScriptEditor] = useState(false);
   const [showPlugins, setShowPlugins] = useState(false);
   const [showVoiceReport, setShowVoiceReport] = useState(false);
   const [experimentConfig, setExperimentConfig] = useState<{ config: any; audioMap: Record<string, string> } | null>(null);
@@ -584,7 +583,7 @@ export default function App() {
     { id: 'tools.speechSynthesizer', label: 'SpeechSynthesizer (TTS)', category: 'Tools', action: () => setShowSpeechSynthesizer(true) },
     { id: 'tools.pitchSonification', label: 'Pitch Sonification', category: 'Tools', action: () => setShowPitchSonification(true) },
     { id: 'tools.noteTranscription', label: 'Note Transcription', category: 'Tools', action: () => setShowNoteTranscription(true) },
-    { id: 'tools.script-editor', label: 'Script Editor', category: 'Tools', action: () => setShowScriptEditor(true) },
+    { id: 'tools.script-editor', label: 'Script Editor', category: 'Tools', action: () => document.dispatchEvent(new CustomEvent('open-sidebar-tab', { detail: 'script' })) },
     { id: 'tools.plugins', label: 'Plugins', category: 'Tools', action: () => setShowPlugins(true) },
     { id: 'analysis.compute-hnr', label: 'Compute HNR', category: 'Analysis', action: () => {} },
     { id: 'analysis.compute-rhythm', label: 'Compute Rhythm', category: 'Analysis', action: () => {} },
@@ -650,7 +649,7 @@ export default function App() {
         onOpenSpeechSynthesizer={() => setShowSpeechSynthesizer(true)}
         onOpenPitchSonification={() => setShowPitchSonification(true)}
         onOpenNoteTranscription={() => setShowNoteTranscription(true)}
-        onOpenScriptEditor={() => setShowScriptEditor(true)}
+        onOpenScriptEditor={() => document.dispatchEvent(new CustomEvent('open-sidebar-tab', { detail: 'script' }))}
         onOpenPlugins={() => setShowPlugins(true)}
         themeSetting={themeSetting}
         onThemeChange={setThemeSetting}
@@ -903,13 +902,13 @@ export default function App() {
 
         </main>
 
-        {analysis && !isMobile && (
+        {!isMobile && (
           <RightSidebar>
             {{
-              spectrum: <SpectrumSlice slice={analysis.spectrumSlice} />,
-              excitation: <ExcitationPattern samples={currentSamplesRef.current} sampleRate={sampleRate} />,
-              voice: <VoiceQualityPanel metrics={analysis.voiceQuality} />,
-              hnr: <HarmonicityPanel data={analysis.harmonicity} viewStart={viewStart} viewEnd={viewEnd} />,
+              spectrum: analysis ? <SpectrumSlice slice={analysis.spectrumSlice} /> : <div className="empty-panel">Load audio to see spectrum</div>,
+              excitation: analysis ? <ExcitationPattern samples={currentSamplesRef.current} sampleRate={sampleRate} /> : <div className="empty-panel">Load audio to see excitation pattern</div>,
+              voice: analysis ? <VoiceQualityPanel metrics={analysis.voiceQuality} /> : <div className="empty-panel">Load audio for voice quality</div>,
+              hnr: analysis ? <HarmonicityPanel data={analysis.harmonicity} viewStart={viewStart} viewEnd={viewEnd} /> : <div className="empty-panel">Load audio for HNR</div>,
               rhythm: <RhythmPanel metrics={rhythmMetrics} />,
               video: <VideoSync currentTime={currentTime} isPlaying={isPlaying} onAudioExtracted={(samples, sr) => { currentSamplesRef.current = samples; setSampleRate(sr); }} onSeek={(t) => setCurrentTime(t)} />,
               vocabulary: <ControlledVocabularyEditor textGrid={textGrid} vocabularies={vocabularies} bindings={vocabBindings} onVocabulariesChange={setVocabularies} onBindingsChange={setVocabBindings} />,
@@ -919,6 +918,7 @@ export default function App() {
                   <FilterPanel settings={filterSettings} onChange={setFilterSettings} onApply={handleApplyFilter} onReset={handleResetFilter} />
                 </>
               ),
+              script: <ScriptEditor samples={currentSamplesRef.current ?? undefined} sampleRate={sampleRate} />,
             }}
           </RightSidebar>
         )}
@@ -1068,14 +1068,6 @@ export default function App() {
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => { setShowExperiment(false); setExperimentConfig(null); }}>✕</button>
             <ExperimentMFC config={experimentConfig.config} audioMap={experimentConfig.audioMap} onComplete={() => { setShowExperiment(false); setExperimentConfig(null); }} />
-          </div>
-        </div>
-      )}
-      {showScriptEditor && (
-        <div className="modal-overlay" onClick={() => setShowScriptEditor(false)}>
-          <div className="modal-panel modal-panel-lg" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowScriptEditor(false)}>✕</button>
-            <ScriptEditor samples={currentSamplesRef.current ?? undefined} sampleRate={sampleRate} />
           </div>
         </div>
       )}
