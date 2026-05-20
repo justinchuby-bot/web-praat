@@ -18,9 +18,11 @@
 
 ## 当前优先任务
 
-- [ ] **FastTrack 端到端跑通** — include registry 和 Table ops 已完成，下一步实现 FastTrack 脚本的 formant fitting loop（polynomial regression + error metric）让 e.g. `fasttrack.praat` 完整执行
+- [ ] **Pulses (PointProcess)** — 声门脉冲检测 + 可视化 overlay + Pulses 菜单（Show pulses, Voice report, Jitter/Shimmer from pulses）
+- [ ] **Praat Editor 菜单补全** — Query 菜单（Get cursor, Get spectral power, Pitch/Formant listing）、Pulses 菜单、Select 菜单（Move cursor to zero crossing）
+- [ ] **FastTrack 端到端跑通** — include registry + Table ops + polynomial regression + error metric
 - [ ] **SpellingChecker** — WordList-based 拼写检查
-- [ ] **Spectrum Slice UX** — 频率轴标注 + formant peak markers
+- [ ] **Spectrum Slice UX** — formant peak markers + dB scale labels
 
 ## Backlog（按优先级）
 
