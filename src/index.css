@@ -1665,22 +1665,150 @@ select:focus-visible {
   flex-shrink: 0;
 }
 
-.script-editor-tabs {
+.script-tab-bar {
   display: flex;
-  gap: 4px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+  min-height: 32px;
 }
 
-.script-tab {
-  padding: 4px 10px;
-  font-size: 12px;
-  border-radius: 4px;
+.script-tabs-scroll {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  flex: 1;
+  gap: 1px;
+}
+
+.script-file-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+  color: var(--text-dim);
+  background: transparent;
+}
+
+.script-file-tab.active {
+  background: var(--bg-base);
+  color: var(--text);
+}
+
+.script-file-tab-lang {
+  font-weight: 600;
+  font-size: 9px;
+  padding: 1px 3px;
+  border-radius: 2px;
+  background: var(--accent, #89b4fa);
+  color: #fff;
+}
+
+.script-file-tab-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.script-file-tab-close {
   border: none;
   background: none;
   color: var(--text-dim);
   cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+  opacity: 0.5;
 }
 
-.script-tab.active {
+.script-file-tab-close:hover {
+  opacity: 1;
+  color: #ef4444;
+}
+
+.script-tab-add {
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 8px;
+}
+
+.script-tab-add:hover {
+  color: var(--text);
+}
+
+.script-tab-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+.script-lang-select {
+  font-size: 11px;
+  padding: 2px 4px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-base);
+  color: var(--text);
+}
+
+.script-examples-btn {
+  font-size: 11px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-base);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.script-examples-dropdown {
+  position: absolute;
+  right: 8px;
+  top: 34px;
+  z-index: 100;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  padding: 4px;
+  min-width: 220px;
+}
+
+.script-example-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 12px;
+  border: none;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  border-radius: 4px;
+  text-align: left;
+}
+
+.script-example-item:hover {
+  background: var(--bg-overlay);
+}
+
+.script-example-lang {
+  font-weight: 600;
+  font-size: 9px;
+  padding: 1px 3px;
+  border-radius: 2px;
   background: var(--accent, #89b4fa);
   color: #fff;
 }
