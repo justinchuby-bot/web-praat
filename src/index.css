@@ -876,8 +876,13 @@ select:focus-visible {
   cursor: default;
 }
 .toolbar-btn-active {
-  background: var(--red) !important;
-  color: #fff !important;
+  background: var(--bg-overlay);
+  border: 1px solid currentColor;
+}
+.toolbar-btn-danger.toolbar-btn-active {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red);
 }
 .toolbar-btn-danger {
   color: var(--red);
@@ -1220,6 +1225,100 @@ select:focus-visible {
   padding: 16px;
   text-align: center;
   color: var(--text-dim);
+}
+
+/* Menubar */
+.menubar-root {
+  display: flex;
+  height: 32px;
+  align-items: center;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+  padding: 0 4px;
+}
+
+.menubar-trigger {
+  display: flex;
+  cursor: default;
+  user-select: none;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+  outline: none;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+}
+
+.menubar-trigger:hover,
+.menubar-trigger[data-state="open"] {
+  background: var(--bg-overlay);
+  color: var(--text);
+}
+
+.menubar-content {
+  z-index: 50;
+  min-width: 180px;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  padding: 4px;
+  color: var(--text);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.12s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.menubar-item {
+  position: relative;
+  display: flex;
+  cursor: default;
+  user-select: none;
+  align-items: center;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 13px;
+  outline: none;
+  color: var(--text);
+}
+
+.menubar-item:focus,
+.menubar-item:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.menubar-item[data-disabled] {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.menubar-item-inset {
+  padding-left: 28px;
+}
+
+.menubar-sub-trigger[data-state="open"] {
+  background: var(--bg-overlay);
+}
+
+.menubar-sub-arrow {
+  margin-left: auto;
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+.menubar-separator {
+  margin: 4px -4px;
+  height: 1px;
+  background: var(--border);
 }
 
 .menubar-row {
