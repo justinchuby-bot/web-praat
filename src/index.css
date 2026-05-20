@@ -1394,3 +1394,43 @@ select:focus-visible {
   color: var(--text);
   border-color: var(--text-dim);
 }
+
+/* Voice Report Dialog */
+.voice-report-modal {
+  max-width: 500px;
+  width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.voice-report-body section {
+  margin-bottom: 1rem;
+}
+.voice-report-body h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.4rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.2rem;
+}
+.voice-report-table {
+  width: 100%;
+  font-size: 0.8rem;
+  border-collapse: collapse;
+}
+.voice-report-table td {
+  padding: 0.15rem 0.5rem;
+  color: var(--text-dim);
+}
+.voice-report-table td:last-child {
+  text-align: right;
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+.voice-report-footer {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-align: right;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}

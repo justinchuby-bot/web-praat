@@ -39,6 +39,7 @@ import { ExperimentDesigner } from './components/ExperimentDesigner';
 import { ExperimentMFC } from './components/ExperimentMFC';
 import { ScriptEditor } from './components/ScriptEditor';
 import { PluginManager } from './components/PluginManager';
+import { VoiceReportDialog } from './components/VoiceReportDialog';
 import SpeechSynthesizerPanel from './components/SpeechSynthesizerPanel';
 import PitchSonificationPanel from './components/PitchSonificationPanel';
 import NoteTranscriptionPanel from './components/NoteTranscriptionPanel';
@@ -106,6 +107,7 @@ export default function App() {
   const [showNoteTranscription, setShowNoteTranscription] = useState(false);
   const [showScriptEditor, setShowScriptEditor] = useState(false);
   const [showPlugins, setShowPlugins] = useState(false);
+  const [showVoiceReport, setShowVoiceReport] = useState(false);
   const [experimentConfig, setExperimentConfig] = useState<{ config: any; audioMap: Record<string, string> } | null>(null);
   const [settings, setSettings] = useState<AnalysisSettings>(defaultAnalysisSettings);
   const [filterSettings, setFilterSettings] = useState<FilterSettings>(defaultFilterSettings);
@@ -720,6 +722,9 @@ export default function App() {
           const t = findNearestZeroCrossing(currentSamplesRef.current, sampleRate, selection.end);
           setSelection({ start: selection.start, end: t });
         }}
+        showPulses={showPulses}
+        onTogglePulses={() => setShowPulses((v) => !v)}
+        onShowVoiceReport={() => setShowVoiceReport(true)}
       />
 
       <CommandPalette commands={paletteCommands} open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
@@ -1050,6 +1055,18 @@ export default function App() {
       )}
 
       {showPlugins && <PluginManager onClose={() => setShowPlugins(false)} samples={currentSamplesRef.current ?? undefined} sampleRate={sampleRate} />}
+
+      <VoiceReportDialog
+        open={showVoiceReport}
+        onClose={() => setShowVoiceReport(false)}
+        metrics={analysis?.voiceQuality ?? null}
+        duration={currentSamplesRef.current ? currentSamplesRef.current.length / sampleRate : 0}
+        meanPitch={analysis ? (() => { const f = (analysis.pitch.frequencies as (number | null)[]).filter((v): v is number => v != null && v > 0); return f.length ? f.reduce((a, b) => a + b, 0) / f.length : 0; })() : 0}
+        medianPitch={analysis ? (() => { const f = (analysis.pitch.frequencies as (number | null)[]).filter((v): v is number => v != null && v > 0).sort((a, b) => a - b); return f.length ? f[Math.floor(f.length / 2)] : 0; })() : 0}
+        pulseCount={analysis?.voiceQuality?.pulses.length ?? 0}
+        meanPeriod={analysis?.voiceQuality ? (() => { const pd = analysis.voiceQuality.periodDurations; return pd.length ? pd.reduce((a, b) => a + b, 0) / pd.length : 0; })() : 0}
+        hnrMean={analysis?.harmonicity ? (() => { const h = analysis.harmonicity.values.filter((v: number) => Number.isFinite(v) && v > -200); return h.length ? h.reduce((a: number, b: number) => a + b, 0) / h.length : 0; })() : 0}
+      />
 
       {showSpeechSynthesizer && (
         <div className="modal-overlay" onClick={() => setShowSpeechSynthesizer(false)}>

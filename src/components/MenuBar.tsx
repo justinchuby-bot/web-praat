@@ -63,6 +63,10 @@ interface MenuBarProps {
   onOpenCommandPalette?: () => void;
   themeSetting?: ThemeSetting;
   onThemeChange?: (theme: ThemeSetting) => void;
+  // Pulses menu
+  showPulses?: boolean;
+  onTogglePulses?: () => void;
+  onShowVoiceReport?: () => void;
   // Query menu
   onGetCursorPosition?: () => void;
   onGetSelectionBounds?: () => void;
@@ -208,6 +212,18 @@ export function MenuBar(props: MenuBarProps) {
           <MenubarItem onClick={onOpenPlugins}>🧩 Plugins</MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onOpenControlledVocabulary}>Controlled Vocabulary</MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
+
+      {/* Pulses */}
+      <MenubarMenu>
+        <MenubarTrigger>Pulses</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem onClick={props.onTogglePulses}>
+            {props.showPulses ? '✓ ' : ''}Show pulses
+          </MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem disabled={!hasAudio} onClick={props.onShowVoiceReport}>Voice report</MenubarItem>
         </MenubarContent>
       </MenubarMenu>
 
