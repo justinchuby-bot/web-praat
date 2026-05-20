@@ -639,32 +639,6 @@ button, input, select {
   max-width: 420px;
 }
 
-.settings-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.settings-section-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding: 8px 4px;
-  border: none;
-  background: none;
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: background 0.15s;
-}
-
-.settings-section-header:hover {
-  background: var(--bg-hover, rgba(0,0,0,0.05));
-}
-
 .settings-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1459,4 +1433,87 @@ select:focus-visible {
   text-align: right;
   padding-top: 0.5rem;
   border-top: 1px solid var(--border);
+}
+
+/* Listing Panel */
+.listing-panel {
+  border-top: 1px solid var(--border);
+  background: var(--bg-base);
+  max-height: 240px;
+  display: flex;
+  flex-direction: column;
+}
+
+.listing-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface, var(--bg-base));
+  flex-shrink: 0;
+}
+
+.listing-panel-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.listing-panel-count {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-right: auto;
+}
+
+.listing-panel-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: none;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.listing-panel-btn:hover {
+  background: var(--bg-hover, rgba(0,0,0,0.05));
+}
+
+.listing-panel-close {
+  border: none;
+  padding: 4px;
+}
+
+.listing-panel-table-wrap {
+  overflow: auto;
+  flex: 1;
+}
+
+.listing-panel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.listing-panel-table th,
+.listing-panel-table td {
+  padding: 3px 10px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.listing-panel-table th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-surface, var(--bg-base));
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+}
+
+.listing-panel-table tr:hover td {
+  background: var(--bg-hover, rgba(0,0,0,0.03));
 }

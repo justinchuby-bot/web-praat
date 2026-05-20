@@ -72,9 +72,6 @@ interface MenuBarProps {
   onGetSelectionBounds?: () => void;
   onGetPitchAtCursor?: () => void;
   onGetFormantAtCursor?: () => void;
-  onGetSpectralPowerAtCursor?: () => void;
-  onGetIntensityAtCursor?: () => void;
-  onGetHnrAtCursor?: () => void;
   onPitchListing?: () => void;
   onFormantListing?: () => void;
   // Select menu
@@ -82,9 +79,6 @@ interface MenuBarProps {
   onMoveCursorToZeroCrossing?: () => void;
   onMoveStartToZeroCrossing?: () => void;
   onMoveEndToZeroCrossing?: () => void;
-  // Pulses extended
-  onGetJitterLocal?: () => void;
-  onGetShimmerLocal?: () => void;
 }
 
 function FileInput({ accept, onFile, children }: { accept: string; onFile: (f: File) => void; children: React.ReactNode }) {
@@ -230,9 +224,6 @@ export function MenuBar(props: MenuBarProps) {
           </MenubarItem>
           <MenubarSeparator />
           <MenubarItem disabled={!hasAudio} onClick={props.onShowVoiceReport}>Voice report</MenubarItem>
-          <MenubarSeparator />
-          <MenubarItem disabled={!hasAudio} onClick={props.onGetJitterLocal}>Jitter (local)</MenubarItem>
-          <MenubarItem disabled={!hasAudio} onClick={props.onGetShimmerLocal}>Shimmer (local)</MenubarItem>
         </MenubarContent>
       </MenubarMenu>
 
@@ -245,9 +236,6 @@ export function MenuBar(props: MenuBarProps) {
           <MenubarSeparator />
           <MenubarItem disabled={!hasAudio} onClick={props.onGetPitchAtCursor}>Get pitch at cursor</MenubarItem>
           <MenubarItem disabled={!hasAudio} onClick={props.onGetFormantAtCursor}>Get formant at cursor</MenubarItem>
-          <MenubarItem disabled={!hasAudio} onClick={props.onGetSpectralPowerAtCursor}>Get spectral power at cursor <span className="menu-shortcut">F9</span></MenubarItem>
-          <MenubarItem disabled={!hasAudio} onClick={props.onGetIntensityAtCursor}>Get intensity at cursor</MenubarItem>
-          <MenubarItem disabled={!hasAudio} onClick={props.onGetHnrAtCursor}>Get HNR at cursor</MenubarItem>
           <MenubarSeparator />
           <MenubarItem disabled={!hasAudio} onClick={props.onPitchListing}>Pitch listing</MenubarItem>
           <MenubarItem disabled={!hasAudio} onClick={props.onFormantListing}>Formant listing</MenubarItem>

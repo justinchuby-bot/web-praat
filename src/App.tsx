@@ -51,6 +51,7 @@ import { Waveform } from './components/Waveform';
 import { DropOverlay, DropFileType } from './components/DropOverlay';
 import { Minimap } from './components/Minimap';
 import { FilterPanel } from './components/FilterPanel';
+import { ListingPanel, type ListingData } from './components/ListingPanel';
 import {
   downloadBinaryFile,
   downloadTextFile,
@@ -115,6 +116,7 @@ export default function App() {
   const [vocabularies, setVocabularies] = useState<ControlledVocabulary[]>([]);
   const [vocabBindings, setVocabBindings] = useState<TierVocabularyBinding[]>([]);
   const [activeTierId, setActiveTierId] = useState<string | null>(null);
+  const [listingData, setListingData] = useState<ListingData | null>(null);
   const [viewStart, setViewStart] = useState(0);
   const [viewEnd, setViewEnd] = useState(1);
   const [sampleRate, setSampleRate] = useState(44100);
@@ -685,58 +687,23 @@ export default function App() {
           const f1 = f.f1[bestIdx], f2 = f.f2[bestIdx], f3 = f.f3[bestIdx];
           window.alert(`Formants at ${t.toFixed(4)} s:\nF1: ${f1 != null && f1 > 0 ? f1.toFixed(0) + ' Hz' : '--'}\nF2: ${f2 != null && f2 > 0 ? f2.toFixed(0) + ' Hz' : '--'}\nF3: ${f3 != null && f3 > 0 ? f3.toFixed(0) + ' Hz' : '--'}`);
         }}
-        onGetSpectralPowerAtCursor={() => {
-          if (!analysis) return;
-          const t = currentTimeRef.current;
-          const sg = analysis.spectrogram;
-          const frameIdx = Math.round(t / sg.timeStep);
-          if (frameIdx < 0 || frameIdx >= sg.magnitudes.length) { window.alert('No spectrogram data at cursor'); return; }
-          const frame = sg.magnitudes[frameIdx];
-          let totalPower = 0;
-          for (let i = 0; i < frame.length; i++) totalPower += frame[i] * frame[i];
-          const powerDensity = totalPower * sg.freqStep;
-          window.alert(`Spectral power at ${t.toFixed(4)} s: ${powerDensity.toExponential(4)} Pa²/Hz`);
-        }}
-        onGetIntensityAtCursor={() => {
-          if (!analysis) return;
-          const t = currentTimeRef.current;
-          const int = analysis.intensity;
-          let bestIdx = 0;
-          let bestDist = Infinity;
-          for (let i = 0; i < int.times.length; i++) {
-            const d = Math.abs(int.times[i] - t);
-            if (d < bestDist) { bestDist = d; bestIdx = i; }
-          }
-          window.alert(`Intensity at ${t.toFixed(4)} s: ${int.values[bestIdx].toFixed(2)} dB`);
-        }}
-        onGetHnrAtCursor={() => {
-          if (!analysis) return;
-          const t = currentTimeRef.current;
-          const hnr = analysis.harmonicity;
-          let bestIdx = 0;
-          let bestDist = Infinity;
-          for (let i = 0; i < hnr.times.length; i++) {
-            const d = Math.abs(hnr.times[i] - t);
-            if (d < bestDist) { bestDist = d; bestIdx = i; }
-          }
-          window.alert(`HNR at ${t.toFixed(4)} s: ${hnr.values[bestIdx].toFixed(2)} dB`);
-        }}
         onPitchListing={() => {
           if (!analysis) return;
           const p = analysis.pitch;
-          const lines = p.times.map((t: number, i: number) => `${t.toFixed(4)}\t${p.frequencies[i] != null && (p.frequencies[i] as number) > 0 ? (p.frequencies[i] as number).toFixed(1) : '--'}`);
-          console.log('Pitch listing (time\tHz):\n' + lines.join('\n'));
-          window.alert(`Pitch listing output to console (${p.times.length} frames)`);
+          const rows = p.times.map((t: number, i: number) => [
+            t.toFixed(4),
+            p.frequencies[i] != null && (p.frequencies[i] as number) > 0 ? (p.frequencies[i] as number).toFixed(1) : '--'
+          ]);
+          setListingData({ title: 'Pitch listing', headers: ['Time (s)', 'F0 (Hz)'], rows });
         }}
         onFormantListing={() => {
           if (!analysis) return;
           const f = analysis.formants;
-          const lines = f.times.map((t: number, i: number) => {
-            const vals = [f.f1[i], f.f2[i], f.f3[i]].map(v => v != null && v > 0 ? v.toFixed(0) : '--').join('\t');
-            return `${t.toFixed(4)}\t${vals}`;
+          const rows = f.times.map((t: number, i: number) => {
+            const vals = [f.f1[i], f.f2[i], f.f3[i]].map(v => v != null && v > 0 ? v.toFixed(0) : '--');
+            return [t.toFixed(4), ...vals];
           });
-          console.log('Formant listing (time\tF1\tF2\tF3):\n' + lines.join('\n'));
-          window.alert(`Formant listing output to console (${f.times.length} frames)`);
+          setListingData({ title: 'Formant listing', headers: ['Time (s)', 'F1 (Hz)', 'F2 (Hz)', 'F3 (Hz)'], rows });
         }}
         onSelectAll={() => {
           if (!currentSamplesRef.current) return;
@@ -761,14 +728,6 @@ export default function App() {
         showPulses={showPulses}
         onTogglePulses={() => setShowPulses((v) => !v)}
         onShowVoiceReport={() => setShowVoiceReport(true)}
-        onGetJitterLocal={() => {
-          if (!analysis?.voiceQuality) return;
-          window.alert(`Jitter (local): ${analysis.voiceQuality.jitterLocalPercent.toFixed(3)}%\nJitter (absolute): ${(analysis.voiceQuality.jitterAbsolute * 1000).toFixed(4)} ms`);
-        }}
-        onGetShimmerLocal={() => {
-          if (!analysis?.voiceQuality) return;
-          window.alert(`Shimmer (local): ${analysis.voiceQuality.shimmerLocalPercent.toFixed(3)}%\nShimmer (dB): ${analysis.voiceQuality.shimmerDb.toFixed(4)} dB`);
-        }}
       />
 
       <CommandPalette commands={paletteCommands} open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
@@ -941,6 +900,8 @@ export default function App() {
         </div>
 
         </main>
+
+        <ListingPanel data={listingData} onClose={() => setListingData(null)} />
 
         {analysis && !isMobile && (
           <RightSidebar>

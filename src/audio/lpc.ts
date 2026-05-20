@@ -164,7 +164,7 @@ export interface FormantResult {
 function extractFormantCandidates(
   frame: Float64Array,
   sampleRate: number,
-  lpcOrder = 15,
+  lpcOrder = 10,
   maxFrequency = DEFAULT_MAX_FORMANT
 ): FormantCandidate[] {
   const prepared = prepareFrame(frame, sampleRate, maxFrequency);
@@ -192,7 +192,7 @@ function extractFormantCandidates(
 export function extractFormants(
   frame: Float64Array,
   sampleRate: number,
-  lpcOrder = 15,
+  lpcOrder = 10,
   maxFrequency = DEFAULT_MAX_FORMANT
 ): FormantResult | null {
   const candidates = extractFormantCandidates(frame, sampleRate, lpcOrder, maxFrequency);
