@@ -278,6 +278,28 @@ export async function batchFftMagnitudeGpu(
     return frames.map(f => cpuFftMagnitude(f, fftSize));
   }
 
+  // Process in chunks to avoid buffer allocation failures on long audio
+  const MAX_FRAMES_PER_BATCH = 8192;
+  if (frames.length > MAX_FRAMES_PER_BATCH) {
+    const results: Float64Array[] = [];
+    for (let i = 0; i < frames.length; i += MAX_FRAMES_PER_BATCH) {
+      const chunk = frames.slice(i, i + MAX_FRAMES_PER_BATCH);
+      const chunkResults = await batchFftMagnitudeGpuInner(chunk, fftSize);
+      results.push(...chunkResults);
+    }
+    return results;
+  }
+  return batchFftMagnitudeGpuInner(frames, fftSize);
+}
+
+async function batchFftMagnitudeGpuInner(
+  frames: Float64Array[],
+  fftSize: number,
+): Promise<Float64Array[]> {
+  if (!gpuDevice || frames.length === 0) {
+    return frames.map(f => cpuFftMagnitude(f, fftSize));
+  }
+
   const device = gpuDevice;
   const n = fftSize;
   const numFrames = frames.length;
