@@ -9,7 +9,7 @@
 
 ## 当前状态
 
-- **435 tests**, 70+ 源文件, 10000+ 行 TypeScript
+- **448 tests**, 70+ 源文件, 10000+ 行 TypeScript
 - **React 19 + TypeScript 6 + Vite 8 + vitest 4.1**
 - Coverage: 84% statements, 93% audio module
 - Build: 467KB / 145KB gzip
@@ -18,7 +18,7 @@
 
 ## 当前优先任务
 
-- [ ] **FastTrack 完整支持** — Praat Script interpreter 已连接真实引擎，下一步让 FastTrack 脚本端到端跑通（include registry + 完整 Table 操作）
+- [ ] **FastTrack 端到端跑通** — include registry 和 Table ops 已完成，下一步实现 FastTrack 脚本的 formant fitting loop（polynomial regression + error metric）让 e.g. `fasttrack.praat` 完整执行
 - [ ] **SpellingChecker** — WordList-based 拼写检查
 - [ ] **Spectrum Slice UX** — 频率轴标注 + formant peak markers
 
@@ -110,6 +110,7 @@
 - [x] **主题一致性** — 所有 modal/dialog/command palette 用统一 CSS vars，切主题不会出现白块
 - [x] **Plugin 系统** — 加载 .praat 脚本作为 plugin; 内置 Vowel Space + Jitter/Shimmer; Tools > 🧩 Plugins
 - [x] **Praat Script interpreter 大升级** — 386→998行; include/dot-local vars/向量数组/Table操作/selectObject/nocheck/字符串插值/线性回归
+- [x] **FastTrack include registry + Table ops** — registerInclude/registerIncludes, command-call assignment parsing (var = Get...), Append row/Set numeric/Set string/Get string/Get column index/Sort rows/Get min-max/Get stdev/Create Table with column names
 - [x] **Interpreter 连接真实引擎** — To Formant/To Pitch/Get value at time/Get mean 调用真实 LPC + autocorrelation 分析
 
 ## 规则
