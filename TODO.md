@@ -18,9 +18,9 @@
 
 ## 当前优先任务
 
-- [ ] **SpellingChecker** — WordList-based 拼写检查
 - [ ] **SpeechSynthesizer (TTS)** — Web Speech API integration
 - [ ] **JS API: spectral queries** — `praat.getSpectralPower()`, `praat.getIntensityAtTime()`, `praat.getHnrAtTime()`
+- [ ] Formant accuracy tuning — LPC params to match Praat defaults (F1/F2 tolerance currently ~350/1500 Hz)
 
 ## Backlog（按优先级）
 
@@ -40,7 +40,6 @@
 - [x] Controlled vocabulary（标注预定义词表）
 
 ### 低优先
-- [ ] SpellingChecker
 - [ ] Distributions & Transition（统计）
 - [ ] Polygon / Photo / Movie 支持
 
@@ -115,6 +114,7 @@
 - [x] **FastTrack 端到端跑通** — polynomial fitting (Fit polynomial/Get fitting error) + select Type Name fix + Remove column + Extract rows where + full fitting loop
 - [x] **Pulses (PointProcess)** — 声门脉冲检测 + 可视化 overlay + Pulses 菜单（Show pulses, Voice report）+ VoiceReportDialog
 - [x] **Praat Editor 菜单补全** — Query菜单 (Get spectral power/intensity/HNR at cursor) + Pulses菜单 (Jitter local/Shimmer local) + Select菜单完善
+- [x] **SpellingChecker** — WordList binary search + SpellingChecker (rules: names, abbreviations, prefixes, suffixes, user dictionary) + TextGrid integration + 18 tests
 - [x] **Spectrum Slice UX** — formant peak markers (F1/F2/F3) + dB axis labels + hover cursor readout
 
 ## 规则
