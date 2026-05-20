@@ -62,7 +62,7 @@ export function PluginManager({ onClose, samples, sampleRate }: PluginManagerPro
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content plugin-manager" onClick={e => e.stopPropagation()} style={{ maxWidth: '800px', width: '90%' }}>
+      <div className="modal-panel plugin-manager" onClick={e => e.stopPropagation()} style={{ maxWidth: '800px', width: '90%' }}>
         <button className="modal-close" onClick={onClose}>✕</button>
         <h2 style={{ margin: '0 0 16px', fontSize: '18px' }}>🧩 Plugins</h2>
 
