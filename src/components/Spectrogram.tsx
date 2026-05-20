@@ -335,6 +335,7 @@ export const Spectrogram = React.memo(function Spectrogram({
       <canvas
         ref={canvasRef}
         className="spectrogram-canvas"
+        aria-label="Spectrogram visualization"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

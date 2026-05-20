@@ -47,6 +47,8 @@ export class AudioRecorder {
 
       this.mediaRecorder.stop();
       this.mediaRecorder.stream.getTracks().forEach((t) => t.stop());
+      this.audioContext?.close();
+      this.audioContext = null;
     });
   }
 }
@@ -57,5 +59,7 @@ export class AudioRecorder {
 export async function loadAudioFile(file: File): Promise<AudioBuffer> {
   const ctx = new AudioContext();
   const arrayBuffer = await file.arrayBuffer();
-  return ctx.decodeAudioData(arrayBuffer);
+  const buffer = await ctx.decodeAudioData(arrayBuffer);
+  await ctx.close();
+  return buffer;
 }

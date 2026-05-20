@@ -153,6 +153,30 @@ export default function App() {
 
   const viewRange = useMemo(() => ({ start: viewStart, end: viewEnd }), [viewStart, viewEnd]);
 
+  const pitchAtCursor = useMemo(() => {
+    if (!analysis) return undefined;
+    const p = analysis.pitch;
+    if (p.times.length === 0) return undefined;
+    let bestIdx = 0, bestDist = Infinity;
+    for (let i = 0; i < p.times.length; i++) {
+      const d = Math.abs(p.times[i] - currentTime);
+      if (d < bestDist) { bestDist = d; bestIdx = i; }
+    }
+    return p.frequencies[bestIdx];
+  }, [analysis, currentTime]);
+
+  const formantsAtCursor = useMemo(() => {
+    if (!analysis) return undefined;
+    const f = analysis.formants;
+    if (f.times.length === 0) return undefined;
+    let bestIdx = 0, bestDist = Infinity;
+    for (let i = 0; i < f.times.length; i++) {
+      const d = Math.abs(f.times[i] - currentTime);
+      if (d < bestDist) { bestDist = d; bestIdx = i; }
+    }
+    return { f1: f.f1[bestIdx], f2: f.f2[bestIdx], f3: f.f3[bestIdx] };
+  }, [analysis, currentTime]);
+
   const syncHistoryFlags = useCallback(() => {
     setCanUndo(editorRef.current.canUndo());
     setCanRedo(editorRef.current.canRedo());
@@ -189,6 +213,10 @@ export default function App() {
           editorRef.current.setSamples(samples);
           syncHistoryFlags();
         }
+      }).catch((err) => {
+        setAnalyzing(false);
+        setProgress(0);
+        console.error('Analysis failed:', err);
       });
     },
     [syncHistoryFlags, analyzeInWorker]
@@ -273,11 +301,15 @@ export default function App() {
   }, [processAudioBuffer]);
 
   const handleImportTextGrid = useCallback(async (file: File) => {
-    const content = await file.text();
-    const parsed = parseTextGrid(content);
-    textGridRef.current = parsed;
-    setTextGrid(parsed);
-    setActiveTierId(parsed.tiers[0]?.id ?? null);
+    try {
+      const content = await file.text();
+      const parsed = parseTextGrid(content);
+      textGridRef.current = parsed;
+      setTextGrid(parsed);
+      setActiveTierId(parsed.tiers[0]?.id ?? null);
+    } catch (err) {
+      alert(`Failed to import TextGrid: ${err instanceof Error ? err.message : 'Invalid format'}`);
+    }
   }, []);
 
   const handleRecord = useCallback(async () => {
@@ -1169,26 +1201,8 @@ export default function App() {
         isRecording={isRecording}
         streamDuration={streaming.streamDuration}
         cursorTime={analysis ? currentTime : undefined}
-        pitchAtCursor={(() => {
-          if (!analysis) return undefined;
-          const p = analysis.pitch;
-          let bestIdx = 0, bestDist = Infinity;
-          for (let i = 0; i < p.times.length; i++) {
-            const d = Math.abs(p.times[i] - currentTime);
-            if (d < bestDist) { bestDist = d; bestIdx = i; }
-          }
-          return p.frequencies[bestIdx];
-        })()}
-        formantsAtCursor={(() => {
-          if (!analysis) return undefined;
-          const f = analysis.formants;
-          let bestIdx = 0, bestDist = Infinity;
-          for (let i = 0; i < f.times.length; i++) {
-            const d = Math.abs(f.times[i] - currentTime);
-            if (d < bestDist) { bestDist = d; bestIdx = i; }
-          }
-          return { f1: f.f1[bestIdx], f2: f.f2[bestIdx], f3: f.f3[bestIdx] };
-        })()}
+        pitchAtCursor={pitchAtCursor}
+        formantsAtCursor={formantsAtCursor}
       />
       <KeyboardShortcutsDialog />
       <AboutDialog />
@@ -1196,72 +1210,72 @@ export default function App() {
       {/* Tool Panels */}
       {showManipulation && currentSamplesRef.current && (
         <div className="modal-overlay" onClick={() => setShowManipulation(false)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowManipulation(false)}>✕</button>
+          <div className="modal-panel" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" aria-label="Close" onClick={() => setShowManipulation(false)}>✕</button>
             <ManipulationEditor samples={currentSamplesRef.current} sampleRate={sampleRate} onSynthesized={(output) => { commitSamples(output); setShowManipulation(false); }} />
           </div>
         </div>
       )}
       {showPitchTier && currentSamplesRef.current && (
         <div className="modal-overlay" onClick={() => setShowPitchTier(false)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowPitchTier(false)}>✕</button>
+          <div className="modal-panel" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" aria-label="Close" onClick={() => setShowPitchTier(false)}>✕</button>
             <PitchTierEditor samples={currentSamplesRef.current} sampleRate={sampleRate} onApply={() => setShowPitchTier(false)} />
           </div>
         </div>
       )}
       {showFormantGrid && analysis && (
         <div className="modal-overlay" onClick={() => setShowFormantGrid(false)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowFormantGrid(false)}>✕</button>
+          <div className="modal-panel" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" aria-label="Close" onClick={() => setShowFormantGrid(false)}>✕</button>
             <FormantGridEditor duration={analysis.duration} onApply={() => setShowFormantGrid(false)} />
           </div>
         </div>
       )}
       {showDurationTier && analysis && (
         <div className="modal-overlay" onClick={() => setShowDurationTier(false)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowDurationTier(false)}>✕</button>
+          <div className="modal-panel" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" aria-label="Close" onClick={() => setShowDurationTier(false)}>✕</button>
             <DurationTierEditor duration={analysis.duration} onApply={() => setShowDurationTier(false)} />
           </div>
         </div>
       )}
       {showAmplitudeTier && analysis && (
         <div className="modal-overlay" onClick={() => setShowAmplitudeTier(false)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowAmplitudeTier(false)}>✕</button>
+          <div className="modal-panel" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" aria-label="Close" onClick={() => setShowAmplitudeTier(false)}>✕</button>
             <AmplitudeTierEditor duration={analysis.duration} onApply={() => setShowAmplitudeTier(false)} />
           </div>
         </div>
       )}
       {showVocalTract && (
         <div className="modal-overlay" onClick={() => setShowVocalTract(false)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowVocalTract(false)}>✕</button>
+          <div className="modal-panel" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" aria-label="Close" onClick={() => setShowVocalTract(false)}>✕</button>
             <VocalTractEditor />
           </div>
         </div>
       )}
       {showSpectrumEditor && (
         <div className="modal-overlay" onClick={() => setShowSpectrumEditor(false)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowSpectrumEditor(false)}>✕</button>
+          <div className="modal-panel" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" aria-label="Close" onClick={() => setShowSpectrumEditor(false)}>✕</button>
             <SpectrumEditor slice={analysis?.spectrumSlice ?? null} samples={currentSamplesRef.current ?? null} sampleRate={sampleRate} onApplyFilter={(filtered) => { commitSamples(filtered); setShowSpectrumEditor(false); }} />
           </div>
         </div>
       )}
       {showExperiment && !experimentConfig && (
         <div className="modal-overlay" onClick={() => setShowExperiment(false)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowExperiment(false)}>✕</button>
+          <div className="modal-panel" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" aria-label="Close" onClick={() => setShowExperiment(false)}>✕</button>
             <ExperimentDesigner onStart={(config, audioMap) => setExperimentConfig({ config, audioMap })} />
           </div>
         </div>
       )}
       {showExperiment && experimentConfig && (
         <div className="modal-overlay" onClick={() => { setShowExperiment(false); setExperimentConfig(null); }}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => { setShowExperiment(false); setExperimentConfig(null); }}>✕</button>
+          <div className="modal-panel" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" aria-label="Close" onClick={() => { setShowExperiment(false); setExperimentConfig(null); }}>✕</button>
             <ExperimentMFC config={experimentConfig.config} audioMap={experimentConfig.audioMap} onComplete={() => { setShowExperiment(false); setExperimentConfig(null); }} />
           </div>
         </div>
@@ -1284,24 +1298,24 @@ export default function App() {
 
       {showSpeechSynthesizer && (
         <div className="modal-overlay" onClick={() => setShowSpeechSynthesizer(false)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowSpeechSynthesizer(false)}>✕</button>
+          <div className="modal-panel" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" aria-label="Close" onClick={() => setShowSpeechSynthesizer(false)}>✕</button>
             <SpeechSynthesizerPanel onClose={() => setShowSpeechSynthesizer(false)} />
           </div>
         </div>
       )}
       {showPitchSonification && (
         <div className="modal-overlay" onClick={() => setShowPitchSonification(false)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowPitchSonification(false)}>✕</button>
+          <div className="modal-panel" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" aria-label="Close" onClick={() => setShowPitchSonification(false)}>✕</button>
             <PitchSonificationPanel pitch={analysis?.pitch ?? null} onClose={() => setShowPitchSonification(false)} />
           </div>
         </div>
       )}
       {showNoteTranscription && (
         <div className="modal-overlay" onClick={() => setShowNoteTranscription(false)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowNoteTranscription(false)}>✕</button>
+          <div className="modal-panel" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" aria-label="Close" onClick={() => setShowNoteTranscription(false)}>✕</button>
             <NoteTranscriptionPanel pitch={analysis?.pitch ?? null} onClose={() => setShowNoteTranscription(false)} />
           </div>
         </div>

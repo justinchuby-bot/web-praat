@@ -22,7 +22,7 @@ export function ListingPanel({ data, onClose }: ListingPanelProps) {
     navigator.clipboard.writeText(tsv).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+    }).catch(() => { /* clipboard not available */ });
   };
 
   return (
