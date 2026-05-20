@@ -1052,6 +1052,14 @@ export default function App() {
                   onZoomSelection={handleZoomSelection}
                   onSelectionChange={setSelection}
                   onSpectrumSliceSelect={handleSpectrumSliceSelect}
+                  onAnalyzeRegion={() => {
+                    if (!currentSamplesRef.current) return;
+                    const startSample = Math.floor(viewStart * sampleRate);
+                    const endSample = Math.min(Math.floor(viewEnd * sampleRate), currentSamplesRef.current.length);
+                    if (endSample - startSample < 100) return;
+                    const region = currentSamplesRef.current.slice(startSample, endSample);
+                    processSamples(region, sampleRate, false);
+                  }}
                 />
               )}
               </div>
