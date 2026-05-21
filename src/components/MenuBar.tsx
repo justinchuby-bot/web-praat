@@ -94,11 +94,23 @@ interface MenuBarProps {
 
 function FileInput({ accept, onFile, children }: { accept: string; onFile: (f: File) => void; children: React.ReactNode }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
+  // Render input via portal to document.body so it persists after menu closes
+  React.useEffect(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept;
+    input.style.display = 'none';
+    input.addEventListener('change', () => {
+      if (input.files?.[0]) onFile(input.files[0]);
+      input.value = '';
+    });
+    (inputRef as React.MutableRefObject<HTMLInputElement>).current = input;
+    document.body.appendChild(input);
+    return () => { document.body.removeChild(input); };
+  }, [accept, onFile]);
+
   return (
-    <>
-      <MenubarItem onClick={() => inputRef.current?.click()}>{children}</MenubarItem>
-      <input ref={inputRef} hidden type="file" accept={accept} onChange={(e) => { if (e.target.files?.[0]) onFile(e.target.files[0]); e.target.value = ''; }} />
-    </>
+    <MenubarItem onClick={() => inputRef.current?.click()}>{children}</MenubarItem>
   );
 }
 
