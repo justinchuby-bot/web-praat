@@ -1,8 +1,7 @@
 /**
  * Whisper-based transcription + word timestamps using transformers.js.
- * Runs entirely in the browser (ONNX Runtime + WebAssembly).
+ * Runs in a Web Worker to keep UI responsive.
  */
-import { pipeline } from '@huggingface/transformers';
 import type { TextGrid, Interval } from '../types';
 import { createId } from '../utils/id';
 
@@ -14,13 +13,23 @@ export interface WhisperTranscribeOptions {
   onProgress?: (progress: { status: string; progress?: number }) => void;
 }
 
-let cachedPipeline: any = null;
-let cachedModelId: string | null = null;
+let worker: Worker | null = null;
+
+function getWorker(): Worker {
+  if (!worker) {
+    worker = new Worker(
+      new URL('../workers/whisperWorker.ts', import.meta.url),
+      { type: 'module' }
+    );
+  }
+  return worker;
+}
 
 /**
  * Transcribe audio and return a TextGrid with word-level intervals.
+ * Runs entirely off the main thread via Web Worker.
  */
-export async function whisperTranscribe(
+export function whisperTranscribe(
   samples: Float32Array,
   sampleRate: number,
   options: WhisperTranscribeOptions = {}
@@ -31,57 +40,47 @@ export async function whisperTranscribe(
     onProgress,
   } = options;
 
-  // Load model (with progress)
-  if (!cachedPipeline || cachedModelId !== model) {
-    onProgress?.({ status: 'downloading' });
-    cachedPipeline = await pipeline('automatic-speech-recognition', model, {
-      revision: 'output_attentions',  // Required for word-level timestamps
-      dtype: 'q4',
-      device: 'wasm',
-      progress_callback: (data: any) => {
-        if (data.status === 'progress' && data.progress != null) {
-          onProgress?.({ status: 'downloading', progress: data.progress });
-        } else if (data.status === 'done') {
-          onProgress?.({ status: 'loading' });
-        }
-      },
-    });
-    cachedModelId = model;
-  }
+  return new Promise((resolve, reject) => {
+    const w = getWorker();
 
-  onProgress?.({ status: 'transcribing' });
-
-  // Resample to 16kHz if needed
-  let audio: Float32Array;
-  if (Math.abs(sampleRate - 16000) > 1) {
-    const ratio = 16000 / sampleRate;
-    const newLen = Math.round(samples.length * ratio);
-    audio = new Float32Array(newLen);
-    for (let i = 0; i < newLen; i++) {
-      const srcIdx = i / ratio;
-      const idx = Math.floor(srcIdx);
-      const frac = srcIdx - idx;
-      const s0 = samples[idx] ?? 0;
-      const s1 = samples[Math.min(idx + 1, samples.length - 1)] ?? 0;
-      audio[i] = s0 + frac * (s1 - s0);
+    // Resample to 16kHz if needed
+    let audio: Float32Array;
+    if (Math.abs(sampleRate - 16000) > 1) {
+      const ratio = 16000 / sampleRate;
+      const newLen = Math.round(samples.length * ratio);
+      audio = new Float32Array(newLen);
+      for (let i = 0; i < newLen; i++) {
+        const srcIdx = i / ratio;
+        const idx = Math.floor(srcIdx);
+        const frac = srcIdx - idx;
+        const s0 = samples[idx] ?? 0;
+        const s1 = samples[Math.min(idx + 1, samples.length - 1)] ?? 0;
+        audio[i] = s0 + frac * (s1 - s0);
+      }
+    } else {
+      audio = new Float32Array(samples);
     }
-  } else {
-    audio = new Float32Array(samples);
-  }
 
-  // Run transcription
-  const result = await cachedPipeline(audio, {
-    return_timestamps: 'word',
-    language: language || undefined,
-    task: 'transcribe',
-    chunk_length_s: 30,
-    stride_length_s: 5,
+    const handler = (event: MessageEvent) => {
+      const { type, status, progress, result, message } = event.data;
+      if (type === 'progress') {
+        onProgress?.({ status, progress });
+      } else if (type === 'result') {
+        w.removeEventListener('message', handler);
+        const duration = samples.length / sampleRate;
+        resolve(buildTextGrid(result, duration));
+      } else if (type === 'error') {
+        w.removeEventListener('message', handler);
+        reject(new Error(message));
+      }
+    };
+
+    w.addEventListener('message', handler);
+    w.postMessage(
+      { type: 'transcribe', model, audio, language, revision: 'output_attentions' },
+      [audio.buffer]
+    );
   });
-
-  onProgress?.({ status: 'done' });
-
-  const duration = samples.length / sampleRate;
-  return buildTextGrid(result, duration);
 }
 
 function buildTextGrid(result: any, duration: number): TextGrid {
