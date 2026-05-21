@@ -45,7 +45,7 @@ export async function whisperTranscribe(
   options: WhisperTranscribeOptions = {}
 ): Promise<TextGrid> {
   const {
-    model = 'onnx-community/whisper-base',
+    model = 'onnx-community/whisper-small',
     language = null,
     onProgress,
   } = options;

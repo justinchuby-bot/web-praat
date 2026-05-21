@@ -786,13 +786,26 @@ export default function App() {
         }}
         onWhisperTranscribe={async () => {
           if (!currentSamplesRef.current) return;
+          const modelChoice = prompt(
+            'Whisper model:\n' +
+            '1. tiny (~40 MB, fast, less accurate)\n' +
+            '2. base (~80 MB, balanced)\n' +
+            '3. small (~150 MB, best accuracy)\n\n' +
+            'Enter 1/2/3 (default: 3):',
+            '3'
+          );
+          if (modelChoice === null) return;
+          const models = { '1': 'onnx-community/whisper-tiny', '2': 'onnx-community/whisper-base', '3': 'onnx-community/whisper-small' } as const;
+          const model = models[modelChoice as '1'|'2'|'3'] ?? 'onnx-community/whisper-small';
           const lang = prompt('Language (e.g. en, zh, ja, fr — leave empty for auto-detect):');
+          if (lang === null) return;
           setIsProcessing(true);
           try {
             const grid = await whisperTranscribe(
               currentSamplesRef.current,
               sampleRate,
               {
+                model: model as any,
                 language: lang || null,
                 onProgress: (p) => { document.title = `Whisper: ${p.status}${p.progress ? ` ${Math.round(p.progress)}%` : ''}`; },
               }
