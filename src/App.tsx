@@ -1329,8 +1329,15 @@ export default function App() {
                   onProgress: (p) => { document.title = `Whisper: ${p.status}${p.progress ? ` ${Math.round(p.progress)}%` : ''}`; },
                 }
               );
-              textGridRef.current = grid;
-              setTextGrid(grid);
+              // Add transcription as new tier(s) instead of replacing existing TextGrid
+              const existingGrid = textGridRef.current;
+              const mergedGrid = {
+                xmin: existingGrid.xmin,
+                xmax: Math.max(existingGrid.xmax, grid.xmax),
+                tiers: [...existingGrid.tiers, ...grid.tiers],
+              };
+              textGridRef.current = mergedGrid;
+              setTextGrid(mergedGrid);
               setActiveTierId(grid.tiers[0]?.id ?? null);
             } catch (err) {
               alert(`Transcription failed: ${err instanceof Error ? err.message : err}`);
