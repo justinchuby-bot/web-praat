@@ -34,6 +34,7 @@ interface MenuBarProps {
   onBatchProcess?: () => void;
   onAnalyzeSelection?: () => void;
   onAutoSegment?: () => void;
+  onLiveTranscribe?: () => void;
   onUndo: () => void;
   onRedo: () => void;
   onCut: () => void;
@@ -251,6 +252,7 @@ export function MenuBar(props: MenuBarProps) {
           <MenubarSeparator />
           {props.onBatchProcess && <MenubarItem onClick={props.onBatchProcess}>Batch Process…</MenubarItem>}
           {props.onAutoSegment && <MenubarItem disabled={!hasAudio} onClick={props.onAutoSegment}>Auto-Segment (Silence Detection)</MenubarItem>}
+          {props.onLiveTranscribe && <MenubarItem onClick={props.onLiveTranscribe}>Live Transcribe (Speech-to-Text)…</MenubarItem>}
         </MenubarContent>
       </MenubarMenu>
 

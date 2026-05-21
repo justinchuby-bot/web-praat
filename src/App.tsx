@@ -62,6 +62,7 @@ import { exportFigurePng } from './export/figure';
 import { normalize as soundNormalize } from './audio/soundManipulation';
 import { removeSilence } from './audio/soundEnhance';
 import { autoSegment } from './audio/transcribe';
+import { LiveTranscriber } from './audio/liveTranscribe';
 import { generateSineWave } from './audio/psola';
 import {
   downloadBinaryFile,
@@ -319,6 +320,26 @@ export default function App() {
   }, [streaming]);
 
   const handleStopRecord = useCallback(() => {
+    // Check if live transcriber is active
+    const transcriber = (window as any).__liveTranscriber;
+    if (transcriber?.isRunning) {
+      const result = transcriber.stop();
+      (window as any).__liveTranscriber = null;
+      setIsRecording(false);
+      document.title = 'web-praat';
+      if (result.samples.length > 0) {
+        originalSamplesRef.current = Float32Array.from(result.samples);
+        editorRef.current.setSamples(result.samples);
+        processSamples(result.samples, result.sampleRate, true);
+        // Apply the transcribed TextGrid
+        setTimeout(() => {
+          textGridRef.current = result.textGrid;
+          setTextGrid(result.textGrid);
+          setActiveTierId(result.textGrid.tiers[0]?.id ?? null);
+        }, 500);
+      }
+      return;
+    }
     const { samples, sampleRate: sr } = streaming.stopStreaming();
     setIsRecording(false);
     if (samples.length > 0) {
@@ -782,6 +803,21 @@ export default function App() {
           textGridRef.current = grid;
           setTextGrid(grid);
           setActiveTierId(grid.tiers[0]?.id ?? null);
+        }}
+        onLiveTranscribe={() => {
+          const lang = prompt('Language (BCP-47):', 'en-US');
+          if (!lang) return;
+          const transcriber = new LiveTranscriber(lang);
+          transcriber.start({
+            onInterimResult: (text) => {
+              document.title = `🎙️ ${text}`;
+            },
+          }).then(() => {
+            // Show recording indicator
+            setIsRecording(true);
+            // Store transcriber ref for stop
+            (window as any).__liveTranscriber = transcriber;
+          }).catch((err) => alert(err.message));
         }}
         onAnalyzeSelection={() => {
           if (!currentSamplesRef.current) return;
