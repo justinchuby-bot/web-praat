@@ -41,13 +41,13 @@ export function WhisperDialog({ onStart, onClose }: WhisperDialogProps) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-panel" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+      <div className="modal-panel" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()} style={{ maxWidth: 600, width: '90vw' }}>
         <button className="modal-close" aria-label="Close" onClick={onClose}>×</button>
         <h2 style={{ margin: '0 0 16px', fontSize: '18px' }}>🎤 Transcribe with Whisper</h2>
 
         <div style={{ marginBottom: '16px' }}>
           <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '8px', color: 'var(--text-dim)' }}>Model</div>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '8px' }}>
             {MODELS.map(m => (
               <button
                 key={m.id}
