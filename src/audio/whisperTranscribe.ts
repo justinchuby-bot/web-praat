@@ -68,9 +68,13 @@ export function whisperTranscribe(
     }
 
     const handler = (event: MessageEvent) => {
-      const { type, status, progress, result, message } = event.data;
+      const { type, status, progress, result, message, text } = event.data;
       if (type === 'progress') {
         onProgress?.({ status, progress });
+      } else if (type === 'partial') {
+        onProgress?.({ status: 'transcribing', progress: undefined });
+        // Show partial text in title
+        if (text) document.title = `🎤 ${text.slice(-50)}`;
       } else if (type === 'result') {
         w.removeEventListener('message', handler);
         const duration = samples.length / sampleRate;
