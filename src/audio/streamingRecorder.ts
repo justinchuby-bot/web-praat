@@ -72,6 +72,12 @@ export class StreamingRecorder {
       this.workletNode.port.postMessage('stop');
       this.workletNode.disconnect();
     }
+    // Disconnect ScriptProcessor fallback if used
+    const sp = (this as unknown as { _scriptProcessor?: ScriptProcessorNode })._scriptProcessor;
+    if (sp) {
+      sp.disconnect();
+      (this as unknown as { _scriptProcessor?: ScriptProcessorNode })._scriptProcessor = undefined;
+    }
     this.sourceNode?.disconnect();
     this.mediaStream?.getTracks().forEach((t) => t.stop());
 

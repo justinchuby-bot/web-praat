@@ -977,7 +977,7 @@ export default function App() {
       <div className="app-body">
         <main className="main-area" role="main" aria-label="Audio editor">
           <div className="visualizations">
-          {!analysis && !streaming.streamAnalysis && (
+          {!analysis && !streaming.isStreaming && (
             <div className="empty-state">
               <div className="empty-icon">🎙️</div>
               <p>Drop audio or a TextGrid here, or start recording.</p>
@@ -985,38 +985,42 @@ export default function App() {
             </div>
           )}
 
-          {streaming.streamAnalysis && (
+          {streaming.isStreaming && (
             <>
               <div className="streaming-indicator">
                 <span className="recording-dot" /> Recording — {streaming.streamDuration.toFixed(1)}s
               </div>
-              <TimeRuler duration={streaming.streamAnalysis.duration} viewRange={{ start: 0, end: streaming.streamAnalysis.duration }} />
-              <Waveform
-                analysis={streaming.streamAnalysis}
-                selection={null}
-                currentTime={streaming.streamAnalysis.duration}
-                viewRange={{ start: 0, end: streaming.streamAnalysis.duration }}
-                onSelectionChange={() => {}}
-                onCursorChange={() => {}}
-                onWheelZoom={() => {}}
-                onPan={() => {}}
-                onZoomSelection={() => {}}
-              />
-              <Spectrogram
-                analysis={streaming.streamAnalysis}
-                selection={null}
-                currentTime={streaming.streamAnalysis.duration}
-                viewRange={{ start: 0, end: streaming.streamAnalysis.duration }}
-                showPitch={showPitch}
-                showFormants={showFormants}
-                showIntensity={showIntensity}
-                showIpa={showIpa}
-                onWheelZoom={() => {}}
-                onPan={() => {}}
-                onZoomSelection={() => {}}
-                onSelectionChange={() => {}}
-                onSpectrumSliceSelect={() => {}}
-              />
+              {streaming.streamAnalysis && (
+                <>
+                  <TimeRuler duration={streaming.streamAnalysis.duration} viewRange={{ start: 0, end: streaming.streamAnalysis.duration }} />
+                  <Waveform
+                    analysis={streaming.streamAnalysis}
+                    selection={null}
+                    currentTime={streaming.streamAnalysis.duration}
+                    viewRange={{ start: 0, end: streaming.streamAnalysis.duration }}
+                    onSelectionChange={() => {}}
+                    onCursorChange={() => {}}
+                    onWheelZoom={() => {}}
+                    onPan={() => {}}
+                    onZoomSelection={() => {}}
+                  />
+                  <Spectrogram
+                    analysis={streaming.streamAnalysis}
+                    selection={null}
+                    currentTime={streaming.streamAnalysis.duration}
+                    viewRange={{ start: 0, end: streaming.streamAnalysis.duration }}
+                    showPitch={showPitch}
+                    showFormants={showFormants}
+                    showIntensity={showIntensity}
+                    showIpa={showIpa}
+                    onWheelZoom={() => {}}
+                    onPan={() => {}}
+                    onZoomSelection={() => {}}
+                    onSelectionChange={() => {}}
+                    onSpectrumSliceSelect={() => {}}
+                  />
+                </>
+              )}
             </>
           )}
 
@@ -1035,7 +1039,7 @@ export default function App() {
             </div>
           )}
 
-          {analysis && !streaming.streamAnalysis && (
+          {analysis && !streaming.isStreaming && (
             <>
               {isProcessing && (
                 <div className="processing-bar">
