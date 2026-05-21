@@ -151,7 +151,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
 
       <Section title="Pitch" icon={Music}>
         <SliderField
-          label="Min pitch"
+          label="Pitch floor"
           value={local.pitch.minHz}
           min={30}
           max={300}
@@ -160,7 +160,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
           onChange={(v) => updatePitch({ minHz: v })}
         />
         <SliderField
-          label="Max pitch"
+          label="Pitch ceiling"
           value={local.pitch.maxHz}
           min={100}
           max={1000}
@@ -235,7 +235,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
 
       <Section title="Formant" icon={BarChart3}>
         <label className="settings-field">
-          <span>Max frequency (Hz)</span>
+          <span>Maximum formant (Hz)</span>
           <input
             type="number"
             min={3000}
@@ -254,7 +254,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
           onChange={(v) => updateFormant({ lpcOrder: v })}
         />
         <label className="settings-field">
-          <span>Number of formants</span>
+          <span>Max. number of formants</span>
           <input
             type="number"
             min={1}
