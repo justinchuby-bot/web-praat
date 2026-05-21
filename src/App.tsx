@@ -985,7 +985,7 @@ export default function App() {
             </div>
           )}
 
-          {!analysis && streaming.streamAnalysis && (
+          {streaming.streamAnalysis && (
             <>
               <div className="streaming-indicator">
                 <span className="recording-dot" /> Recording — {streaming.streamDuration.toFixed(1)}s
@@ -1035,7 +1035,7 @@ export default function App() {
             </div>
           )}
 
-          {analysis && (
+          {analysis && !streaming.streamAnalysis && (
             <>
               {isProcessing && (
                 <div className="processing-bar">
