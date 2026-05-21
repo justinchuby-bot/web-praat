@@ -140,7 +140,7 @@ function prepareFrame(frame: Float64Array, sampleRate: number, maxFrequency = DE
 
   let energy = 0;
   for (let i = 0; i < downsampled.length; i++) energy += downsampled[i] * downsampled[i];
-  if (energy / downsampled.length < 1e-8) return null;
+  if (energy / downsampled.length < 1e-12) return null;
 
   const emphasized = preEmphasis(downsampled, effectiveRate);
   return {
@@ -177,11 +177,11 @@ function extractFormantCandidates(
   for (const root of roots) {
     if (root.im <= 0) continue;
     const magnitude = Math.hypot(root.re, root.im);
-    if (magnitude < 0.2 || magnitude > 1.0) continue;
+    if (magnitude < 0.05 || magnitude > 1.0) continue;
     const angle = Math.atan2(root.im, root.re);
     const frequency = (angle * prepared.effectiveRate) / (2 * Math.PI);
     const bandwidth = (-Math.log(magnitude) * prepared.effectiveRate) / Math.PI;
-    if (frequency > 50 && frequency < Math.min(prepared.effectiveRate / 2, maxFrequency) && bandwidth < 1000) {
+    if (frequency > 50 && frequency < Math.min(prepared.effectiveRate / 2, maxFrequency) && bandwidth < 2000) {
       candidates.push({ freq: frequency, bandwidth });
     }
   }
