@@ -15,8 +15,9 @@ self.onmessage = async (event: MessageEvent) => {
       // Load model
       if (!cachedPipeline || cachedModelId !== model) {
         self.postMessage({ type: 'progress', status: 'downloading', progress: 0 });
+        const isWav2vec = model.includes('wav2vec2');
         cachedPipeline = await pipeline('automatic-speech-recognition', model, {
-          dtype: 'q4',
+          dtype: isWav2vec ? 'fp32' : 'q4',
           device: 'wasm',
           progress_callback: (data: any) => {
             if (data.status === 'progress' && data.progress != null) {
