@@ -9,7 +9,8 @@ export type WhisperModel =
   | 'onnx-community/whisper-tiny_timestamped'
   | 'onnx-community/whisper-base_timestamped'
   | 'onnx-community/whisper-small.en_timestamped'
-  | 'onnx-community/whisper-medium.en_timestamped';
+  | 'onnx-community/whisper-medium.en_timestamped'
+  | 'onnx-community/ipa-whisper-base-ONNX';
 
 export interface WhisperTranscribeOptions {
   model?: WhisperModel;
