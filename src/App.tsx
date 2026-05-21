@@ -317,9 +317,13 @@ export default function App() {
   }, []);
 
   const handleRecord = useCallback(async () => {
+    if (analysis) {
+      const ok = confirm('Starting a new recording will replace the current audio and analysis. Continue?');
+      if (!ok) return;
+    }
     await streaming.startStreaming();
     setIsRecording(true);
-  }, [streaming]);
+  }, [streaming, analysis]);
 
   const handleStopRecord = useCallback(() => {
     const { samples, sampleRate: sr } = streaming.stopStreaming();
