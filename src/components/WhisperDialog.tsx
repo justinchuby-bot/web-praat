@@ -22,7 +22,7 @@ function loadSaved(): { model: WhisperModel; language: string } {
     const raw = localStorage.getItem(SAVED_KEY);
     if (raw) return JSON.parse(raw);
   } catch { /* ignore */ }
-  return { model: 'onnx-community/whisper-base_timestamped', language: '' };
+  return { model: 'onnx-community/whisper-base_timestamped', language: 'en' };
 }
 
 function save(model: WhisperModel, language: string) {
@@ -75,11 +75,9 @@ export function WhisperDialog({ onStart, onClose }: WhisperDialogProps) {
           <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-dim)', display: 'block', marginBottom: '4px' }}>
             Language
           </label>
-          <input
-            type="text"
+          <select
             value={language}
             onChange={e => setLanguage(e.target.value)}
-            placeholder="Auto-detect (or: en, zh, ja, fr, de...)"
             style={{
               width: '100%',
               padding: '8px 10px',
@@ -89,10 +87,29 @@ export function WhisperDialog({ onStart, onClose }: WhisperDialogProps) {
               color: 'var(--text)',
               fontSize: '13px',
             }}
-          />
-          <div style={{ fontSize: '10px', color: 'var(--text-dim)', marginTop: '4px' }}>
-            Leave empty for auto-detection. Supports 99 languages.
-          </div>
+          >
+            <option value="en">English</option>
+            <option value="zh">中文 (Chinese)</option>
+            <option value="ja">日本語 (Japanese)</option>
+            <option value="ko">한국어 (Korean)</option>
+            <option value="fr">Français (French)</option>
+            <option value="de">Deutsch (German)</option>
+            <option value="es">Español (Spanish)</option>
+            <option value="pt">Português (Portuguese)</option>
+            <option value="it">Italiano (Italian)</option>
+            <option value="nl">Nederlands (Dutch)</option>
+            <option value="ru">Русский (Russian)</option>
+            <option value="ar">العربية (Arabic)</option>
+            <option value="hi">हिन्दी (Hindi)</option>
+            <option value="th">ไทย (Thai)</option>
+            <option value="vi">Tiếng Việt (Vietnamese)</option>
+            <option value="id">Bahasa Indonesia</option>
+            <option value="tr">Türkçe (Turkish)</option>
+            <option value="pl">Polski (Polish)</option>
+            <option value="sv">Svenska (Swedish)</option>
+            <option value="da">Dansk (Danish)</option>
+            <option value="yue">粵語 (Cantonese)</option>
+          </select>
         </div>
 
         <button
