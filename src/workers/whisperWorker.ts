@@ -40,7 +40,14 @@ self.onmessage = async (event: MessageEvent) => {
       const result = await cachedPipeline(audio, {
         return_timestamps: isWav2vec ? true : isIpa ? undefined : 'word',
         ...(!isEnglishOnly && !isIpa && !isWav2vec && language ? { language, task: 'transcribe' } : {}),
-        ...(isWav2vec ? {} : { chunk_length_s: 30, stride_length_s: 5 }),
+        chunk_length_s: 30,
+        stride_length_s: isWav2vec ? 0 : 5,
+        // Stream partial results back to main thread
+        callback_function: (output: any) => {
+          if (output?.text) {
+            self.postMessage({ type: 'partial', text: output.text });
+          }
+        },
       });
 
       self.postMessage({ type: 'result', result });
