@@ -38,10 +38,9 @@ self.onmessage = async (event: MessageEvent) => {
       const isIpa = model.includes('ipa');
       const isWav2vec = model.includes('wav2vec2');
       const result = await cachedPipeline(audio, {
-        return_timestamps: isWav2vec ? true : isIpa ? false : 'word',
+        ...(isWav2vec || isIpa ? {} : { return_timestamps: 'word' }),
         ...(!isEnglishOnly && !isIpa && !isWav2vec ? { language: language || undefined, task: 'transcribe' } : {}),
-        chunk_length_s: isWav2vec ? undefined : 30,
-        stride_length_s: isWav2vec ? undefined : 5,
+        ...(isWav2vec ? {} : { chunk_length_s: 30, stride_length_s: 5 }),
       });
 
       self.postMessage({ type: 'result', result });
