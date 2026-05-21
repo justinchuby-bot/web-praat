@@ -1366,7 +1366,8 @@ select:focus-visible {
 }
 
 .command-palette-item.selected {
-  background: var(--accent-color, #094771);
+  background: var(--accent, #89b4fa);
+  color: #fff;
 }
 
 .command-palette-item:hover {
