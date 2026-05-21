@@ -1402,7 +1402,6 @@ select:focus-visible {
   height: 32px;
   align-items: center;
   gap: 0;
-  border-bottom: 1px solid var(--border);
   background: var(--bg-surface);
   padding: 0 4px;
 }
@@ -1495,6 +1494,8 @@ select:focus-visible {
   align-items: center;
   width: 100%;
   padding: 0 4px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
 }
 
 .command-palette-trigger {
