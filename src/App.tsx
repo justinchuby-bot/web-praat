@@ -61,6 +61,7 @@ import { computeIntervalStats, intervalStatsToCsv } from './audio/intervalStats'
 import { exportFigurePng } from './export/figure';
 import { normalize as soundNormalize } from './audio/soundManipulation';
 import { removeSilence } from './audio/soundEnhance';
+import { autoSegment } from './audio/transcribe';
 import { generateSineWave } from './audio/psola';
 import {
   downloadBinaryFile,
@@ -775,6 +776,13 @@ export default function App() {
           processSamples(tone, sr);
         }}
         onBatchProcess={() => setShowBatch(true)}
+        onAutoSegment={() => {
+          if (!currentSamplesRef.current || !analysis) return;
+          const grid = autoSegment(currentSamplesRef.current, sampleRate);
+          textGridRef.current = grid;
+          setTextGrid(grid);
+          setActiveTierId(grid.tiers[0]?.id ?? null);
+        }}
         onAnalyzeSelection={() => {
           if (!currentSamplesRef.current) return;
           const startSample = Math.floor(viewStart * sampleRate);

@@ -33,6 +33,7 @@ interface MenuBarProps {
   onGenerateTone?: () => void;
   onBatchProcess?: () => void;
   onAnalyzeSelection?: () => void;
+  onAutoSegment?: () => void;
   onUndo: () => void;
   onRedo: () => void;
   onCut: () => void;
@@ -249,6 +250,7 @@ export function MenuBar(props: MenuBarProps) {
           {props.onGenerateTone && <MenubarItem onClick={props.onGenerateTone}>Generate Tone…</MenubarItem>}
           <MenubarSeparator />
           {props.onBatchProcess && <MenubarItem onClick={props.onBatchProcess}>Batch Process…</MenubarItem>}
+          {props.onAutoSegment && <MenubarItem disabled={!hasAudio} onClick={props.onAutoSegment}>Auto-Segment (Silence Detection)</MenubarItem>}
         </MenubarContent>
       </MenubarMenu>
 
