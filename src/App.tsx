@@ -286,6 +286,10 @@ export default function App() {
   }, [textGrid]);
 
   const handleLoadFile = useCallback(async (file: File) => {
+    if (analysis) {
+      const ok = confirm('Loading a new file will replace the current audio and annotations. Continue?');
+      if (!ok) return;
+    }
     try {
       const buffer = await loadAudioFile(file);
       // Warn for very long files
@@ -302,12 +306,26 @@ export default function App() {
     } catch (err) {
       alert(`Failed to load audio: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
-  }, [processAudioBuffer]);
+  }, [processAudioBuffer, analysis]);
 
   const handleImportTextGrid = useCallback(async (file: File) => {
     try {
       const content = await file.text();
       const parsed = parseTextGrid(content);
+      if (textGridRef.current.tiers.length > 0) {
+        const choice = confirm('Add imported tiers to existing TextGrid?\n\nOK = Add tiers\nCancel = Replace all');
+        if (choice) {
+          const merged = {
+            ...textGridRef.current,
+            xmax: Math.max(textGridRef.current.xmax, parsed.xmax),
+            tiers: [...textGridRef.current.tiers, ...parsed.tiers],
+          };
+          textGridRef.current = merged;
+          setTextGrid(merged);
+          setActiveTierId(parsed.tiers[0]?.id ?? null);
+          return;
+        }
+      }
       textGridRef.current = parsed;
       setTextGrid(parsed);
       setActiveTierId(parsed.tiers[0]?.id ?? null);
