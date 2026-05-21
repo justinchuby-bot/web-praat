@@ -87,8 +87,6 @@ export function exportFigurePng(
   ctx.restore();
 
   // ─── Spectrogram ────────────────────────────────────────────────────────────
-  ctx.save();
-  ctx.translate(margin.left, margin.top + waveH);
 
   const { spectrogram } = analysis;
   const maxDisplayFreq = Math.min(analysis.settings.spectrogram.maxViewFrequency, spectrogram.maxFreq);
@@ -134,8 +132,12 @@ export function exportFigurePng(
         imgData.data[idx + 3] = 255;
       }
     }
-    ctx.putImageData(imgData, 0, 0);
+    ctx.putImageData(imgData, margin.left, margin.top + waveH);
   }
+
+  // Overlays need offset
+  ctx.save();
+  ctx.translate(margin.left, margin.top + waveH);
 
   // Pitch overlay
   if (showPitch) {
