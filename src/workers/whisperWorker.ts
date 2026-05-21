@@ -35,11 +35,12 @@ self.onmessage = async (event: MessageEvent) => {
       // Don't pass language/task for English-only or IPA models
       const isEnglishOnly = model.includes('.en');
       const isIpa = model.includes('ipa');
+      const isWav2vec = model.includes('wav2vec2');
       const result = await cachedPipeline(audio, {
-        return_timestamps: isIpa ? false : 'word',
-        ...(!isEnglishOnly && !isIpa ? { language: language || undefined, task: 'transcribe' } : {}),
-        chunk_length_s: 30,
-        stride_length_s: 5,
+        return_timestamps: isWav2vec ? 'char' : isIpa ? false : 'word',
+        ...(!isEnglishOnly && !isIpa && !isWav2vec ? { language: language || undefined, task: 'transcribe' } : {}),
+        chunk_length_s: isWav2vec ? undefined : 30,
+        stride_length_s: isWav2vec ? undefined : 5,
       });
 
       self.postMessage({ type: 'result', result });

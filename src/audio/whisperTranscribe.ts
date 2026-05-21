@@ -10,7 +10,8 @@ export type WhisperModel =
   | 'onnx-community/whisper-base_timestamped'
   | 'onnx-community/whisper-small.en_timestamped'
   | 'onnx-community/whisper-medium.en_timestamped'
-  | 'onnx-community/ipa-whisper-base-ONNX';
+  | 'onnx-community/ipa-whisper-base-ONNX'
+  | 'onnx-community/wav2vec2-lv-60-espeak-cv-ft-ONNX';
 
 export interface WhisperTranscribeOptions {
   model?: WhisperModel;
