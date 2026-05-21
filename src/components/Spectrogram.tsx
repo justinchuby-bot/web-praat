@@ -292,6 +292,7 @@ export const Spectrogram = React.memo(function Spectrogram({
   const handleCrosshairMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const container = event.currentTarget;
     const rect = container.getBoundingClientRect();
+    const canvasRect = canvasRef.current?.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     if (crosshairRef.current) {
@@ -299,14 +300,15 @@ export const Spectrogram = React.memo(function Spectrogram({
       crosshairRef.current.style.top = `${y}px`;
       crosshairRef.current.style.display = 'block';
     }
-    if (readoutRef.current && analysis) {
+    if (readoutRef.current && analysis && canvasRect) {
       const maxDisplayFreq = Math.min(analysis.settings.spectrogram.maxViewFrequency, analysis.spectrogram.maxFreq);
-      const time = xToTime(x, rect.width, viewRange);
-      const freq = (1 - y / rect.height) * maxDisplayFreq;
-      readoutRef.current.textContent = `${time.toFixed(3)}s  ${Math.round(freq)} Hz`;
+      const time = xToTime(x, canvasRect.width, viewRange);
+      const canvasY = event.clientY - canvasRect.top;
+      const freq = (1 - canvasY / canvasRect.height) * maxDisplayFreq;
+      readoutRef.current.textContent = `${time.toFixed(3)}s  ${Math.max(0, Math.round(freq))} Hz`;
       readoutRef.current.style.left = `${x + 8}px`;
       readoutRef.current.style.top = `${y - 18}px`;
-      readoutRef.current.style.display = 'block';
+      readoutRef.current.style.display = freq >= 0 ? 'block' : 'none';
     }
   };
 
