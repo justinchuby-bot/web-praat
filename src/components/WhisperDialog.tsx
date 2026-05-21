@@ -7,9 +7,9 @@ interface WhisperDialogProps {
 }
 
 const MODELS: { id: WhisperModel; name: string; size: string; desc: string }[] = [
-  { id: 'onnx-community/whisper-tiny', name: 'Tiny', size: '~40 MB', desc: 'Fastest, less accurate' },
-  { id: 'onnx-community/whisper-base', name: 'Base', size: '~80 MB', desc: 'Balanced' },
-  { id: 'onnx-community/whisper-small', name: 'Small', size: '~150 MB', desc: 'Best accuracy' },
+  { id: 'onnx-community/whisper-tiny_timestamped', name: 'Tiny', size: '~40 MB', desc: 'Fastest, less accurate' },
+  { id: 'onnx-community/whisper-base_timestamped', name: 'Base', size: '~80 MB', desc: 'Balanced, multilingual' },
+  { id: 'onnx-community/whisper-small.en_timestamped', name: 'Small (EN)', size: '~150 MB', desc: 'Best accuracy, English only' },
 ];
 
 const SAVED_KEY = 'web-praat-whisper-settings';
@@ -19,7 +19,7 @@ function loadSaved(): { model: WhisperModel; language: string } {
     const raw = localStorage.getItem(SAVED_KEY);
     if (raw) return JSON.parse(raw);
   } catch { /* ignore */ }
-  return { model: 'onnx-community/whisper-small', language: '' };
+  return { model: 'onnx-community/whisper-base_timestamped', language: '' };
 }
 
 function save(model: WhisperModel, language: string) {

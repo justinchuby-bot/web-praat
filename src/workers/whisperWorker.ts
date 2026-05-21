@@ -8,7 +8,7 @@ let cachedPipeline: any = null;
 let cachedModelId: string | null = null;
 
 self.onmessage = async (event: MessageEvent) => {
-  const { type, model, audio, language, revision } = event.data;
+  const { type, model, audio, language } = event.data;
 
   if (type === 'transcribe') {
     try {
@@ -16,7 +16,6 @@ self.onmessage = async (event: MessageEvent) => {
       if (!cachedPipeline || cachedModelId !== model) {
         self.postMessage({ type: 'progress', status: 'downloading', progress: 0 });
         cachedPipeline = await pipeline('automatic-speech-recognition', model, {
-          revision: revision || 'output_attentions',
           dtype: 'q4',
           device: 'wasm',
           progress_callback: (data: any) => {

@@ -5,7 +5,10 @@
 import type { TextGrid, Interval } from '../types';
 import { createId } from '../utils/id';
 
-export type WhisperModel = 'onnx-community/whisper-tiny' | 'onnx-community/whisper-base' | 'onnx-community/whisper-small';
+export type WhisperModel =
+  | 'onnx-community/whisper-tiny_timestamped'
+  | 'onnx-community/whisper-base_timestamped'
+  | 'onnx-community/whisper-small.en_timestamped';
 
 export interface WhisperTranscribeOptions {
   model?: WhisperModel;
@@ -35,7 +38,7 @@ export function whisperTranscribe(
   options: WhisperTranscribeOptions = {}
 ): Promise<TextGrid> {
   const {
-    model = 'onnx-community/whisper-small',
+    model = 'onnx-community/whisper-base_timestamped',
     language = null,
     onProgress,
   } = options;
@@ -77,7 +80,7 @@ export function whisperTranscribe(
 
     w.addEventListener('message', handler);
     w.postMessage(
-      { type: 'transcribe', model, audio, language, revision: 'output_attentions' },
+      { type: 'transcribe', model, audio, language },
       [audio.buffer]
     );
   });
