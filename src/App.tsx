@@ -1145,6 +1145,7 @@ export default function App() {
                 onDeleteBoundary={(tierId, boundaryIndex) => setTextGrid((current) => deleteBoundary(current, tierId, boundaryIndex))}
                 onDeletePoint={(tierId, pointId) => setTextGrid((current) => deletePoint(current, tierId, pointId))}
                 onMoveTier={(tierId, direction) => setTextGrid((current) => moveTier(current, tierId, direction))}
+                onTranscribe={() => { if (currentSamplesRef.current) setShowWhisper(true); }}
               />
             </>
           )}
