@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { AnalysisResult, TimeSelection } from '../types';
 
 interface VowelSpaceProps {
@@ -72,17 +72,32 @@ export function VowelSpace({ analysis, selection, currentTime }: VowelSpaceProps
   const plotW = width - margin.left - margin.right;
   const plotH = height - margin.top - margin.bottom;
 
-  // Axes: F2 (x, reversed: high left) and F1 (y, reversed: high top)
-  const f1Min = 150, f1Max = 900;
-  const f2Min = 500, f2Max = 2800;
+  // Speaker type normalization ranges
+  const ranges = {
+    male:   { f1Min: 200, f1Max: 800, f2Min: 600, f2Max: 2500 },
+    female: { f1Min: 200, f1Max: 1000, f2Min: 700, f2Max: 3000 },
+    child:  { f1Min: 250, f1Max: 1100, f2Min: 800, f2Max: 3500 },
+  };
+  const [speakerType, setSpeakerType] = useState<'male' | 'female' | 'child'>('male');
+  const { f1Min, f1Max, f2Min, f2Max } = ranges[speakerType];
 
+  // Axes: F2 (x, reversed: high left) and F1 (y: small at top, large at bottom — IPA convention)
   const toX = (f2: number) => margin.left + (1 - (f2 - f2Min) / (f2Max - f2Min)) * plotW;
-  const toY = (f1: number) => margin.top + (1 - (f1 - f1Min) / (f1Max - f1Min)) * plotH;
+  const toY = (f1: number) => margin.top + ((f1 - f1Min) / (f1Max - f1Min)) * plotH;
 
   return (
     <div className="vowel-space-panel">
       <div className="vowel-space-header">
         Vowel Space {selection ? '(selection)' : '(all)'}
+        <select
+          value={speakerType}
+          onChange={(e) => setSpeakerType(e.target.value as 'male' | 'female' | 'child')}
+          className="vowel-space-select"
+        >
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="child">Child</option>
+        </select>
       </div>
       <svg width={width} height={height} className="vowel-space-svg">
         {/* Background */}
@@ -150,10 +165,10 @@ export function VowelSpace({ analysis, selection, currentTime }: VowelSpaceProps
 
         {/* Axis labels */}
         <text x={margin.left + plotW / 2} y={height - 4} textAnchor="middle" fontSize="10" fill="var(--text-dim)">
-          ← F2 (Hz) →
+          F2 (Hz) → high
         </text>
         <text x={10} y={margin.top + plotH / 2} textAnchor="middle" fontSize="10" fill="var(--text-dim)" transform={`rotate(-90, 10, ${margin.top + plotH / 2})`}>
-          ← F1 (Hz) →
+          F1 (Hz) ↓ open
         </text>
 
         {/* F2 tick labels */}

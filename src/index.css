@@ -2062,3 +2062,13 @@ select:focus-visible {
   background: var(--accent, #89b4fa);
   color: #fff;
 }
+
+.vowel-space-select {
+  font-size: 10px;
+  padding: 1px 4px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-base);
+  color: var(--text);
+  margin-left: 6px;
+}
