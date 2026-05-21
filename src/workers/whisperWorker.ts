@@ -32,10 +32,11 @@ self.onmessage = async (event: MessageEvent) => {
       self.postMessage({ type: 'progress', status: 'transcribing' });
 
       // Run transcription
+      // Don't pass language/task for English-only models
+      const isEnglishOnly = model.includes('.en');
       const result = await cachedPipeline(audio, {
         return_timestamps: 'word',
-        language: language || undefined,
-        task: 'transcribe',
+        ...(isEnglishOnly ? {} : { language: language || undefined, task: 'transcribe' }),
         chunk_length_s: 30,
         stride_length_s: 5,
       });
