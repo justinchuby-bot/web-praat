@@ -7,14 +7,25 @@ const PRE_EMPHASIS_FROM = 50;
 
 function downsample(signal: Float64Array, factor: number): Float64Array {
   if (factor <= 1) return Float64Array.from(signal);
+  // Anti-aliasing: simple moving-average low-pass before decimation
+  // (Praat uses sinc interpolation via Sound_resample, but averaging is
+  // a reasonable approximation for LPC formant extraction)
+  const filtered = new Float64Array(signal.length);
+  const halfWin = Math.floor(factor / 2);
+  for (let i = 0; i < signal.length; i++) {
+    let sum = 0;
+    let count = 0;
+    for (let j = Math.max(0, i - halfWin); j <= Math.min(signal.length - 1, i + halfWin); j++) {
+      sum += signal[j];
+      count++;
+    }
+    filtered[i] = sum / count;
+  }
+  // Decimate
   const outLen = Math.floor(signal.length / factor);
   const out = new Float64Array(outLen);
   for (let i = 0; i < outLen; i++) {
-    let sum = 0;
-    for (let j = 0; j < factor; j++) {
-      sum += signal[i * factor + j];
-    }
-    out[i] = sum / factor;
+    out[i] = filtered[i * factor];
   }
   return out;
 }
@@ -140,7 +151,8 @@ function prepareFrame(frame: Float64Array, sampleRate: number, maxFrequency = DE
 
   let energy = 0;
   for (let i = 0; i < downsampled.length; i++) energy += downsampled[i] * downsampled[i];
-  if (energy / downsampled.length < 1e-12) return null;
+  // Skip only completely silent frames
+  if (energy === 0) return null;
 
   const emphasized = preEmphasis(downsampled, effectiveRate);
   return {
@@ -173,15 +185,19 @@ function extractFormantCandidates(
   const coefficients = burgMethod(prepared.windowed, lpcOrder);
   const roots = findRoots(coefficients, lpcOrder);
   const candidates: FormantCandidate[] = [];
+  const safetyMargin = 50; // Hz, same as Praat
+  const nyquist = prepared.effectiveRate / 2;
 
   for (const root of roots) {
     if (root.im <= 0) continue;
+    // Praat: Roots_fixIntoUnitCircle — push roots inside unit circle
     const magnitude = Math.hypot(root.re, root.im);
-    if (magnitude < 0.05 || magnitude > 1.0) continue;
+    const fixedMag = magnitude > 1.0 ? 1.0 / magnitude : magnitude;
     const angle = Math.atan2(root.im, root.re);
-    const frequency = (angle * prepared.effectiveRate) / (2 * Math.PI);
-    const bandwidth = (-Math.log(magnitude) * prepared.effectiveRate) / Math.PI;
-    if (frequency > 50 && frequency < Math.min(prepared.effectiveRate / 2, maxFrequency) && bandwidth < 2000) {
+    const frequency = Math.abs(angle) * nyquist / Math.PI;
+    const bandwidth = -Math.log(fixedMag) * prepared.effectiveRate / Math.PI;
+    // Praat only filters by frequency range, not magnitude or bandwidth
+    if (frequency >= safetyMargin && frequency <= nyquist - safetyMargin) {
       candidates.push({ freq: frequency, bandwidth });
     }
   }
