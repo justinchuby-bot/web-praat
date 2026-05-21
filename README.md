@@ -6,6 +6,9 @@ A browser-based speech analysis workstation inspired by [Praat](https://www.fon.
 ![Build](https://img.shields.io/badge/Vite-5-purple)
 ![Tests](https://img.shields.io/badge/tests-27_passing-green)
 
+<img width="2354" height="1212" alt="image" src="https://github.com/user-attachments/assets/14fa2de8-3f54-44ec-8b70-86c80b718e4b" />
+
+
 ## Features
 
 - Recording, playback, drag-and-drop audio loading
