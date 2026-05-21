@@ -116,10 +116,20 @@ function buildTextGrid(result: any, duration: number): TextGrid {
     });
   }
 
+  // Sort by start time and remove invalid intervals (end <= start)
+  const sorted = intervals
+    .filter(int => int.end > int.start)
+    .sort((a, b) => a.start - b.start);
+
   // Fill gaps
   const filled: Interval[] = [];
   let lastEnd = 0;
-  for (const int of intervals) {
+  for (const int of sorted) {
+    if (int.start < lastEnd) {
+      // Overlapping — adjust start
+      int.start = lastEnd;
+      if (int.end <= int.start) continue;
+    }
     if (int.start > lastEnd + 0.01) {
       filled.push({ id: createId('int'), start: lastEnd, end: int.start, label: '' });
     }
