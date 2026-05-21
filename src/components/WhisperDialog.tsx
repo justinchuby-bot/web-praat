@@ -7,9 +7,10 @@ interface WhisperDialogProps {
 }
 
 const MODELS: { id: WhisperModel; name: string; size: string; desc: string }[] = [
-  { id: 'onnx-community/whisper-tiny_timestamped', name: 'Tiny', size: '~40 MB', desc: 'Fastest, less accurate' },
+  { id: 'onnx-community/whisper-tiny_timestamped', name: 'Tiny', size: '~40 MB', desc: 'Fastest, multilingual' },
   { id: 'onnx-community/whisper-base_timestamped', name: 'Base', size: '~80 MB', desc: 'Balanced, multilingual' },
-  { id: 'onnx-community/whisper-small.en_timestamped', name: 'Small (EN)', size: '~150 MB', desc: 'Best accuracy, English only' },
+  { id: 'onnx-community/whisper-small.en_timestamped', name: 'Small', size: '~150 MB', desc: 'Better accuracy, English' },
+  { id: 'onnx-community/whisper-medium.en_timestamped', name: 'Medium', size: '~400 MB', desc: 'Best accuracy, English' },
 ];
 
 const SAVED_KEY = 'web-praat-whisper-settings';

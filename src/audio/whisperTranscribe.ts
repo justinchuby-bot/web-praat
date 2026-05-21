@@ -8,7 +8,8 @@ import { createId } from '../utils/id';
 export type WhisperModel =
   | 'onnx-community/whisper-tiny_timestamped'
   | 'onnx-community/whisper-base_timestamped'
-  | 'onnx-community/whisper-small.en_timestamped';
+  | 'onnx-community/whisper-small.en_timestamped'
+  | 'onnx-community/whisper-medium.en_timestamped';
 
 export interface WhisperTranscribeOptions {
   model?: WhisperModel;
