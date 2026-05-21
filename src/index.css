@@ -2074,3 +2074,9 @@ select:focus-visible {
   color: var(--text);
   margin-left: 6px;
 }
+
+.textgrid-transcribe-btn {
+  background: var(--accent, #89b4fa) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}

@@ -22,6 +22,7 @@ interface TextGridEditorProps {
   onDeletePoint: (tierId: string, pointId: string) => void;
   onMoveTier?: (tierId: string, direction: 'up' | 'down') => void;
   onSetTierParent?: (tierId: string, parentId: string | null) => void;
+  onTranscribe?: () => void;
 }
 
 interface BoundaryDragState {
@@ -66,6 +67,7 @@ export function TextGridEditor({
   onDeletePoint,
   onMoveTier,
   onSetTierParent,
+  onTranscribe,
 }: TextGridEditorProps) {
   const tierHeight = 54;
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
@@ -364,6 +366,7 @@ export function TextGridEditor({
       <div className="textgrid-add-tier-row">
         <button className="textgrid-add-tier" onClick={() => handleAddTier('interval')} title="Add interval tier">+ Interval Tier</button>
         <button className="textgrid-add-tier" onClick={() => handleAddTier('point')} title="Add point tier">+ Point Tier</button>
+        {onTranscribe && <button className="textgrid-add-tier textgrid-transcribe-btn" onClick={onTranscribe} title="Transcribe audio with AI">🎤 Transcribe</button>}
       </div>
       {contextMenu && (
         <ContextMenu
