@@ -42,6 +42,7 @@ import { ExperimentMFC } from './components/ExperimentMFC';
 import { ScriptEditor } from './components/ScriptEditor';
 import { PluginManager } from './components/PluginManager';
 import { BatchProcess } from './components/BatchProcess';
+import { WhisperDialog } from './components/WhisperDialog';
 import { VowelSpace } from './components/VowelSpace';
 import { VoiceReportDialog } from './components/VoiceReportDialog';
 import SpeechSynthesizerPanel from './components/SpeechSynthesizerPanel';
@@ -121,6 +122,7 @@ export default function App() {
   const [showNoteTranscription, setShowNoteTranscription] = useState(false);
   const [showPlugins, setShowPlugins] = useState(false);
   const [showBatch, setShowBatch] = useState(false);
+  const [showWhisper, setShowWhisper] = useState(false);
   const [showVoiceReport, setShowVoiceReport] = useState(false);
   const [experimentConfig, setExperimentConfig] = useState<{ config: any; audioMap: Record<string, string> } | null>(null);
   const [settings, setSettings] = useState<AnalysisSettings>(defaultAnalysisSettings);
@@ -784,41 +786,9 @@ export default function App() {
           setTextGrid(grid);
           setActiveTierId(grid.tiers[0]?.id ?? null);
         }}
-        onWhisperTranscribe={async () => {
+        onWhisperTranscribe={() => {
           if (!currentSamplesRef.current) return;
-          const modelChoice = prompt(
-            'Whisper model:\n' +
-            '1. tiny (~40 MB, fast, less accurate)\n' +
-            '2. base (~80 MB, balanced)\n' +
-            '3. small (~150 MB, best accuracy)\n\n' +
-            'Enter 1/2/3 (default: 3):',
-            '3'
-          );
-          if (modelChoice === null) return;
-          const models = { '1': 'onnx-community/whisper-tiny', '2': 'onnx-community/whisper-base', '3': 'onnx-community/whisper-small' } as const;
-          const model = models[modelChoice as '1'|'2'|'3'] ?? 'onnx-community/whisper-small';
-          const lang = prompt('Language (e.g. en, zh, ja, fr — leave empty for auto-detect):');
-          if (lang === null) return;
-          setIsProcessing(true);
-          try {
-            const grid = await whisperTranscribe(
-              currentSamplesRef.current,
-              sampleRate,
-              {
-                model: model as any,
-                language: lang || null,
-                onProgress: (p) => { document.title = `Whisper: ${p.status}${p.progress ? ` ${Math.round(p.progress)}%` : ''}`; },
-              }
-            );
-            textGridRef.current = grid;
-            setTextGrid(grid);
-            setActiveTierId(grid.tiers[0]?.id ?? null);
-          } catch (err) {
-            alert(`Transcription failed: ${err instanceof Error ? err.message : err}`);
-          } finally {
-            setIsProcessing(false);
-            document.title = 'web-praat';
-          }
+          setShowWhisper(true);
         }}
         onAnalyzeSelection={() => {
           if (!currentSamplesRef.current) return;
@@ -1332,6 +1302,35 @@ export default function App() {
 
       {showPlugins && <PluginManager onClose={() => setShowPlugins(false)} samples={currentSamplesRef.current ?? undefined} sampleRate={sampleRate} />}
       {showBatch && <BatchProcess onClose={() => setShowBatch(false)} />}
+      {showWhisper && (
+        <WhisperDialog
+          onClose={() => setShowWhisper(false)}
+          onStart={async (model, language) => {
+            setShowWhisper(false);
+            if (!currentSamplesRef.current) return;
+            setIsProcessing(true);
+            try {
+              const grid = await whisperTranscribe(
+                currentSamplesRef.current,
+                sampleRate,
+                {
+                  model,
+                  language,
+                  onProgress: (p) => { document.title = `Whisper: ${p.status}${p.progress ? ` ${Math.round(p.progress)}%` : ''}`; },
+                }
+              );
+              textGridRef.current = grid;
+              setTextGrid(grid);
+              setActiveTierId(grid.tiers[0]?.id ?? null);
+            } catch (err) {
+              alert(`Transcription failed: ${err instanceof Error ? err.message : err}`);
+            } finally {
+              setIsProcessing(false);
+              document.title = 'web-praat';
+            }
+          }}
+        />
+      )}
 
       <VoiceReportDialog
         open={showVoiceReport}
