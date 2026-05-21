@@ -37,19 +37,31 @@ export class StreamingRecorder {
     this.audioContext = new AudioContext();
     this.sourceNode = this.audioContext.createMediaStreamSource(stream);
 
-    await this.audioContext.audioWorklet.addModule('/recording-processor.js');
-
-    this.workletNode = new AudioWorkletNode(this.audioContext, 'recording-processor');
-
-    this.workletNode.port.onmessage = (event) => {
-      if (!this._isRecording) return;
-      const samples = event.data as Float32Array;
-      this.chunks.push(samples);
-      this.callbacks?.onData(samples, this.audioContext!.sampleRate);
-    };
-
-    this.sourceNode.connect(this.workletNode);
-    this.workletNode.connect(this.audioContext.destination);
+    try {
+      const base = import.meta.env.BASE_URL || '/';
+      await this.audioContext.audioWorklet.addModule(`${base}recording-processor.js`);
+      this.workletNode = new AudioWorkletNode(this.audioContext, 'recording-processor');
+      this.workletNode.port.onmessage = (event) => {
+        if (!this._isRecording) return;
+        const samples = event.data as Float32Array;
+        this.chunks.push(samples);
+        this.callbacks?.onData(samples, this.audioContext!.sampleRate);
+      };
+      this.sourceNode.connect(this.workletNode);
+      this.workletNode.connect(this.audioContext.destination);
+    } catch {
+      // Fallback: ScriptProcessorNode (deprecated but universal)
+      const processor = this.audioContext.createScriptProcessor(4096, 1, 1);
+      processor.onaudioprocess = (e) => {
+        if (!this._isRecording) return;
+        const samples = new Float32Array(e.inputBuffer.getChannelData(0));
+        this.chunks.push(samples);
+        this.callbacks?.onData(samples, this.audioContext!.sampleRate);
+      };
+      this.sourceNode.connect(processor);
+      processor.connect(this.audioContext.destination);
+      (this as unknown as { _scriptProcessor: ScriptProcessorNode })._scriptProcessor = processor;
+    }
     this._isRecording = true;
   }
 
