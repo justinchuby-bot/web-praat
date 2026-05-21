@@ -1,9 +1,8 @@
 /**
  * Whisper-based transcription + word timestamps using transformers.js.
  * Runs entirely in the browser (ONNX Runtime + WebAssembly).
- * Model: Whisper base (~150 MB, downloaded on first use).
  */
-import { pipeline, type AutomaticSpeechRecognitionOutput } from '@huggingface/transformers';
+import { pipeline } from '@huggingface/transformers';
 import type { TextGrid, Interval } from '../types';
 import { createId } from '../utils/id';
 
@@ -11,30 +10,12 @@ export type WhisperModel = 'onnx-community/whisper-tiny' | 'onnx-community/whisp
 
 export interface WhisperTranscribeOptions {
   model?: WhisperModel;
-  language?: string | null; // null = auto-detect
+  language?: string | null;
   onProgress?: (progress: { status: string; progress?: number }) => void;
 }
 
-let transcriber: Awaited<ReturnType<typeof pipeline>> | null = null;
-let loadedModel: string | null = null;
-
-async function getTranscriber(model: WhisperModel, onProgress?: WhisperTranscribeOptions['onProgress']) {
-  if (transcriber && loadedModel === model) return transcriber;
-
-  transcriber = await pipeline('automatic-speech-recognition', model, {
-    dtype: 'q4', // 4-bit quantized for smaller download
-    device: 'wasm',
-    progress_callback: onProgress ? (data: any) => {
-      if (data.status === 'progress') {
-        onProgress({ status: 'downloading', progress: data.progress });
-      } else if (data.status === 'ready') {
-        onProgress({ status: 'ready' });
-      }
-    } : undefined,
-  });
-  loadedModel = model;
-  return transcriber;
-}
+let cachedPipeline: any = null;
+let cachedModelId: string | null = null;
 
 /**
  * Transcribe audio and return a TextGrid with word-level intervals.
@@ -50,14 +31,29 @@ export async function whisperTranscribe(
     onProgress,
   } = options;
 
-  onProgress?.({ status: 'loading' });
-  const pipe = await getTranscriber(model, onProgress);
+  // Load model (with progress)
+  if (!cachedPipeline || cachedModelId !== model) {
+    onProgress?.({ status: 'downloading' });
+    cachedPipeline = await pipeline('automatic-speech-recognition', model, {
+      revision: 'output_attentions',  // Required for word-level timestamps
+      dtype: 'q4',
+      device: 'wasm',
+      progress_callback: (data: any) => {
+        if (data.status === 'progress' && data.progress != null) {
+          onProgress?.({ status: 'downloading', progress: data.progress });
+        } else if (data.status === 'done') {
+          onProgress?.({ status: 'loading' });
+        }
+      },
+    });
+    cachedModelId = model;
+  }
 
   onProgress?.({ status: 'transcribing' });
 
-  // Resample to 16kHz if needed (Whisper expects 16kHz)
+  // Resample to 16kHz if needed
   let audio: Float32Array;
-  if (sampleRate !== 16000) {
+  if (Math.abs(sampleRate - 16000) > 1) {
     const ratio = 16000 / sampleRate;
     const newLen = Math.round(samples.length * ratio);
     audio = new Float32Array(newLen);
@@ -65,39 +61,44 @@ export async function whisperTranscribe(
       const srcIdx = i / ratio;
       const idx = Math.floor(srcIdx);
       const frac = srcIdx - idx;
-      audio[i] = (1 - frac) * (samples[idx] ?? 0) + frac * (samples[idx + 1] ?? 0);
+      const s0 = samples[idx] ?? 0;
+      const s1 = samples[Math.min(idx + 1, samples.length - 1)] ?? 0;
+      audio[i] = s0 + frac * (s1 - s0);
     }
   } else {
-    audio = samples;
+    audio = new Float32Array(samples);
   }
 
-  const result = await (pipe as any)(audio, {
+  // Run transcription
+  const result = await cachedPipeline(audio, {
     return_timestamps: 'word',
     language: language || undefined,
     task: 'transcribe',
-  }) as AutomaticSpeechRecognitionOutput;
+    chunk_length_s: 30,
+    stride_length_s: 5,
+  });
 
   onProgress?.({ status: 'done' });
 
-  return buildTextGrid(result, samples.length / sampleRate);
+  const duration = samples.length / sampleRate;
+  return buildTextGrid(result, duration);
 }
 
-function buildTextGrid(result: AutomaticSpeechRecognitionOutput, duration: number): TextGrid {
+function buildTextGrid(result: any, duration: number): TextGrid {
   const intervals: Interval[] = [];
 
   if (result.chunks && result.chunks.length > 0) {
     for (const chunk of result.chunks) {
-      const [start, end] = chunk.timestamp as [number, number];
-      if (start == null || end == null) continue;
+      if (!chunk.timestamp || chunk.timestamp[0] == null || chunk.timestamp[1] == null) continue;
+      const [start, end] = chunk.timestamp;
       intervals.push({
         id: createId('int'),
-        start,
-        end: Math.min(end, duration),
-        label: chunk.text.trim(),
+        start: start as number,
+        end: Math.min(end as number, duration),
+        label: (chunk.text ?? '').trim(),
       });
     }
   } else if (result.text) {
-    // No timestamps — put entire text as one interval
     intervals.push({
       id: createId('int'),
       start: 0,
