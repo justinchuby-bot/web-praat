@@ -12,7 +12,7 @@ const MODELS: { id: WhisperModel; name: string; size: string; desc: string }[] =
   { id: 'onnx-community/whisper-small.en_timestamped', name: 'Small', size: '~150 MB', desc: 'Better accuracy, English' },
   { id: 'onnx-community/whisper-medium.en_timestamped', name: 'Medium', size: '~400 MB', desc: 'Best accuracy, English' },
   { id: 'onnx-community/ipa-whisper-base-ONNX', name: 'IPA (Whisper)', size: '~80 MB', desc: 'Whisper IPA (no timestamps)' },
-  { id: 'justinchuby/wav2vec2-lv-60-espeak-cv-ft-ONNX', name: 'IPA + Timestamps', size: '~360 MB', desc: 'wav2vec2 CTC (experimental) ⚠️' },
+  { id: 'justinchuby/wav2vec2-lv-60-espeak-cv-ft-ONNX', name: 'IPA + Timestamps', size: '~360 MB', desc: 'wav2vec2 IPA, 30+ languages' },
 ];
 
 const SAVED_KEY = 'web-praat-whisper-settings';
