@@ -108,7 +108,7 @@ export function WhisperDialog({ onStart, onClose }: WhisperDialogProps) {
             <option value="pl">Polski (Polish)</option>
             <option value="sv">Svenska (Swedish)</option>
             <option value="da">Dansk (Danish)</option>
-            <option value="yue">粵語 (Cantonese)</option>
+            <option value="chinese">中文 (Chinese / Cantonese)</option>
           </select>
         </div>
 
