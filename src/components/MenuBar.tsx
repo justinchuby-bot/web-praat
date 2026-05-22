@@ -252,7 +252,7 @@ export function MenuBar(props: MenuBarProps) {
           <MenubarSeparator />
           {props.onBatchProcess && <MenubarItem onClick={props.onBatchProcess}>Batch Process…</MenubarItem>}
           {props.onAutoSegment && <MenubarItem disabled={!hasAudio} onClick={props.onAutoSegment}>Auto-Segment (Silence Detection)</MenubarItem>}
-          {props.onWhisperTranscribe && <MenubarItem disabled={!hasAudio} onClick={props.onWhisperTranscribe}>Transcribe (Whisper AI)</MenubarItem>}
+          {props.onWhisperTranscribe && <MenubarItem disabled={!hasAudio} onClick={props.onWhisperTranscribe}>AI Transcribe</MenubarItem>}
         </MenubarContent>
       </MenubarMenu>
 
