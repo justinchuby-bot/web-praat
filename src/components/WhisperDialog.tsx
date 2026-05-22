@@ -11,8 +11,8 @@ const MODELS: { id: WhisperModel; name: string; size: string; desc: string }[] =
   { id: 'onnx-community/whisper-base_timestamped', name: 'Base', size: '~80 MB', desc: 'Balanced, multilingual' },
   { id: 'onnx-community/whisper-small.en_timestamped', name: 'Small', size: '~150 MB', desc: 'Better accuracy, English' },
   { id: 'onnx-community/whisper-medium.en_timestamped', name: 'Medium', size: '~400 MB', desc: 'Best accuracy, English' },
-  { id: 'onnx-community/ipa-whisper-base-ONNX', name: 'IPA (Whisper)', size: '~80 MB', desc: 'IPA transcription (no timestamps)' },
-  { id: 'justinchuby/wav2vec2-lv-60-espeak-cv-ft-ONNX', name: 'IPA + Timestamps', size: '~360 MB', desc: 'Phone-level IPA (experimental) ⚠️' },
+  { id: 'onnx-community/ipa-whisper-base-ONNX', name: 'IPA (Whisper)', size: '~80 MB', desc: 'Whisper IPA (no timestamps)' },
+  { id: 'justinchuby/wav2vec2-lv-60-espeak-cv-ft-ONNX', name: 'IPA + Timestamps', size: '~360 MB', desc: 'wav2vec2 CTC (experimental) ⚠️' },
 ];
 
 const SAVED_KEY = 'web-praat-whisper-settings';
@@ -43,7 +43,7 @@ export function WhisperDialog({ onStart, onClose }: WhisperDialogProps) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-panel" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()} style={{ maxWidth: 600, width: '90vw' }}>
         <button className="modal-close" aria-label="Close" onClick={onClose}>×</button>
-        <h2 style={{ margin: '0 0 16px', fontSize: '18px' }}>🎤 Transcribe with Whisper</h2>
+        <h2 style={{ margin: '0 0 16px', fontSize: '18px' }}>🎤 AI Transcription</h2>
 
         <div style={{ marginBottom: '16px' }}>
           <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '8px', color: 'var(--text-dim)' }}>Model</div>
