@@ -3,9 +3,7 @@
 A browser-based port of [Praat](https://www.fon.hum.uva.nl/praat/) for phonetics research, teaching, and interactive exploration. Zero installation — runs entirely in the browser.
 
 [![CI](https://github.com/justinchuby/web-praat/actions/workflows/ci.yml/badge.svg)](https://github.com/justinchuby/web-praat/actions/workflows/ci.yml)
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
-![Tests](https://img.shields.io/badge/tests-529_passing-green)
-![Coverage](https://img.shields.io/badge/coverage-74%25-yellow)
+[![codecov](https://codecov.io/gh/justinchuby/web-praat/graph/badge.svg)](https://codecov.io/gh/justinchuby/web-praat)
 
 <img width="2354" height="1212" alt="image" src="https://github.com/user-attachments/assets/14fa2de8-3f54-44ec-8b70-86c80b718e4b" />
 

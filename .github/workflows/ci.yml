@@ -17,7 +17,11 @@ jobs:
           cache: npm
       - run: npm ci --legacy-peer-deps
       - run: npx tsc --noEmit
-      - run: npm test
+      - run: npm test -- --coverage
+      - uses: codecov/codecov-action@v5
+        with:
+          files: coverage/lcov.info
+          fail_ci_if_error: false
       - run: npm run build
         env:
           BASE_URL: /web-praat/
